@@ -1,17 +1,7 @@
 
-### Wiring it in code
-
-```java
-HikariConfig config = new HikariConfig();
-// … normal pool configuration …
-config.setClock(new MonotonicClock());
-
-HikariDataSource ds = new HikariDataSource(config);
-```
-
 **Result:** all time‑outs, leak detection, and house‑keeping now rely on a **steady** source, eliminating the “Retrograde clock change detected” warning even when the OS clock jumps.
 
-> **Tip:** If you are on Spring Boot, expose a `DataSource` bean with the above configuration, or set the property `spring.datasource.hikari.clock=your.package.MonotonicClock` (if you register it as a Spring bean).
+> **Tip:** In Spring Boot you can expose the `DataSource` bean with the same configuration, or set the property `spring.datasource.hikari.clock=your.package.MonotonicClock` if you register it as a Spring bean.
 
 ---  
 
