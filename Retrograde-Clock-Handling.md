@@ -1,5 +1,7 @@
+#Handling Retrograde Clock Changes in Java Applications
+
 ``` markdown
-# Handling Retrograde Clock Changes in Java Applications  
+#   
 *Why they happen, how they affect connection pools (HikariCP), and what to do when the Internet is unavailable*
 
 ---  
