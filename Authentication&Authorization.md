@@ -1,13 +1,5 @@
 # Authentication & Authorization – A Comprehensive Survey  
 
-*Technical White‑Paper (≈ 12 pages, 7 K words)*  
-
-**Author:** ChatGPT – Large Language Model (OpenAI)  
-**Date:** 2026‑02‑12  
-
----  
-
-## Abstract  
 
 Authentication and authorization are the two foundational pillars of computer‑security. Over four decades, a rich ecosystem of mechanisms—ranging from static passwords to decentralized, cryptographic identifiers—has evolved to address changing threat models, system architectures, and user‑experience expectations. This paper presents a **chronological taxonomy**, a **formal comparative analysis**, and a **forward‑looking discussion** of the most influential techniques. We contrast **authentication** (who you are) with **authorization** (what you may do), examine the interplay of **session management**, **token‑based models**, and **policy‑driven access control**, and evaluate each method against criteria such as **security**, **scalability**, **usability**, and **operational complexity**. Finally, we identify research gaps and emerging trends (Zero‑Trust, Decentralized Identity, Continuous Authentication) that will shape the next generation of secure systems.  
 
