@@ -1,119 +1,259 @@
-1️⃣ Core Spring Container & Dependency Injection
-How does Spring’s DefaultListableBeanFactory manage bean definitions internally?
-It stores them in a ConcurrentHashMap<String, BeanDefinition> keyed by bean name and also maintains a LinkedHashSet for hierarchical parent‑child factories, enabling fast name‑based lookup and inheritance.
-Explain the complete lifecycle of a Spring bean from definition registration to destruction.
-Registration → BeanDefinition parsing → Instantiation (via constructors or factory methods) → Populate properties (dependency injection) → Aware callbacks (BeanNameAware, ApplicationContextAware) → BeanPostProcessor postProcessBeforeInitialization → @PostConstruct/InitializingBean.afterPropertiesSet → custom init‑method → bean ready → on shutdown @PreDestroy/DisposableBean.destroy → BeanPostProcessor postProcessAfterInitialization → bean removal.
-What is the difference between type‑based and name‑based autowiring?
-Type‑based (@Autowired without qualifier) matches by Java type; name‑based (@Resource(name="…")) matches the bean name. Use type‑based for clarity, name‑based when multiple beans share the same type.
-Describe how Spring resolves generic‑type injection points (e.g., Repository<User>).
-Spring examines the generic declaration at runtime via ResolvableType. It matches the raw type (Repository) and then verifies the generic argument (User) against the actual bean’s generic metadata.
-How does @Primary interact with @Qualifier when multiple candidates exist?
-@Primary gives a bean higher precedence when no qualifier is present. If an explicit @Qualifier is used, it overrides the primary selection.
-Discuss circular dependencies and Spring’s “early reference” mechanism.
-For setter‑injected cycles Spring creates the first bean, registers a singleton factory (ObjectFactory) that returns a raw early reference, then injects the second bean. When the first bean later needs the second, the factory supplies the already‑created instance, breaking the cycle.
-When would you use ObjectFactory<T> or Provider<T> instead of direct injection?
-When you need lazy or prototype‑scoped dependencies inside a singleton, or want to avoid early initialization (e.g., to prevent circular references).
-Explain SmartInitializingSingleton.
-Beans implementing this interface get a callback (afterSingletonsInstantiated) after the container has finished creating all singleton beans, useful for post‑startup validation or triggering background jobs.
-Field injection vs. constructor injection – impact on testability?
-Constructor injection makes dependencies explicit and enables easy creation of test instances without reflection; field injection hides dependencies and usually requires @InjectMocks/reflection to test.
-Prototype bean injected into a singleton – how does Spring handle it?
-By default the singleton receives a single prototype instance at creation time. To obtain a fresh prototype each call, inject ObjectProvider<PrototypeBean> or @Lookup method that Spring overrides to fetch a new instance.
-(…continue the same concise‑answer pattern for items 11‑30 – omitted here for brevity but present in the full document.)
- 
-2️⃣ Aspect‑Oriented Programming (AOP)
-Proxy‑creation strategy: JDK vs. CGLIB?
-If the bean implements at least one interface, Spring uses a JDK dynamic proxy; otherwise, it falls back to CGLIB subclassing (unless proxyTargetClass = true).
-Lifecycle of an Advice and order when multiple aspects apply.
-Advice objects are wrapped in Advisors, sorted by @Order (or Ordered). At method invocation Spring iterates the chain: MethodBeforeAdvice → AroundAdvice (outermost first) → target method → AfterReturning/AfterThrowing (reverse order).
-Pointcut expression referencing annotation attributes.
-Example: @annotation(myAnn) && @args(.., @MyAnnotation(*)) matches methods whose parameter or method annotations meet the criteria; the attribute values can be bound to advice method parameters.
-Self‑invocation problem and a solution without refactoring.
-*Calling another @Transactional method from within the same bean bypasses the proxy. Solve by injecting the bean’s own proxy (@Autowired private SelfProxy self;) or by using AopContext.currentProxy(). *
-Compile‑time vs. load‑time vs. runtime AOP.
-Compile‑time (AspectJ ajc) weaves bytecode before deployment – highest performance, no proxy limits. Load‑time (AspectJ LTW) weaves on class loading using a Java agent. Runtime (Spring proxy) is simpler, works with plain JDK, but can’t advise final methods or private calls.
-(…questions 36‑50 follow the same concise‑answer format.)
- 
-3️⃣ Transaction Management
-List all propagation types with a REQUIRES_NEW scenario.
-REQUIRED, REQUIRES_NEW, SUPPORTS, NOT_SUPPORTED, MANDATORY, NEVER, NESTED. REQUIRES_NEW is useful for audit logging: even if the main transaction rolls back, the audit record must be persisted.
-JpaTransactionManager vs. DataSourceTransactionManager flush behavior.
-JpaTransactionManager triggers EntityManager.flush() on commit, ensuring JPA changes are sent to DB; DataSourceTransactionManager works at JDBC level and does not know about JPA’s persistence context.
-Checked exception inside @Transactional – what happens?
-*By default Spring rolls back only on unchecked (RuntimeException) or Error. A checked exception commits unless specified in rollbackFor. *
-@Transactional + @Async interaction.
-@Async runs in a separate thread, thus cannot see the caller’s transaction. Either make the async method @Transactional itself or use TransactionTemplate inside it to start a new transaction.
-When does Spring create a new transaction vs. join an existing one?
-If no transaction exists, it creates one; otherwise, depending on the propagation (REQUIRED joins, REQUIRES_NEW creates a new one, etc.).
-(…questions 56‑75 continue similarly.)
- 
-4️⃣ Spring Boot
-Three meta‑annotations of @SpringBootApplication.
-@Configuration (Java config class), @EnableAutoConfiguration (import auto‑config classes), @ComponentScan (scan the package of the annotated class).
-How does auto‑configuration discover candidates?
-Spring Boot reads META-INF/spring.factories for EnableAutoConfiguration entries; each class is conditionally loaded based on @Conditional annotations.
-Order of property‑source resolution.
-RandomValuePropertySource
-devtools override (if present)
-application.{profile}.properties / .yml (profile specific)
-application.properties / .yml
-@PropertySource declared in @Configuration classes
-OS environment variables
-Java system properties
-Command‑line arguments
-Disable a specific auto‑configuration without excluding the whole starter.
-Add the class name to spring.autoconfigure.exclude (e.g., spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration).
-Purpose of META-INF/spring.components.
-Used by Spring’s classic classpath scanning to pre‑declare candidate component classes, primarily for legacy XML‑based configuration.
-(…questions 81‑120 continue in the same brief‑answer style.)
- 
-5️⃣ Spring Data & Persistence
-How does Spring Data generate repository implementations?
-It creates a proxy that implements the repository interface; method‑name parsing (findBy…) builds a JPQL/SQL query; @Query annotations provide explicit queries; the proxy delegates to SimpleJpaRepository.
-@EntityGraph to solve N+1 problem.
-Annotate a repository method with @EntityGraph(attributePaths = {"orders", "address"}) so Hibernate fetches the specified associations eagerly in a single SQL join, eliminating extra selects.
-Differences among CrudRepository, PagingAndSortingRepository, JpaRepository.
-CrudRepository provides basic CRUD ops. PagingAndSortingRepository adds pagination and sorting. JpaRepository extends both and adds JPA‑specific methods like flush and saveAndFlush.
-Flush mode for a modifying query (@Modifying).
-Spring sets the query’s flushMode to COMMIT by default; you can force an immediate flush with @Modifying(flushAutomatically = true). The transaction is still responsible for the final commit.
-Native SQL vs. JPQL with @Query.
-Native SQL allows database‑specific features (window functions, hints) but bypasses JPQL portability and entity mapping nuances. JPQL is portable and works with the JPA provider’s parsing/validation.
-(…questions 126‑150 continue similarly.)
- 
-6️⃣ Spring Security
-Default filters in Spring Security’s chain.
-SecurityContextPersistenceFilter, HeaderWriterFilter, CsrfFilter, LogoutFilter, UsernamePasswordAuthenticationFilter, DefaultLoginPageGeneratingFilter, BasicAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, FilterSecurityInterceptor.
-@PreAuthorize SpEL evaluation context.
-The expression can use authentication, principal, #variable (method arguments), and security‑specific utility methods (hasRole, hasAuthority). The context is built from the MethodSecurityExpressionHandler.
-SecurityContextHolderStrategy implementations.
-MODE_THREADLOCAL (default, per‑thread), MODE_INHERITABLETHREADLOCAL (child threads inherit), MODE_GLOBAL (static singleton, not thread‑safe).
-Stateless JWT authentication in Spring Security 6.
-Configure httpSecurity.sessionManagement().sessionCreationPolicy(STATELESS), add a OncePerRequestFilter that extracts the token, validates it via JwtDecoder, creates a UsernamePasswordAuthenticationToken, and stores it in SecurityContextHolder. No HttpSession is created.
-Why use PasswordEncoderFactories.createDelegatingPasswordEncoder()?
-It stores the encoding algorithm identifier ({bcrypt}) in the hash, allowing seamless migration between algorithms while still supporting old passwords.
-(…questions 156‑175 follow the concise‑answer format.)
- 
-7️⃣ Spring Cloud & Microservices
-@EnableDiscoveryClient vs. @EnableEurekaClient.
-@EnableDiscoveryClient is generic – works with any supported service registry (Eureka, Consul, Zookeeper). @EnableEurekaClient is Eureka‑specific and adds no extra functionality.
-Spring Cloud Config Server externalising configuration.
-It pulls property files from a Git (or filesystem) repo, serves them via /{application}/{profile} endpoints, and clients refresh via /actuator/refresh or Spring Cloud Bus. Property placeholders are re‑evaluated on refresh.
-Circuit‑breaker pattern in Spring Cloud – Resilience4j vs. Hystrix.
-Resilience4j is a lightweight, functional‑style library without the Hystrix Dashboard, supporting bulkhead, rate‑limiter, and time‑limiter. Hystrix is deprecated, uses a thread‑pool isolation model, and provides a built‑in dashboard.
-Spring Cloud Sleuth propagation mechanism.
-It adds traceId/spanId to the MDC, to outgoing HTTP headers (X‑B3‑TraceId, etc.), and extracts them on inbound requests, allowing downstream services to join the same trace.
-@LoadBalanced RestTemplate vs. WebClient.
-Both resolve logical service names via Ribbon/Eureka (or Spring Cloud LoadBalancer). RestTemplate is blocking; WebClient is reactive and integrates with Project Reactor.
-(…questions 181‑195 continue in the same brevity.)
- 
-8️⃣ Testing
-@SpringBootTest vs. @WebMvcTest.
-@SpringBootTest loads the full application context (useful for integration tests). @WebMvcTest slices only the MVC layer (controllers, Jackson, MockMvc), mocking service beans.
-@MockBean vs. plain Mockito @Mock.
-@MockBean registers the mock as a bean in the Spring ApplicationContext, replacing any existing bean of the same type; plain @Mock lives only in the test class.
-Using Testcontainers for PostgreSQL integration tests.
-Declare a @Container PostgreSQLContainer<?> pg = new PostgreSQLContainer<>("postgres:15"); start it before the test, inject the JDBC URL with @DynamicPropertySource, and let Spring create a real DataSource pointing at the container.
-Testing a @Transactional service method without committing data.
-Annotate the test with @Transactional; Spring will start a transaction before the test and roll it back after the test method finishes.
-Purpose of @DirtiesContext and performance implications.
-Marks the context as dirty, forcing a reload for subsequent tests. Overuse leads to many full context starts, dramatically slowing the test suite.
+
+---  
+
+## 1️⃣ Core Spring Container & Dependency Injection  
+
+| # | Question | Answer |
+|---|----------|--------|
+| 1 | How does Spring’s `DefaultListableBeanFactory` manage bean definitions internally? | It stores `BeanDefinition`s in a thread‑safe `ConcurrentHashMap<String, BeanDefinition>` keyed by bean name and keeps a parent‑child hierarchy for inheritance, allowing O(1) lookup and fast merging. |
+| 2 | Explain the complete lifecycle of a Spring bean from definition registration to destruction. | Registration → parsing → **instantiation** → **populate properties** → `Aware` callbacks → `BeanPostProcessor` **pre‑init** → `@PostConstruct` / `InitializingBean` → custom init‑method → bean ready → on shutdown: `@PreDestroy` / `DisposableBean` → `BeanPostProcessor` **post‑destroy** → removal. |
+| 3 | What is the difference between type‑based and name‑based autowiring? | Type‑based (`@Autowired` without qualifier) matches by Java type; name‑based (`@Resource(name="…")`) matches by bean name. Use type‑based for clarity, name‑based when several beans share the same type. |
+| 4 | How does Spring resolve generic‑type injection points (e.g., `Repository<User>`)? | It uses `ResolvableType` to read the generic metadata at runtime, matches the raw type (`Repository`) and then verifies the generic argument (`User`) against the actual bean’s generic declarations. |
+| 5 | How does `@Primary` interact with `@Qualifier` when multiple candidates exist? | `@Primary` gives a bean higher precedence when **no** qualifier is present. An explicit `@Qualifier` always overrides primary selection. |
+| 6 | Discuss circular dependencies and Spring’s “early reference” mechanism. | For setter‑injected cycles Spring creates the first bean, registers an `ObjectFactory` that supplies a **raw early reference**, then injects the second bean. When the first bean later needs the second, the factory returns the already‑created instance, breaking the cycle. |
+| 7 | When would you use `ObjectFactory<T>` or `Provider<T>` instead of direct injection? | When you need **lazy** fetching, a **prototype** inside a singleton, or to avoid early initialization that could cause circular references. |
+| 8 | Explain `SmartInitializingSingleton`. | Beans implementing it receive a callback (`afterSingletonsInstantiated`) **after** all singleton beans have been created, useful for post‑startup validation or starting background jobs. |
+| 9 | Field injection vs. constructor injection – impact on testability? | Constructor injection makes dependencies explicit and lets you instantiate beans directly in tests; field injection hides them and usually requires reflection or Mockito’s `@InjectMocks`. |
+|10| How does Spring handle a prototype bean injected into a singleton? | By default the singleton receives a *single* prototype instance at creation time. To obtain a fresh prototype each call, inject `ObjectProvider<Proto>` or use an `@Lookup` method that Spring overrides. |
+|11| What is bean definition inheritance and why is it rarely used today? | Child definitions can **override** or **add** property values from a parent definition. Modern Java‑based config gives the same flexibility with less XML overhead, so inheritance is seldom needed. |
+|12| How does `@Configuration` class proxying affect bean method calls? | With `proxyBeanMethods = true` (default) Spring creates a CGLIB subclass proxy so that internal `@Bean` method calls go through the container, preserving scoping and proxying. Setting it to `false` makes calls direct, improving startup speed but breaking cross‑method bean referencing. |
+|13| When does `@Lazy` on a bean definition differ from `@Lazy` on an injection point? | On a bean definition the **entire bean** is lazily instantiated the first time it’s needed. On an injection point only that particular dependency is lazily resolved, leaving the bean itself eager. |
+|14| How does `ScopedProxyMode` work for request‑scoped beans in a non‑web context? | Spring creates a **class‑based proxy** that implements the scoped bean’s type; each method call triggers a lookup of the actual bean from the current scope (e.g., a thread‑local “mock” scope you define for batch jobs). |
+|15| What are the purposes of `BeanFactoryPostProcessor` vs. `BeanPostProcessor`? | `BeanFactoryPostProcessor` runs **before** any bean instances are created and can **modify bean definitions**. `BeanPostProcessor` runs **after** bean instantiation, allowing you to wrap or modify the actual bean instance (e.g., proxy creation). |
+|16| How does the `@Conditional` mechanism evaluate multiple conditions? | All declared `@Conditional` annotations are evaluated **AND‑ed**; each class implements `Condition` with a `matches` method that can inspect the `Environment`, classpath, existing beans, etc. |
+|17| What is the difference between a `FactoryBean` and a factory method `@Bean`? | `FactoryBean` is a **special bean** that, when retrieved, returns the object produced by its `getObject()` method; a factory method `@Bean` is simply a method that returns an object, with no extra indirection. |
+|18| Why does Spring treat `java.util.Optional<T>` specially during injection? | An `Optional<T>` tells Spring the dependency is **optional**; if no matching bean exists, Spring injects `Optional.empty()` instead of throwing `NoSuchBeanDefinitionException`. |
+|19| How would you implement a custom scope (e.g., “tenant”) and register it? | Create a class implementing `Scope` (`get`, `remove`, `registerDestructionCallback`, etc.), then register it with `ConfigurableBeanFactory.registerScope("tenant", new TenantScope())`. The scope can store beans per‑tenant in a `ThreadLocal` or a request attribute. |
+|20| Describe how `@Import` works, especially with `ImportSelector` and `ImportBeanDefinitionRegistrar`. | `@Import` can import configuration classes directly, or delegate to an `ImportSelector` that returns a list of fully qualified class names, or to an `ImportBeanDefinitionRegistrar` that programmatically registers bean definitions (useful for conditional, programmatic imports). |
+|21| How does Spring resolve `@Value` placeholders with multiple property sources? | It resolves placeholders against the **ordered** `PropertySources` in the `Environment` (system properties → environment variables → command‑line → `application.yml` → profile‑specific files → custom `@PropertySource`). The first source that contains the key wins. |
+|22| How does Spring detect and report circular references with `@Lazy` and `ObjectFactory`? | The container builds a **dependency graph**; when a bean is being created it marks it as “in creation”. If another bean depends on it, Spring checks the graph; `@Lazy` or `ObjectFactory` break the graph because they defer the actual lookup until after the current bean finishes. |
+|23| What are the consequences of `@Configuration(proxyBeanMethods = false)`? | Bean methods are **invoked directly**, so inter‑bean method calls do **not** go through the container; each call creates a **new instance** if the bean is prototype‑scoped, breaking singleton semantics and potentially losing proxying (e.g., `@Transactional`). |
+|24| How does `@Autowired(required = false)` differ from using `@Nullable`? | `required = false` tells Spring to ignore the dependency if no matching bean exists, injecting `null`. `@Nullable` marks the *injected value* as allowed to be `null` but still requires the dependency to be resolved; if absent you still get an exception unless `required = false`. |
+|25| When and why would you use `@DependsOn`? | To force a bean to be **initialized after** another bean (e.g., a cache that must be warmed before a service starts) – useful when the dependency is not expressed via a normal injection. |
+|26| Explain the sorting algorithm Spring uses for `Ordered` and `@Order`. | Beans are collected, then sorted by the integer value returned by `Ordered.getOrder()` (or the value in `@Order`). Lower numbers have higher precedence. If two beans have the same order, the order is undefined. |
+|27| How does Spring’s `Environment` abstraction interact with `PropertySources` and profile activation? | `Environment` holds a mutable `MutablePropertySources` list; profiles are activated via `environment.setActiveProfiles(...)`. Beans can use `@Profile` or `@ConditionalOnExpression` that read from the environment to decide activation. |
+|28| Discuss pros/cons of externalizing bean definitions using XML vs. Java config in modern Spring Boot. | XML is declarative, external, and can be edited without recompiling; however, Java config provides **type safety**, IDE completion, and is the default in Boot. XML adds an extra parsing step and is rarely needed now. |
+|29| What is the role of `SmartInstantiationAwareBeanPostProcessor`? | It allows custom logic **before** bean instantiation (`predictBeanType`), after property population (`postProcessProperties`), and after bean construction (`getEarlyBeanReference`), enabling advanced proxying and injection tricks. |
+|30| How does `ApplicationContextAware` differ from `BeanFactoryAware`? | `ApplicationContextAware` gives the full `ApplicationContext` (including message source and event publishing), while `BeanFactoryAware` only provides the underlying `BeanFactory`. Use the former when you need full context features. |
+
+---
+
+## 2️⃣ Aspect‑Oriented Programming (AOP)  
+
+| # | Question | Answer |
+|---|----------|--------|
+|31| Describe Spring’s proxy‑creation strategy: when does it pick JDK dynamic proxies vs. CGLIB? | If the bean implements at least one interface, Spring creates a **JDK proxy**; otherwise (or when `proxyTargetClass = true`) it uses **CGLIB** to subclass the concrete class. |
+|32| Explain the lifecycle of an Advice and the order when multiple aspects apply. | Advices are wrapped in **Advisors**, sorted by `@Order`. At invocation Spring builds a chain: `MethodBeforeAdvice` → outermost `AroundAdvice` → target method → `AfterReturning`/`AfterThrowing` (reverse order). Each advice can proceed or abort the chain. |
+|33| How can you write a pointcut that references annotation attributes? | Example: `@annotation(myAnn) && @args(.., @MyAnnotation(value = "special"))`. The pointcut binds the annotation instance (`myAnn`) so you can inspect its attributes in the advice method. |
+|34| What is the self‑invocation problem and a non‑refactoring solution? | Calling another `@Transactional` method from the same bean bypasses the proxy, so the advice is not applied. Solve by injecting the bean’s **own proxy** (`@Autowired private SelfProxy self;`) or by enabling `exposeProxy = true` and using `AopContext.currentProxy()`. |
+|35| Compare compile‑time weaving, load‑time weaving, and runtime proxy‑based AOP. | **Compile‑time** (`ajc`) weaves bytecode before deployment – highest performance, can advise any method. **Load‑time** (`-javaagent`) weaves as classes are loaded – similar power but needs a JVM agent. **Runtime** (Spring proxies) is simpler, works with plain JDK, but cannot advise final methods or internal calls. |
+|36| How does `@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)` affect advice execution? | `proxyTargetClass = true` forces CGLIB subclassing even if interfaces exist. `exposeProxy = true` stores the current proxy in a thread‑local, allowing `AopContext.currentProxy()` for self‑invocation handling. |
+|37| How does `@Order` on aspects influence advice precedence? | Aspects with **lower** order values have **higher** precedence (executed earlier). For `@Around` advice, the lower‑order aspect becomes the **outermost** wrapper. |
+|38| What is `AdviceBinding` in Spring AOP? | It is the internal representation that ties an **Advice** to the **method matcher** (pointcut). The `AdvisorAdapterRegistry` converts a generic `Advice` into an `Advisor` that Spring’s proxy infrastructure can understand. |
+|39| How would you implement annotation‑driven caching using a custom Aspect? | Create a `@CacheResult` annotation, write an `@Around` advice that checks a `CacheManager` for a key derived from method args, returns cached value if present, otherwise proceeds and stores the result. Use `@Order(Ordered.LOWEST_PRECEDENCE)` to run after other advices. |
+|40| What are the limitations of Spring’s proxy‑based AOP for final/private methods? | Proxies subclass the target class (CGLIB) or implement interfaces (JDK). **Final methods** cannot be overridden, **private methods** are not intercepted because they’re not part of the public contract; thus advices never see them. Use AspectJ LTW if you need to advise such methods. |
+|41| How does Spring integrate with AspectJ’s `@AspectJ` style? | `@EnableAspectJAutoProxy` registers an `AnnotationAwareAspectJAutoProxyCreator` that scans the context for `@Aspect` beans, creates Spring AOP advisors from their `@Before/@After/@Around` annotations, and weaves them via proxies. |
+|42| When would you prefer AspectJ LTW over Spring’s proxy‑based AOP in production? | When you must advise **final methods**, **private methods**, library classes you cannot proxy, or need **compile‑time guarantees** (e.g., for security audits). LTW provides full AspectJ power at the cost of a JVM agent and slightly longer startup. |
+|43| Explain the role of `AdvisorAdapterRegistry`. | It holds adapters that translate various `Advice` types (`MethodBeforeAdvice`, `AroundAdvice`, `ThrowsAdvice`) into `Advisor`s that the proxy factory can understand, making the AOP infrastructure extensible. |
+|44| How can you expose the current `JoinPoint` to downstream services without breaking encapsulation? | Pass a **custom context object** (e.g., a `ThreadLocal`‑based `RequestContext`) populated in the advice, then inject that context where needed. This avoids leaking AspectJ classes into business code. |
+|45| What happens if an exception is thrown from an `@Around` advice that also has `@Transactional`? | The exception propagates to the proxy chain; if the exception matches the transaction’s rollback rules, the transaction is rolled back. The advice can also explicitly call `TransactionAspectSupport.currentTransactionStatus().setRollbackOnly()`. |
+|46| How does `AnnotationAwareAspectJAutoProxyCreator` differ from the plain `AspectJAutoProxyCreator`? | The *annotation‑aware* version also processes `@Aspect` beans and respects Spring’s `@Order`, whereas the plain one only works with XML‑defined `aspect` tags. |
+|47| Describe ordering among `@Before`, `@AfterReturning`, and `@AfterThrowing` advices. | All advices are ordered by their aspect’s `@Order`. Within a single aspect, `@Before` runs first, then the target method, followed by `@AfterReturning` (if method returns normally) or `@AfterThrowing` (if an exception occurs); `@After` (if present) runs in both cases. |
+|48| Can an Aspect apply only to beans annotated with a meta‑annotation? Show the pointcut. | Yes. Example: `@Pointcut("@within(com.example.MyMetaAnnotation) || @annotation(com.example.MyMetaAnnotation)")`. This matches any bean whose class or method carries the meta‑annotation. |
+|49| How does Spring handle exceptions thrown from advice (e.g., an `@Around` advice)? | The exception propagates up the proxy chain. If the advice is part of a transaction, the transaction manager decides whether to roll back based on the exception type. The original target method is **not** invoked. |
+|50| What is required to enable load‑time weaving (`@EnableLoadTimeWeaving`)? | Add `@EnableLoadTimeWeaving` and launch the JVM with `-javaagent:path/to/spring-instrument-{version}.jar` (or use a container that provides the agent). Spring then registers a `LoadTimeWeaver` to weave AspectJ aspects at class load. |
+
+---
+
+## 3️⃣ Transaction Management  
+
+| # | Question | Answer |
+|---|----------|--------|
+|51| List all transaction propagation types with a `REQUIRES_NEW` use case. | `REQUIRED`, `REQUIRES_NEW`, `SUPPORTS`, `NOT_SUPPORTED`, `MANDATORY`, `NEVER`, `NESTED`. *Use `REQUIRES_NEW` for audit logging so the audit record commits even if the main transaction rolls back.* |
+|52| `JpaTransactionManager` vs. `DataSourceTransactionManager` flush behavior. | `JpaTransactionManager` calls `EntityManager.flush()` on commit, ensuring pending JPA changes are written. `DataSourceTransactionManager` works on raw JDBC and does **not** know about the JPA persistence context. |
+|53| What happens when a checked exception is thrown inside `@Transactional`? | By default Spring **does not roll back** on checked exceptions; it only rolls back on unchecked (`RuntimeException`) or `Error`. You can specify `rollbackFor = MyCheckedException.class`. |
+|54| Interaction between `@Transactional` and `@Async`. | `@Async` runs in a separate thread, thus it **cannot see** the caller’s transaction. Make the async method itself `@Transactional` or use `TransactionTemplate` inside the async block to start a new transaction. |
+|55| When does Spring create a new transaction vs. join an existing one? | If **no** transaction exists, Spring creates one. If a transaction exists, the behavior depends on the propagation: `REQUIRED` joins, `REQUIRES_NEW` starts a new one, `NESTED` creates a save‑point, etc. |
+|56| What is `TransactionSynchronizationManager`? | It holds thread‑local resources (e.g., the current `Connection` or `EntityManager`) and synchronization callbacks, enabling multiple resources to participate in the same logical transaction. |
+|57| Effect of `@Transactional(readOnly = true)` on Hibernate and DB connections. | Hibernate skips dirty‑checking and flushes, and many databases can apply read‑only optimisations (e.g., using a replica). It also hints the connection pool that the transaction won’t modify data. |
+|58| How to programmatically mark a transaction for rollback without throwing? | Call `TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();` inside the transactional method. |
+|59| How does Spring integrate with JTA for distributed transactions? | By configuring a `JtaTransactionManager` (or a vendor‑specific manager like Atomikos) that delegates to the JTA transaction manager, allowing multiple `DataSource`s and `EntityManager`s to participate in a single global transaction. |
+|60| Consequences of using `PROPAGATION_NESTED` with `DataSourceTransactionManager`. | `NESTED` only works with **JDBC** connections that support savepoints; the transaction manager creates a savepoint for the nested transaction. If the database doesn’t support savepoints, an exception occurs. |
+|61| How does Spring handle transaction timeout settings? | The timeout value (seconds) is passed to the underlying `Connection`/`EntityManager`. If the transaction exceeds the timeout, Spring throws `TransactionTimedOutException` and rolls back. |
+|62| When would you use `@TransactionalEventListener` and its execution phases? | To react to events **after** a transaction commits (`AFTER_COMMIT`) or **before** it rolls back (`AFTER_ROLLBACK`). Useful for sending messages only when the DB changes are guaranteed. |
+|63| Explain `RollbackRuleAttribute` in declarative transaction config. | It defines which exception classes trigger rollback (`new RollbackRuleAttribute(MyException.class)`). The `RuleBasedTransactionAttribute` aggregates these rules to decide rollback vs. commit. |
+|64| When would you prefer `TransactionTemplate` over `@Transactional`? | For **programmatic** transaction control inside a method that already has transactional context, or when you need fine‑grained commit/rollback decisions inside a single method body. |
+|65| Describe the “transaction‑per‑request” pattern in Spring MVC. | A `OpenEntityManagerInViewFilter` (or `OpenEntityManagerInViewInterceptor`) opens a JPA `EntityManager` for the entire HTTP request, allowing lazy loading in view rendering. |
+|66| How does `@Transactional` on a `private` method behave? | Spring’s proxy cannot intercept `private` methods; therefore the annotation is ignored and the method runs **without** transactional semantics. |
+|67| Impact of `@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)`. | Transactional advice is woven by **AspectJ** (compile‑ or load‑time) instead of Spring proxies, allowing transaction management on `final` classes/methods and eliminating proxy‑related limitations. |
+|68| How to suppress transaction rollback for a specific exception? | Use `@Transactional(noRollbackFor = MyException.class)` or `noRollbackForName = "com.example.MyException"`. |
+|69| Pros/cons of optimistic vs. pessimistic locking in Spring Data JPA. | **Optimistic** (`@Version`) avoids DB locks, suitable for low‑contention writes; **pessimistic** (`LockModeType.PESSIMISTIC_WRITE`) obtains a row lock, safe for high‑contention but can deadlock and reduces concurrency. |
+|70| How do `@Commit` and `@Rollback` work in Spring’s testing framework? | When placed on a test method, `@Commit` forces the transaction to **commit** after the test, while `@Rollback` (default) rolls it back, keeping the database clean between tests. |
+|71| What is `ChainedTransactionManager` and why use it? | It combines multiple `PlatformTransactionManager`s (e.g., one for JPA, another for Mongo) into a single logical transaction, delegating commit/rollback to each manager in order. |
+|72| When is `@Transactional(propagation = MANDATORY)` appropriate? | When a method **must** be called inside an existing transaction; otherwise Spring throws `IllegalTransactionStateException`. Useful for internal service methods that should never be invoked outside a transaction. |
+|73| Purpose of `TransactionAwareDataSourceProxy`. | It wraps a regular `DataSource` and ensures that code obtaining a connection via `DataSource.getConnection()` participates in the current Spring transaction, even if that code isn’t aware of Spring. |
+|74| When would you disable Spring’s default transaction synchronization? | In **non‑transactional** batch jobs where you deliberately manage your own connections, to avoid the overhead of thread‑local sync resources. Risks include losing automatic rollback/commit handling. |
+|75| Consequences of using `Isolation.SERIALIZABLE` in a Spring app. | Guarantees full transaction isolation (prevents phantom reads) but can cause **significant locking** and reduced throughput; appropriate only for critical sections where consistency trumps performance. |
+
+---
+
+## 4️⃣ Spring Boot  
+
+| # | Question | Answer |
+|---|----------|--------|
+|76| What three meta‑annotations compose `@SpringBootApplication`? | `@Configuration` (Java config), `@EnableAutoConfiguration` (import auto‑config classes), `@ComponentScan` (search the package of the annotated class). |
+|77| How does auto‑configuration discover candidate classes? | Spring Boot reads `META-INF/spring.factories` for the `EnableAutoConfiguration` key; each listed class is a candidate that may be imported if its `@Conditional` annotations evaluate to true. |
+|78| Order of property‑source resolution in Spring Boot. | 1️⃣ `RandomValuePropertySource` → 2️⃣ `devtools` overrides → 3️⃣ `application-{profile}.properties/yml` → 4️⃣ `application.properties/yml` → 5️⃣ `@PropertySource` → 6️⃣ OS env vars → 7️⃣ System properties → 8️⃣ Command‑line args. |
+|79| Disable a specific auto‑configuration without removing the whole starter. | Set `spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration` (or any fully‑qualified class) in `application.yml`/`properties`. |
+|80| Purpose of `META-INF/spring.components`. | Pre‑declares candidate component classes for classic class‑path scanning (used mainly with legacy XML configuration). |
+|81| How does `@ConditionalOnMissingBean` differ from `@ConditionalOnBean`? | `@ConditionalOnMissingBean` loads the auto‑config *only if* a bean of the specified type **does not** already exist; `@ConditionalOnBean` does the opposite, loading only when the bean **does** exist. |
+|82| Difference between `FactoryBean` and a factory‑method `@Bean`. | `FactoryBean` is a **special bean** whose `getObject()` returns the actual bean to expose; a factory‑method `@Bean` simply returns the object directly, with no extra indirection. |
+|83| When to use `@ConfigurationProperties` vs. `@Value`. | `@ConfigurationProperties` groups related properties into a POJO (type‑safe, supports validation). `@Value` is for one‑off placeholders or SpEL expressions. |
+|84| Programmatically customise the embedded servlet container. | Define a `WebServerFactoryCustomizer<TomcatServletWebServerFactory>` bean and set properties (e.g., port, SSL, thread pool) inside its `customize` method. |
+|85| Role of `SpringApplicationRunListeners`. | They are callbacks invoked at key points of the `SpringApplication` lifecycle (starting, environment prepared, context prepared, etc.). Custom listeners can react to these events (e.g., logging, metrics). |
+|86| How does Spring Boot decide the main class for an executable jar? | It reads the `Main-Class` attribute from the MANIFEST (`org.springframework.boot.loader.JarLauncher`) which then looks for a class with `public static void main(String[])` annotated with `@SpringBootApplication`. |
+|87| Effect of `spring.main.web-application-type=NONE`. | Disables any web‑server auto‑configuration; the application runs as a **non‑web** (CLI) app, useful for batch jobs or utilities. |
+|88| Explain `SpringBootTest.WebEnvironment` values. | `MOCK` – mock servlet environment, no real server; `RANDOM_PORT` – starts embedded server on a random port; `DEFINED_PORT` – uses the port defined in properties; `NONE` – no web environment at all. |
+|89| Conditionally enable a bean based on a Spring profile without `@Profile`. | Use `@ConditionalOnExpression("'${spring.profiles.active}'.contains('myprofile')")` or `@ConditionalOnProperty` that is set only for that profile. |
+|90| How to add a custom actuator endpoint? | Implement `Endpoint` or extend `AbstractEndpoint`, annotate with `@Endpoint(id = "myEndpoint")`, register as a bean, and optionally expose via `@ReadOperation`, `@WriteOperation`. |
+|91| Purpose of the `spring-boot-maven-plugin` `repackage` goal. | It repackages the built JAR with all dependencies and a launch script, turning it into an **executable fat‑jar** (or war). |
+|92| How does the Spring Boot banner feature work? | At startup `BannerPrinter` reads `banner.txt`/`banner.gif` from the classpath (or default ASCII banner) and prints it; you can replace it with a custom file or disable via `spring.main.banner-mode=off`. |
+|93| Use‑cases for `ApplicationRunner` vs. `CommandLineRunner`. | Both run after the context is ready. `ApplicationRunner` receives `ApplicationArguments` (parsed into option‑args and non‑option‑args). `CommandLineRunner` receives the raw `String[]`. Pick the one that matches the needed argument handling. |
+|94| How does `@ConditionalOnProperty` evaluate boolean properties? | It reads the property value (as a string). If the property is **missing**, the condition fails unless `matchIfMissing = true`. It treats `"true"` (case‑insensitive) as true; any other value is false. |
+|95| Role of `SmartLifecycle` in complex start‑stop ordering. | Extends `Lifecycle` with `isAutoStartup()`, `stop(Runnable callback)`, and a `phase` value. Beans with **lower** phase start earlier and stop later, enabling fine‑grained ordering. |
+|96| Difference between `@RestController` and `@Controller`. | `@RestController` = `@Controller + @ResponseBody` on every method (JSON/XML output). `@Controller` returns view names and is used with server‑side templating. |
+|97| How does `WebMvcConfigurer` differ from `WebFluxConfigurer`? | `WebMvcConfigurer` customises the **Servlet‑based** Spring MVC stack; `WebFluxConfigurer` customises the **reactive** WebFlux stack (different return types, non‑blocking I/O). |
+|98| Steps to externalise logging configuration (Logback) in a Spring Boot jar. | Place `logback-spring.xml` on the classpath (outside the jar or in `src/main/resources`), reference external properties via `${LOG_PATH}` and set `logging.config=classpath:logback-spring.xml` or `-Dlogging.config=...` at launch. |
+|99| Remote restart capabilities of `spring-boot-devtools` and security concerns. | DevTools can listen on a separate port for a trigger request (`/restart`). Exposing this port publicly can allow remote code reload; therefore it is **disabled by default** and should be bound to `localhost` only. |
+|100| How does `@EnableConfigurationProperties` work internally? | It registers a `ConfigurationPropertiesBindingPostProcessor` bean that binds external `@ConfigurationProperties` classes to the environment after the bean definitions are loaded. |
+|101| Configure a custom `Jackson` `ObjectMapper` without affecting auto‑configuration. | Declare a `@Bean` of type `Jackson2ObjectMapperBuilderCustomizer` (or `ObjectMapper` with `@Primary`) that applies additional modules; Spring Boot still creates the default mapper and applies your customizer on top of it. |
+|102| Impact of `spring.main.allow-bean-definition-overriding`. | When `true`, a later bean definition with the same name overwrites the previous one (useful for test stubs). When `false` (default), duplicate bean names cause a `BeanDefinitionOverrideException`. |
+|103| Purpose of `META-INF/spring.handlers` and `META-INF/spring.schemas`. | They map XML namespace URIs to `NamespaceHandler` implementations (`spring.handlers`) and to XSD schema files (`spring.schemas`), enabling Spring’s XML configuration to understand custom namespaces. |
+|104| How can a library use `@ImportAutoConfiguration`? | The library defines an auto‑configuration class and annotates it with `@AutoConfiguration` (or declares it in `spring.factories`). Consumers can then import it explicitly via `@ImportAutoConfiguration(MyAutoConfig.class)` if they don’t want it auto‑enabled. |
+|105| How does a `HealthIndicator` contribute to `/actuator/health`? | Each `HealthIndicator` bean returns a `Health` object; the `HealthEndpoint` aggregates them into a composite status (UP/DOWN) and adds custom details. |
+|106| When would you use `SpringApplicationBuilder` instead of `SpringApplication.run()`? | To **chain** multiple sources, apply **customizers** (e.g., set additional listeners, banner mode), or to create **child contexts** (e.g., for a Hop‑by‑Hop migration). |
+|107| Explain `@ConditionalOnExpression` with an example using SpEL. | `@ConditionalOnExpression("${my.feature.enabled} && T(java.lang.Math).random() < 0.5")` enables the bean only when the property is true **and** a random check passes (demonstrates SpEL usage). |
+|108| Share configuration properties between a library and an application using `@ConfigurationProperties`. | Define a POJO in the library annotated with `@ConfigurationProperties(prefix="mylib")`. The application declares it as a bean (or uses `@EnableConfigurationProperties`) and provides the actual values in its `application.yml`. |
+|109| Steps to enable graceful shutdown in a Spring Boot web app. | Set `server.shutdown=graceful` and optionally `spring.lifecycle.timeout-per-shutdown-phase=30s`. Spring will stop accepting new requests, wait for ongoing requests to finish, then close the `ApplicationContext`. |
+|110| Key `SpringApplication` events and when they are published. | `ApplicationStartingEvent` (early, before environment), `ApplicationEnvironmentPreparedEvent`, `ApplicationPreparedEvent`, `ApplicationStartedEvent` (context refreshed), `ApplicationReadyEvent` (app is ready to service requests), `ApplicationFailedEvent`. |
+|111| How does `RestTemplateBuilder` simplify `RestTemplate` creation? | It pre‑configures the template with message converters, error handlers, request factories, and any `ClientHttpRequestInterceptor` beans defined in the context, giving you a fully configured `RestTemplate` with one line. |
+|112| Purpose of `HealthEndpointWebExtension` and customizing its JSON response. | It adapts the core `HealthEndpoint` for the web layer, adding actuator‑specific metadata (e.g., `status`, `components`). You can customize by providing a bean that implements `HealthIndicator` or by adding `HealthEndpointWebExtension` that adds extra fields. |
+|113| Effect of `spring.task.scheduling.pool.size` and underlying implementation. | It sets the core pool size of the `ThreadPoolTaskScheduler` used by `@Scheduled` tasks. The scheduler uses a `java.util.concurrent.ScheduledThreadPoolExecutor` under the hood. |
+|114| How does Spring Boot support multiple `DataSource`s? | Declare each `DataSource` as a `@Bean` (with `@Primary` for the default), then create separate `JdbcTemplate`/`EntityManagerFactory` beans referencing the appropriate `DataSource`. Spring Boot’s auto‑configuration will back‑off for the non‑primary ones. |
+|115| Effect of `spring.main.web-application-type=REACTIVE`. | Spring Boot will auto‑configure the **WebFlux** stack (reactive netty server) instead of the servlet stack, and beans like `WebMvcConfigurer` are ignored. |
+|116| How does `@ConditionalOnJava` work? | It checks `System.getProperty("java.version")` against the required version (e.g., `@ConditionalOnJava(value = JavaVersion.EIGHT, range = Range.EQUAL_OR_NEWER)`). Useful for providing different beans for different JDKs. |
+|117| How does `@ConditionalOnJndi` decide bean creation? | It attempts a JNDI lookup for the supplied name; if the lookup succeeds (resource exists) the condition matches, otherwise the bean is not created. |
+|118| Role of `HealthContributorRegistry` and health endpoint groups. | It holds all `HealthIndicator` and `HealthContributor` beans, allowing the `/actuator/health` endpoint to group them (e.g., `liveness`, `readiness`) and expose only selected contributors per group. |
+|119| Conditionally enable a bean only when a class is present on the classpath? | Use `@ConditionalOnClass(name = "com.example.OptionalFeature")`. The bean will be created only if that class can be loaded. |
+|120| Purpose of `@ConditionalOnMissingClass`. | The opposite of `@ConditionalOnClass`; it creates the bean **only when** the specified class **cannot** be found, useful for providing fall‑backs. |
+
+---
+
+## 5️⃣ Spring Data & Persistence  
+
+| # | Question | Answer |
+|---|----------|--------|
+|121| How does Spring Data generate repository implementations from method names? | It parses the method name (e.g., `findByLastnameAndAgeGreaterThan`) into a **QueryCreationContext**, builds a JPQL/SQL query, and executes it via `EntityManager`. |
+|122| Explain `@EntityGraph` and solving the N+1 problem. | `@EntityGraph(attributePaths = {"orders","address"})` tells Hibernate to fetch the listed associations eagerly in a single JOIN, eliminating extra SELECTs that cause N+1. |
+|123| Difference between `CrudRepository`, `PagingAndSortingRepository`, `JpaRepository`. | `CrudRepository` – basic CRUD. `PagingAndSortingRepository` – adds pagination & sorting. `JpaRepository` – extends both and adds JPA‑specific methods (`flush`, `saveAndFlush`). |
+|124| How does `@Modifying` affect flush mode? | By default the modifying query runs with `FlushModeType.AUTO`. Setting `flushAutomatically = true` forces an **immediate flush** before execution, ensuring pending changes are persisted. |
+|125| Native SQL vs. JPQL with `@Query`. | Native SQL can use DB‑specific syntax & functions but bypasses JPQL validation and automatic result mapping. JPQL is portable, type‑safe, and integrates with JPA entity mapping. |
+|126| Purpose of `JpaSpecificationExecutor`. | Allows building **dynamic, type‑safe predicates** using the Criteria API (`Specification<T>`), enabling complex queries without hard‑coding JPQL strings. |
+|127| Register a custom `RepositoryBaseClass` for common methods. | Extend `JpaRepositoryImpl`, provide it via `@EnableJpaRepositories(repositoryBaseClass = MyBaseRepoImpl.class)`. All repositories will inherit the custom methods. |
+|128| Effect of `@Transactional(readOnly = true)` on a repository method. | Spring opens the transaction in read‑only mode; Hibernate skips dirty checking, and many DBs can optimise the transaction (e.g., using replica). |
+|129| How does `@BatchSize` work and when to use it? | It tells Hibernate to fetch collections or lazy associations in batches of the specified size, reducing the number of SELECTs when iterating large result sets. |
+|130| Difference between `@MappedSuperclass` and `@Inheritance(strategy = SINGLE_TABLE)`. | `@MappedSuperclass` provides common mapping information but **does not** create a table; its fields are mapped in subclasses. `@Inheritance(SINGLE_TABLE)` creates **one** table for the whole hierarchy, using a discriminator column. |
+|131| Role of `AuditingEntityListener` and enabling it. | It automatically populates audit fields (`@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy`). Enable with `@EnableJpaAuditing` and annotate the entity fields. |
+|132| How do projection interfaces differ from DTO constructor expressions? | Projection interfaces let Spring Data map selected columns directly onto an interface (no DTO class needed). DTO constructors (`new com.foo.Dto(e.id, e.name)`) require a concrete class and can include calculated fields. |
+|133| Pitfalls of `FetchType.EAGER` on collections and mitigation. | Eager collections cause **Cartesian product** queries and can blow memory. Mitigate by using `@EntityGraph`, `JOIN FETCH` in queries, or switching to `LAZY` + explicit fetch strategies. |
+|134| How does `@Lock(LockModeType.PESSIMISTIC_WRITE)` work? | It instructs the JPA provider to acquire a **database row lock** (`SELECT … FOR UPDATE`) when reading the entity, preventing concurrent updates until the transaction commits. |
+|135| Override the default `EntityManager` used by repositories. | Define a `@Bean` of type `EntityManagerFactory` (or `LocalContainerEntityManagerFactoryBean`) with a custom name and reference it via `@EnableJpaRepositories(entityManagerFactoryRef = "myEmf")`. |
+|136| Purpose of `@EnableJpaRepositories` `repositoryFactoryBeanClass`. | Allows you to plug a custom `RepositoryFactoryBean` (e.g., one that adds extra behavior or supports non‑standard query methods). |
+|137| How does `Querydsl` integrate with Spring Data JPA? | By enabling `QuerydslPredicateExecutor` on a repository; Spring Data creates a `JPAQueryFactory` that can execute `Predicate`s built with the generated Q‑classes. |
+|138| Effect of `@Modifying(clearAutomatically = true)`. | After the modifying query executes, the persistence context is **cleared**, forcing subsequent reads to hit the database (helps avoid stale data after bulk updates). |
+|139| How does `@RedisHash` work in Spring Data Redis? | It marks a class as a Redis hash, persisting its fields as a Redis hash map keyed by the class’s id; the repository works similarly to JPA but against Redis. |
+|140| Difference between `EntityManager.persist` and `merge`. | `persist` puts a **new** entity into the persistence context; it must not have an identifier already set. `merge` copies the state of a **detached** entity into a managed instance, returning the managed copy. |
+|141| How does Spring Data REST expose repositories as HATEOAS endpoints? | It registers a `RepositoryRestController` for each repository, automatically mapping CRUD URLs and adding HAL‑style links (`self`, `profile`, etc.) based on the entity model. |
+|142| Impact of `spring.jpa.open-in-view` and the “Open Session in View” pattern. | When enabled, a JPA `EntityManager` stays open for the whole web request, allowing lazy loading in view rendering. This can hide N+1 problems and tie the view layer to persistence. |
+|143| What are `TransactionTemplate` and `JpaTemplate`, and why are they legacy? | They provide programmatic transaction handling before annotation‑based transaction management became ubiquitous. `JpaTemplate` predates JPA’s native API; Spring now recommends using `EntityManager` directly or repositories. |
+|144| Configure multi‑tenant schema‑per‑tenant with Spring Data JPA. | Implement a `CurrentTenantIdentifierResolver` for Hibernate, supply a `MultiTenantConnectionProvider` that switches the schema based on a `ThreadLocal` tenant identifier, and set `hibernate.multiTenancy=SCHEMA`. |
+|145| Role of `@Repository` in exception translation. | Spring wraps persistence‑specific exceptions (e.g., `SQLException`) in its own `DataAccessException` hierarchy via `PersistenceExceptionTranslationPostProcessor`. |
+|146| Efficiently batch‑insert 10,000 rows with Spring Data JPA. | Use `EntityManager.flush()` + `clear()` every **N** (e.g., 500) rows, or enable `hibernate.jdbc.batch_size` and let Hibernate batch the inserts. |
+|147| Use of `@DynamicUpdate` and `@DynamicInsert` in Hibernate. | They tell Hibernate to generate **UPDATE/INSERT** statements that include only the changed columns (or non‑null columns), reducing write traffic but adding a small overhead for dirty checking. |
+|148| Purpose of `JpaTransactionManager.isJpaDialectPresent` during init. | It checks whether a specific `JpaDialect` (e.g., Hibernate) is on the classpath; if not, the transaction manager falls back to a generic JPA dialect. |
+|149| How does `@QueryHints` affect query execution? | It passes vendor‑specific hints (e.g., `org.hibernate.fetchSize`) to the JPA provider, allowing fine‑tuned performance tweaks without altering the query itself. |
+|150| Interaction of `EntityManager.flush()` with `@Transactional` boundaries. | Within a transaction, `flush()` forces pending changes to be written to the DB but **does not** commit. The transaction still controls commit/rollback at the method exit. |
+
+---
+
+## 6️⃣ Spring Security  
+
+| # | Question | Answer |
+|---|----------|--------|
+|151| List the default filters in Spring Security’s chain and their purpose. | 1️⃣ `SecurityContextPersistenceFilter` – restores `SecurityContext`. 2️⃣ `HeaderWriterFilter` – adds security headers. 3️⃣ `CsrfFilter`. 4️⃣ `LogoutFilter`. 5️⃣ `UsernamePasswordAuthenticationFilter`. 6️⃣ `BasicAuthenticationFilter`. 7️⃣ `RequestCacheAwareFilter`. 8️⃣ `SecurityContextHolderAwareRequestFilter`. 9️⃣ `AnonymousAuthenticationFilter`. 🔟 `SessionManagementFilter`. 1️⃣1️⃣ `ExceptionTranslationFilter`. 1️⃣2️⃣ `FilterSecurityInterceptor`. |
+|152| How does `@PreAuthorize` evaluate SpEL and what’s available? | The expression can reference `authentication`, `principal`, method arguments (`#param`), and utility methods like `hasRole()`, `hasAuthority()`. Spring creates a `MethodSecurityExpressionHandler` that supplies the evaluation context. |
+|153| `SecurityContextHolderStrategy` implementations and when to use each. | `MODE_THREADLOCAL` (default) – isolated per thread. `MODE_INHERITABLETHREADLOCAL` – child threads inherit the context (useful for async tasks). `MODE_GLOBAL` – a single static context (rare, for legacy code). |
+|154| Implement stateless JWT authentication in Spring Security 6. | Add `http.sessionManagement().sessionCreationPolicy(STATELESS)`, configure a `JwtDecoder` bean, and register a `OncePerRequestFilter` that extracts the token, validates it, builds a `UsernamePasswordAuthenticationToken`, and stores it in `SecurityContextHolder`. |
+|155| Why use `PasswordEncoderFactories.createDelegatingPasswordEncoder()`? | It stores the **id** of the encoder (`{bcrypt}`) in the hash, allowing transparent migration to newer algorithms while still supporting older stored passwords. |
+|156| How to secure a reactive (WebFlux) service with method‑level security? | Add `@EnableMethodSecurity` (or `@EnableReactiveMethodSecurity`), then use `@PreAuthorize` on handler methods. The `ReactorContext` carries the `Authentication` for non‑blocking evaluation. |
+|157| How does CSRF protection work and when is it safe to disable it? | Spring generates a token per session and expects it as a hidden field or header. It can be disabled for **stateless APIs** (e.g., JWT‑based) where the client cannot store cookies, or for non‑browser clients. |
+|158| Role of `AuthenticationProvider` and wiring a custom LDAP provider. | Implement `AuthenticationProvider.authenticate()`, return a populated `Authentication` object, and register the bean. Spring’s `LdapAuthenticationProvider` can be configured via `AuthenticationManagerBuilder.ldapAuthentication()`. |
+|159| Effect of `http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)`. | No `HttpSession` will be created or used; each request must contain all authentication data (e.g., a token). This is required for true RESTful services. |
+|160| Difference between `@RolesAllowed` and `@PreAuthorize`. | `@RolesAllowed` is JSR‑250, only checks **role** strings (`hasRole`). `@PreAuthorize` uses full SpEL, allowing complex expressions (`hasAuthority('ADMIN') && #id == authentication.principal.id`). |
+|161| Secure Actuator endpoints (e.g., `/actuator/health`) with role‑based access. | Expose the endpoint (`management.endpoints.web.exposure.include=*`) and then configure `http.authorizeHttpRequests().requestMatchers(EndpointRequest.to(HealthEndpoint.class)).hasRole("ADMIN")`. |
+|162| How does `FilterSecurityInterceptor` decide authorization? | It obtains the `SecurityMetadataSource` (URL‑to‑attributes mapping), retrieves the required attributes, and delegates to an `AccessDecisionManager` (e.g., `AffirmativeBased`) which evaluates the current `Authentication`. |
+|163| Difference between `UserDetailsService` and `UserDetailsManager`. | `UserDetailsService` only loads a user by username. `UserDetailsManager` extends it and adds CRUD operations for managing users (create, update, delete). |
+|164| How does `OAuth2LoginAuthenticationFilter` handle the authorization code flow? | It intercepts the callback URL, extracts the `code`, exchanges it for an access token via the `OAuth2AccessTokenResponseClient`, then builds an `OidcUser`/`OAuth2User` and stores it in the `SecurityContext`. |
+|165| Configure a resource server to validate RSA‑signed JWTs. | Define `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` (or provide a `JwtDecoder` bean using `NimbusJwtDecoder.withPublicKey(rsaKey).build()`). The decoder verifies signature and claims. |
+|166| Difference between `@EnableGlobalMethodSecurity` and `@EnableMethodSecurity`. | `@EnableGlobalMethodSecurity` is deprecated; `@EnableMethodSecurity` is the modern, unified way (covers both `@PreAuthorize` and JSR‑250). |
+|167| `GrantedAuthority` vs. `AuthorityUtils` – typical usage. | `GrantedAuthority` is the interface representing a single authority string. `AuthorityUtils` is a helper that creates a collection of `GrantedAuthority` from a comma‑separated string. |
+|168| Explain the `SecurityFilterChain` bean approach introduced in Spring Security 5.4. | Instead of extending `WebSecurityConfigurerAdapter`, you now define a `@Bean SecurityFilterChain` that receives an `HttpSecurity` and returns `http.build()`. This is functional, type‑safe, and allows multiple chains. |
+|169| Implications of upgrading a `PasswordEncoder` (e.g., BCrypt → Argon2). | Existing passwords stay stored with their original `{bcrypt}` id. New passwords will be encoded with `{argon2}`. The delegating encoder will automatically select the correct algorithm per stored hash. |
+|170| Customise the `AuthenticationEntryPoint` to return JSON errors for REST APIs. | Implement `AuthenticationEntryPoint` (e.g., `RestAuthenticationEntryPoint`) that writes a JSON body with status 401, and register it via `http.exceptionHandling().authenticationEntryPoint(myEntryPoint)`. |
+|171| Purpose of `@AuthenticationPrincipal` and difference from accessing `SecurityContext`. | `@AuthenticationPrincipal` extracts the **principal** object directly as a method argument, a convenience over `SecurityContextHolder.getContext().getAuthentication().getPrincipal()`. |
+|172| How does `http.oauth2ResourceServer().jwt()` configure opaque‑token validation? | It sets up a `JwtAuthenticationProvider` that validates the token’s **introspection endpoint** (if you configure `introspection-uri`), converting the response into an `Authentication` object. |
+|173| How does `CsrfTokenRepository` store tokens and trade‑offs? | The default `HttpSessionCsrfTokenRepository` stores the token in the `HttpSession`. A `CookieCsrfTokenRepository` stores it in a cookie (stateless, works with SPAs) but may be vulnerable to XSS if not `HttpOnly`. |
+|174| How does “Remember‑Me” authentication work and security considerations? | Spring stores a persistent token (or hashed series + token) in a cookie; on subsequent requests, it re‑authenticates the user. Risks: stolen cookie → session hijacking; mitigations include `tokenValiditySeconds`, `secure` flag, and rotating tokens. |
+|175| What is `WebExpressionAuthorizationManager` and how does it evaluate expressions? | It evaluates Spring‑EL expressions (e.g., `"hasIpAddress('192.168.0.0/16')"`). It builds a `WebSecurityExpressionRoot` with request, authentication, and method‑level data, then evaluates the expression against it. |
+
+---
+
+## 7️⃣ Spring Cloud & Microservices  
+
+| # | Question | Answer |
+|---|----------|--------|
+|176| Difference between `@EnableDiscoveryClient` and `@EnableEurekaClient`. | `@EnableDiscoveryClient` works with **any** supported registry (Eureka, Consul, Zookeeper). `@EnableEurekaClient` is Eureka‑specific and does nothing extra beyond the generic version. |
+|177| How does Spring Cloud Config Server externalise configuration and handle refresh? | The server reads from a Git (or file system) repo and serves `/{application}/{profile}` endpoints. Clients use `@RefreshScope` beans; invoking `/actuator/refresh` (or Spring Cloud Bus) re‑binds those beans to the updated `Environment`. |
+|178| Circuit‑breaker pattern in Spring Cloud – Resilience4j vs. Hystrix. | **Resilience4j** is a lightweight functional library with separate modules (circuit‑breaker, rate‑limiter, bulkhead) and works with Spring Boot 3+. **Hystrix** (now deprecated) uses thread‑pool isolation and provides a Dashboard; it’s heavier and no longer maintained. |
+|179| How does Spring Cloud Sleuth propagate tracing information? | It generates a `traceId`/`spanId`, puts them in the MDC, adds them to outbound HTTP headers (`X‑B3‑TraceId`, `X‑B3‑SpanId`), and extracts them on inbound requests so downstream services join the same trace. |
+|180| `@LoadBalanced` RestTemplate vs. WebClient – how do they resolve service names? | Both rely on Spring Cloud LoadBalancer (previously Ribbon). The logical name (`http://my-service`) is resolved to an actual instance URL via the discovery client (Eureka, Consul, etc.). |
+|181| Purpose of `@RefreshScope` and when to use it. | Marks a bean so that its configuration is **re‑bound** when a refresh event occurs (e.g., after `/actuator/refresh`). Use it for beans that read mutable property values (e.g., feature flags). |
+|182| How does Spring Cloud Stream bind to messaging middleware? | It creates **binder** implementations (Kafka, Rabbit) that map `@Input`/`@Output` channels to physical destinations. The `Binder` abstracts producer/consumer details, letting you write channel‑centric code. |
+|183| Role of Spring Cloud Bus and typical use‑cases. | It propagates **configuration change events** (and other custom events) via a messaging backbone (e.g., RabbitMQ) to all instances of a service, enabling coordinated refresh without manual calls. |
+|184| Implement distributed rate limiting using Spring Cloud Gateway. | Add a `RateLimiter` filter (`RedisRateLimiter` or `RequestRateLimiterGatewayFilterFactory`) referencing a Redis backend; configure `burstCapacity` and `replenishRate` per route or globally. |
+|185| What does `spring-cloud-starter-openfeign` provide? | It creates **type‑safe declarative HTTP clients** by generating a proxy for an interface annotated with `@FeignClient`; the proxy handles URL resolution, request/response conversion, and integrates with Ribbon/LB and Hystrix/Resilience4j. |
+|186| How does `@EnableFeignClients` work and the lifecycle of a Feign client bean? | It scans for `@FeignClient` interfaces, registers a `FeignClientFactoryBean` for each, and after the `ApplicationContext` is refreshed, the factory creates a proxy that implements the interface and injects it as a bean. |
+|187| Difference between Spring Cloud Task and Spring Batch. | **Task** is a simple, short‑lived microservice that executes **once** (e.g., a command‑line job). **Batch** provides a robust chunk‑oriented processing model with readers, processors, writers, transaction management, and job/step orchestration. |
+|188| How does Spring Cloud Function enable function‑as‑a‑service? | It abstracts a **java.util.function** (`Supplier`, `Function`, `Consumer`) and provides adapters for various runtimes (AWS Lambda, Azure Functions, Cloud Foundry). The same code can be deployed to multiple platforms. |
+|189| Purpose of Spring Cloud Kubernetes config maps and secrets integration. | It reads ConfigMaps and Secrets as property sources, making them available via `@Value`/`@ConfigurationProperties`. The integration also supports **profile‑specific** files and automatic reloading. |
+|190| How can Spring Cloud Contract be used for consumer‑driven contract testing? | Define **contracts** (Groovy DSL or YAML) that generate **Stubs** for the provider and **tests** for the consumer. The provider can run the generated stub‑server to verify compliance automatically. |
+|191| Role of `@Retryable` and `@Recover` in Spring Retry, especially with circuit breakers. | `@Retryable` re‑executes a method on specified exceptions; `@Recover` provides a fallback method when retries are exhausted. When combined with a circuit breaker, retries happen **inside** the protected call, and the circuit may open after repeated failures. |
+|192| Secure inter‑service communication using mutual TLS in Spring Cloud. | Configure each service’s `RestTemplate`/WebClient with an `HttpClient` that presents a client certificate (`SSLContext`). Use Spring Cloud Config to share trust stores, and set `server.ssl.client-auth=need` on the server side. |
+|193| Effect of `spring.cloud.loadbalancer.retry.enabled`. | When `true`, the load balancer will **retry** a request on a different service instance if the first attempt fails (e.g., connection timeout). It works together with the circuit‑breaker to improve resiliency. |
+|194| Consequences of eager initialization of `DiscoveryClient` beans on startup time. | The client contacts the registry immediately, which can **slow** startup (especially in large clusters). Lazy initialization (`@Lazy`) defers the network call until the first service lookup, reducing boot time. |
+|195| Order of execution for `spring.cloud.gateway.globalfilters`. | They are ordered by `Ordered`/`@Order` (lower values first). The **first** global filter sees the request before route filters; the **last** runs after the route has been applied, just before the response is returned. |
+
+---
+
+## 8️⃣ Testing  
+
+| # | Question | Answer |
+|---|----------|--------|
+|196| Difference between `@SpringBootTest` (full) and `@WebMvcTest` (slice). | `@SpringBootTest` loads the **entire** application context (all beans, data sources, etc.). `@WebMvcTest` only loads MVC components (`@Controller`, `@RestController`, `Jackson`, `MockMvc`) and mocks the rest, making it faster for controller‑level tests. |
+|197| How does `@MockBean` differ from a plain Mockito `@Mock` in a Spring test? | `@MockBean` registers the mock **as a bean** in the Spring context, replacing any existing bean of the same type. `@Mock` lives only in the test class and is not injected automatically. |
+|198| Using Testcontainers to spin up a real PostgreSQL DB for integration tests. | Declare a static `@Container PostgreSQLContainer<?> pg = new PostgreSQLContainer<>("postgres:15")`; start it before the test suite. Use `@DynamicPropertySource` to programmatically set `spring.datasource.url`, `username`, `password` so Spring Boot connects to the container. |
+|199| Test a `@Transactional` service method without committing any data. | Annotate the test class or method with `@Transactional`. Spring opens a transaction before the test and rolls it back afterwards, leaving the database untouched. |
+|200| Purpose of `@DirtiesContext` and performance implications of over‑use. | Marks the `ApplicationContext` as dirty, forcing a **full reload** for subsequent tests. Overusing it can make the test suite **slow**, because each reload repeats component scanning, bean creation, and possible DB initialisation. Use it only when the test truly mutates shared state that cannot be reset otherwise. |
+
+---  
+
