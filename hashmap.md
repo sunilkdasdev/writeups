@@ -1,0 +1,226 @@
+
+HashMap uses hashCode(), == and equals() for entry lookup. The lookup sequence for a given key k is as follows:
+
+Use k.hashCode() to determine which bucket the entry is stored, if any
+If found, for each entry's key k1 in that bucket, if k == k1 || k.equals(k1), then return k1's entry
+Any other outcomes, no corresponding entry
+To demonstrate using an example, assume that we want to create a HashMap where keys are something which is 'logically equivalent' if they have same integer value, represented by AmbiguousInteger class. We then construct a HashMap, put in one entry, then attempt to override its value and retrieve value by key.
+
+class AmbiguousInteger {
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+}
+
+HashMap<AmbiguousInteger, Integer> map = new HashMap<>();
+// logically equivalent keys
+AmbiguousInteger key1 = new AmbiguousInteger(1),
+                 key2 = new AmbiguousInteger(1),
+                 key3 = new AmbiguousInteger(1);
+map.put(key1, 1); // put in value for entry '1'
+map.put(key2, 2); // attempt to override value for entry '1'
+System.out.println(map.get(key1));
+System.out.println(map.get(key2));
+System.out.println(map.get(key3));
+
+Expected: 2, 2, 2
+Don't override hashCode() and equals(): by default Java generates different hashCode() values for different objects, so HashMap uses these values to map key1 and key2 into different buckets. key3 has no corresponding bucket so it has no value.
+
+class AmbiguousInteger {
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+}
+
+map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 2, set as entry 2[1]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 2, get as entry 2[1]
+map.get(key3); // map to no bucket
+Expected: 2, 2, 2
+Output:   1, 2, null
+Override hashCode() only: HashMap maps key1 and key2 into the same bucket, but they remain different entries due to both key1 == key2 and key1.equals(key2) checks fail, as by default equals() uses == check, and they refer to different instances. key3 fails both == and equals() checks against key1 and key2 and thus has no corresponding value.
+
+class AmbiguousInteger {
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+
+    @Override
+    public int hashCode() {
+        return value;
+    }
+}
+
+map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[2]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[2]
+map.get(key3); // map to bucket 1, no corresponding entry
+Expected: 2, 2, 2
+Output:   1, 2, null
+Override equals() only: HashMap maps all keys into different buckets because of default different hashCode(). == or equals() check is irrelevant here as HashMap never reaches the point where it needs to use them.
+
+class AmbiguousInteger {
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof AmbiguousInteger && value == ((AmbiguousInteger) obj).value;
+    }
+}
+
+map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 2, set as entry 2[1]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 2, get as entry 2[1]
+map.get(key3); // map to no bucket
+Expected: 2, 2, 2
+Actual:   1, 2, null
+Override both hashCode() and equals(): HashMap maps key1, key2 and key3 into the same bucket. == checks fail when comparing different instances, but equals() checks pass as they all have the same value, and deemed 'logically equivalent' by our logic.
+
+class AmbiguousInteger {
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+
+    @Override
+    public int hashCode() {
+        return value;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof AmbiguousInteger && value == ((AmbiguousInteger) obj).value;
+    }
+}
+
+map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[1], override value
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[1]
+map.get(key3); // map to bucket 1, get as entry 1[1]
+Expected: 2, 2, 2
+Actual:   2, 2, 2
+What if hashCode() is random?: HashMap will assign a different bucket for each operation, and thus you never find the same entry that you put in earlier.
+
+class AmbiguousInteger {
+    private static int staticInt;
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+
+    @Override
+    public int hashCode() {
+        return ++staticInt; // every subsequent call gets different value
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof AmbiguousInteger && value == ((AmbiguousInteger) obj).value;
+    }
+}
+
+map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 2, set as entry 2[1]
+map.get(key1); // map to no bucket, no corresponding value
+map.get(key2); // map to no bucket, no corresponding value
+map.get(key3); // map to no bucket, no corresponding value
+Expected: 2, 2, 2
+Actual:   null, null, null
+What if hashCode() is always the same?: HashMap maps all keys into one big bucket. In this case, your code is functionally correct, but the use of HashMap is practically redundant, as any retrieval would need to iterate through all entries in that single bucket in O(N) time (or O(logN) for Java 8), equivalent to the use of a List.
+
+class AmbiguousInteger {
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof AmbiguousInteger && value == ((AmbiguousInteger) obj).value;
+    }
+}
+
+map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[1]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[1]
+map.get(key3); // map to bucket 1, get as entry 1[1]
+Expected: 2, 2, 2
+Actual:   2, 2, 2
+And what if equals is always false?: == check passes when we compare the same instance with itself, but fails otherwise, equals checks always fails so key1, key2 and key3 are deemed to be 'logically different', and maps to different entries, though they are still in the same bucket due to same hashCode().
+
+class AmbiguousInteger {
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return false;
+    }
+}
+
+map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[2]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[2]
+map.get(key3); // map to bucket 1, no corresponding entry
+Expected: 2, 2, 2
+Actual:   1, 2, null
+Okay what if equals is always true now?: you're basically saying that all objects are deemed 'logically equivalent' to another, so they all map to the same bucket (due to same hashCode()), same entry.
+
+class AmbiguousInteger {
+    private final int value;
+
+    AmbiguousInteger(int value) {
+        this.value = value;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return true;
+    }
+}
+
+map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[1], override value
+map.put(new AmbiguousInteger(100), 100); // map to bucket 1, set as entry1[1], override value
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[1]
+map.get(key3); // map to bucket 1, get as entry 1[1]
+Expected: 2, 2, 2
+Actual:   100, 100, 100
