@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elasticsearch Internals and Deep Dive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Elasticsearch Internals and Deep Dive</h1>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#1-cluster-architecture-and-node-roles">Cluster Architecture and Node Roles</a></li>
+<li><a href="#2-lucene-index-structure">Lucene Index Structure</a></li>
+<li><a href="#3-document-indexing-pipeline">Document Indexing Pipeline</a></li>
+<li><a href="#4-query-execution-and-query-planning">Query Execution and Query Planning</a></li>
+<li><a href="#5-aggregation-internals">Aggregation Internals</a></li>
+<li><a href="#6-memory-management-and-caching">Memory Management and Caching</a></li>
+<li><a href="#7-data-tier-architecture">Data Tier Architecture</a></li>
+<li><a href="#8-sharding-and-rebalancing">Sharding and Rebalancing</a></li>
+<li><a href="#9-search-and-indexing-performance">Search and Indexing Performance</a></li>
+<li><a href="#10-security-implementation">Security Implementation</a></li>
+<li><a href="#11-troubleshooting-and-diagnostics">Troubleshooting and Diagnostics</a></li>
+</ol>
+<hr>
+<h2>1. Cluster Architecture and Node Roles</h2>
+<h3>1.1 Master Node Responsibilities</h3>
+<pre><code>// Master node election and responsibilities
+<p>public class MasterNodeResponsibilities &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    MASTER NODE                                      │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  Cluster State Management:                                          │
+     │  - Version: monotonically increasing                               │
+     │  - Contents:                                                        │
+     │    - Nodes in cluster                                               │
+     │    - Index settings, mappings                                       │
+     │    - Allocation decisions                                           │
+     │    - Routing table                                                  │
+     │                                                                      │
+     │  Index Creation/Deletion:                                          │
+     │  - Create index with settings/mappings                              │
+     │  - Delete index                                                     │
+     │  - Update cluster state                                             │
+     │                                                                      │
+     │  Shard Allocation:                                                  │
+     │  - Decide which node gets which shard                              │
+     │  - Rebalance after node join/leave                                 │
+     │  - Handle failed shard recovery                                    │
+     │                                                                      │
+     │  Node Management:                                                   │
+     │  - Detect node failure                                              │
+     │  - Exclude nodes with high error rate                              │
+     │  - Coordinate topology updates                                      │
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Minimum Master Nodes:</li>
+</ul>
+     </em> 
+<ul>
+<li>discovery.zen.minimum_master_nodes = (N/2) + 1</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>For 3-node cluster: 2</li>
+<li>For 5-node cluster: 3</li>
+</ul>
+     </em> 
+<ul>
+<li>Purpose: Prevent split-brain</li>
+<li>- Must have quorum to form cluster</li>
+<li>- Split brain = two masters, inconsistent state</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>In Elasticsearch 7+ (Zen2 Discovery):</li>
+</ul>
+     </em> 
+<ul>
+<li>- No more minimum_master_nodes</li>
+<li>- Uses voting config</li>
+<li>- Auto-adjusts voting config on node changes</li>
+<li>- discovery.seed_hosts (list of master-eligible nodes)</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>1.2 Data Node Architecture</h3>
+<pre><code>// Data node internals
+<p>public class DataNodeArchitecture &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                      DATA NODE                                       │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │                Index (Shard)                                    ││
+     │  │                                                                   ││
+     │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐                ││
+     │  │  │   Segments  │ │   Segments  │ │   Segments  │                ││
+     │  │  │  (cfs/cfe)  │ │  (cfs/cfe)  │ │  (cfs/cfe)  │                ││
+     │  │  └─────────────┘ └─────────────┘ └─────────────┘                ││
+     │  │                                                                   ││
+     │  │  Translog: Transaction log for durability                       ││
+     │  │                                                                   ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                                                                      │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │                  In-Memory Structures                           ││
+     │  │  - Index cache                                                   ││
+     │  │  - Field data cache                                             ││
+     │  │  - Request cache                                                ││
+     │  │  - Query result cache                                           ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                                                                      │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │                  Node-Level Components                          ││
+     │  │  - ShardController: Manage shards on this node                 ││
+     │  │  - MemoryPool: Allocation for segments                          ││
+     │  │  - CircuitBreaker: Prevent OOM                                  ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Shard Types:</li>
+</ul>
+     </em> 
+<ul>
+<li>Primary Shard:</li>
+<li>- Handles all writes</li>
+<li>- Created when index created</li>
+<li>- Can be explicitly set: 1-50 per index</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Replica Shard:</li>
+<li>- Copy of primary, for redundancy</li>
+<li>- Handles reads (load balancing)</li>
+<li>- Can be changed without recreating index</li>
+<li>- Total shards = (1 + number_of_replicas) </em> number_of_primary_shards</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>2. Lucene Index Structure</h2>
+<h3>2.1 Segment Files Explained</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                      ELASTICSEARCH/LUCENE INDEX                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Index (shard):                                                              │
+│  ├─ segments_N                # Segment metadata                            │
+│  │  - Names of all segments                                                │
+│  │  - Files in each segment                                                │
+│  │  - Generation counter                                                   │
+│  │                                                                          │
+│  ├─ </em>.cfs                    # Compound file (combined)                    │
+│  │  ├── _0.cfe                # Compound field entries                      │
+│  │  └── _0.cfs               # Compound field data                         │
+│  │                                                                          │
+│  ┌─┐                          # Individual segment files (if non-compound) │
+│  ││  _0.si                    # Segment info                                │
+│  ││  _0.fnm                   # Fields                                     │
+│  ││  _0.fdx                   # Field data index                           │
+│  ││  _0.fdt                   # Field data                                 │
+│  ││  _0.tip                   # Term index (FST for dictionary)            │
+│  ││  _0.tip                   # Term index                                 │
+│  ││  _0.doc                   # Doc values (posting lists)                 │
+│  ││  _0.pos                   # Positions                                  │
+│  ││  _0.term                  # Term vectors                              │
+│  ││  _0.nrm                   # Norms                                      │
+│  ││  _0.blo                   # Bloom filter                               │
+│  ││  _0.bst                   # Index sort                                 │
+│  ││                                                                          │
+│  ├─ write.lock                # Write lock                                  │
+│  │                                                                          │
+│  └─ .lock                     # Index lock                                  │
+│                                                                              │
+│  Segment Naming:                                                             │
+│  - Segments are named by sequence number: _0, _1, _2, ...                   │
+│  - New segment created on: flush, merge, index close                        │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>2.2 Inverted Index Deep Dive</h3>
+<pre><code>// Inverted index structure
+<p>public class InvertedIndexDeepDive &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Inverted Index Structure:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                        INVERTED INDEX                                │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  Term Dictionary: (Sorted by term)                                  │
+     │  ┌───────────────┬─────────────────────────────────────────────┐    │
+     │  │    Term       │        Posting List (Doc IDs)               │    │
+     │  ├───────────────┼─────────────────────────────────────────────┤    │
+     │  │   &quot;orders&quot;    │  [1, 5, 12, 23, 45, 89, ...]                │    │
+     │  │   &quot;warehouse&quot; │  [2, 8, 15, 44, ...]                        │    │
+     │  │   &quot;shipped&quot;   │  [3, 7, 11, 19, 33, ...]                     │    │
+     │  └───────────────┴─────────────────────────────────────────────┘    │
+     │                                                                      │
+     │  ┌──────────────────────────────────────────────────────────────┐   │
+     │  │ Each posting contains:                                       │   │
+     │  │ - Doc ID                                                     │   │
+     │  │ - Term frequency (tf)                                        │   │
+     │  │ - Position (for phrase queries)                             │   │
+     │  │ - Payload (for custom data)                                  │   │
+     │  │ - Norms (for field-length normalization)                     │   │
+     │  └──────────────────────────────────────────────────────────────┘   │
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>FST (Finite State Transducer) - Term Index:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Stored in .tip file</li>
+<li>- Maps term prefixes to block locations in term dictionary</li>
+<li>- Enables fast term lookup</li>
+<li>- Very compact, in-memory</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Example: For terms [cat, catering, cathedral]</li>
+</ul>
+     </em> 
+<ul>
+<li>(start)</li>
+<li>|</li>
+<li>c-a-t [block: cats]</li>
+<li>|</li>
+<li>-t-e-r [block: catering<em>]</li>
+<li>|</li>
+<li>-h-e-d-r-a-l [block: cathedral</em>]</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Posting List Compression:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Lucene uses FOR (Fast Optimized RLE) encoding</li>
+<li>- Block-based: 128 docs per block</li>
+<li>- Delta encoding within block</li>
+<li>- Bitmap for sparse docs (for highly repetitive)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Example: [1, 5, 12, 23] -&gt; encoded as [1, 4, 7, 11] (deltas)</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>3. Document Indexing Pipeline</h2>
+<h3>3.1 Index Request Flow</h3>
+<pre><code>// Document indexing flow
+<p>public class IndexingPipeline &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                      INDEXING PIPELINE                               │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  Client Request:                                                      │
+     │  POST /orders/_doc &#123; &quot;order_id&quot;: &quot;12345&quot;, &quot;total&quot;: 100.00 &#125;         │
+     │                              │                                        │
+     │                              ▼                                        │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │              Coordinating Node (any data node)                   ││
+     │  │  - Parses request                                               ││
+     │  │  - Validates document                                           ││
+     │  │  - Determines target shard (routing)                            ││
+     │  │  - Replicas: (primary + replicas)                               ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │              Primary Shard Node                                  ││
+     │  │  - Parse JSON to Fields                                         ││
+     │  │  - Analyzer tokenization                                        ││
+     │  │  - Generate inverted index terms                                ││
+     │  │  - Write to Translog (before commit)                            ││
+     │  │  - Add to in-memory buffer                                      ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                  Wait for replication to replicas                    │
+     │                              ▼                                        │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │              Replica Shard Nodes                                 ││
+     │  │  - Apply same indexing logic                                    ││
+     │  │  - Translog write                                               ││
+     │  │  - Acknowledge to primary                                       ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  Response to client                                                   │
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Index Buffer and Refresh:</li>
+</ul>
+     </em> 
+<ul>
+<li>indices.memory.index_buffer_size = 10% (default)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Buffer fills -&gt; refresh() called:</li>
+<li>- Creates new Lucene segment from in-memory data</li>
+<li>- New segment searchable immediately</li>
+<li>- index.refresh_interval = 1s (default)</li>
+<li>- Can be disabled for bulk indexing</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Translog:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Write-ahead log for durability</li>
+<li>- Every indexed document first written to translog</li>
+<li>- Survives crash (within translog flush interval)</li>
+<li>- translog.durability = request (default) or async</li>
+<li>- translog.flush_threshold_size = 512MB (default)</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>3.2 Analysis Pipeline</h3>
+<pre><code>// Analysis and tokenization
+<p>public class AnalysisPipeline &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Text Analysis Flow:</li>
+</ul>
+     </em> 
+<ul>
+<li>Input: &quot;The quick brown fox jumps over the lazy dog&quot;</li>
+<li>│</li>
+<li>▼</li>
+<li>┌──────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                 Character Filter(s)                               │
+     │  - HTML strip: &lt;b&gt; → (removed)                                   │
+     │  - Mapping: 'stop' → ' STOP '                                    │
+     │  - Pattern: replace digits with #                                 │
+     └──────────────────────────────────────────────────────────────────┘
+</p>
+<ul>
+<li>│</li>
+<li>▼</li>
+<li>┌──────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                 Tokenizer                                          │
+     │  Standard: splits on whitespace/punctuation                       │
+     │  Input: &quot;The quick brown fox jumps over the lazy dog&quot;            │
+     │  Output: [The, quick, brown, fox, jumps, over, the, lazy, dog]  │
+     └──────────────────────────────────────────────────────────────────┘
+</p>
+<ul>
+<li>│</li>
+<li>▼</li>
+<li>┌──────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                 Token Filter(s)                                    │
+     │  - lowercase: [the, quick, brown, fox, jumps, over, the, lazy, dog]
+     │  - stop: [quick, brown, fox, jumps, over, lazy, dog]
+     │  - asciifolding: handle accents
+     │  - snowball: stem to root form
+     │  - edge_ngram: generate autocomplete tokens                       │
+     └──────────────────────────────────────────────────────────────────┘
+</p>
+<ul>
+<li>│</li>
+<li>▼</li>
+<li>┌──────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                 Indexed Terms                                     │
+     │  Inverted index now contains stemmed, normalized tokens          │
+     └──────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Custom Analyzer Example:</li>
+</ul>
+     </em>/
+<p>/<em>
+     PUT /orders
+     &#123;
+       &quot;settings&quot;: &#123;
+         &quot;analysis&quot;: &#123;
+           &quot;analyzer&quot;: &#123;
+             &quot;warehouse_analyzer&quot;: &#123;
+               &quot;type&quot;: &quot;custom&quot;,
+               &quot;char_filter&quot;: [&quot;html_strip&quot;],
+               &quot;tokenizer&quot;: &quot;standard&quot;,
+               &quot;filter&quot;: [
+                 &quot;lowercase&quot;,
+                 &quot;asciifolding&quot;,
+                 &quot;warehouse_synonym&quot;,
+                 &quot;snowball_english&quot;
+               ]
+             &#125;
+           &#125;,
+           &quot;filter&quot;: &#123;
+             &quot;warehouse_synonym&quot;: &#123;
+               &quot;type&quot;: &quot;synonym&quot;,
+               &quot;synonyms&quot;: [
+                 &quot;wh,warehouse,distribution center&quot;,
+                 &quot;sku,product,item&quot;
+               ]
+             &#125;
+           &#125;
+         &#125;
+       &#125;
+     &#125;
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Runtime Field Analysis:</li>
+</ul>
+     </em> 
+<ul>
+<li>POST /orders/_search</li>
+<li>&#123;</li>
+<li>&quot;runtime_mappings&quot;: &#123;</li>
+<li>&quot;order_category&quot;: &#123;</li>
+<li>&quot;type&quot;: &quot;keyword&quot;,</li>
+<li>&quot;script&quot;: &#123;</li>
+<li>&quot;source&quot;: &quot;if (doc['total'].value &gt; 1000) &#123; emit('premium'); &#125; else &#123; emit('standard'); &#125;&quot;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>4. Query Execution and Query Planning</h2>
+<h3>4.1 Query Phase Deep Dive</h3>
+<pre><code>// Query execution flow
+<p>public class QueryExecutionFlow &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    QUERY PHASE                                        │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  Client Request:                                                      │
+     │  GET /orders/_search?q=status:pending                                │
+     │                              │                                        │
+     │                              ▼                                        │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │              Coordinating Node                                   ││
+     │  │  - Parse query to Lucene Query                                    ││
+     │  │  - Create SearchRequest with shards list                         ││
+     │  │  - Send to all relevant shard copies (primary or replica)        ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │              Each Shard Executes Query                           ││
+     │  │                                                                   ││
+     │  │  1. Query Planning:                                              ││
+     │  │     - Rewrite: Expand match_all to terms, etc.                   ││
+     │  │     - Create weight tree from query                              ││
+     │  │     - Determine execution plan (index or data nodes)            ││
+     │  │                                                                   ││
+     │  │  2. Get Relevant Docs:                                           ││
+     │  │     - Iterate inverted index                                     ││
+     │  │     - Collect matching document IDs                              ││
+     │  │     - Score documents (TF-IDF or BM25)                          ││
+     │  │                                                                   ││
+     │  │  3. Fetch from index:                                            ││
+     │  │     - Retrieve stored fields                                    ││
+     │  │     - Apply field collapsing                                     ││
+     │  │     - Build top N results                                        ││
+     │  │                                                                   ││
+     │  │  4. Return Results:                                              ││
+     │  │     - Return top 100 (default) docs + highlight                 ││
+     │  │     - Include aggregation results                                ││
+     │  │     - Return search context for fetch phase                     ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │              Coordinating Node Reduces                          ││
+     │  │  - Merge top N from each shard                                   ││
+     │  │  - Sort to get global top N                                      ││
+     │  │  - Execute post-filter if needed                                ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  Response to Client                                                  │
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Query Rewrite Process:</li>
+</ul>
+     </em> 
+<ul>
+<li>Original: match: &#123; status: &quot;pending&quot; &#125;</li>
+<li>- Can expand to terms query using analyze API</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Original: prefix: &#123; status: &quot;pen&quot; &#125;</li>
+<li>- Expands to match_all with prefix filter</li>
+</ul>
+     </em> 
+<ul>
+<li>Original: wildcard: &#123; status: &quot;p<em>&quot; &#125;</li>
+<li>- Replaced with terms lookup or rewrite to prefix</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<h3>4.2 Query Cache</h3>
+<pre><code>// Query cache behavior
+<p>public class QueryCacheBehavior &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                      QUERY CACHING                                  │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  Request Cache:                                                      │
+     │  - Caches entire query results                                      │
+     │  - Key = Lucene query + sorting + aggregations                     │
+     │  - Size: 1% of heap (default)                                       │
+     │  - TTL: explicit (when refresh occurs)                             │
+     │  - Invalidated on: index refresh, mapping change                   │
+     │                                                                      │
+     │  Query Result Cache:                                                │
+     │  - Caches actual document results                                  │
+     │  - For large result sets, caches pages                             │
+     │  - Key = query + sort + from/size                                  │
+     │                                                                      │
+     │  Filter Cache (deprecated in ES 5+):                                │
+     │  - Replaced by node query cache                                     │
+     │  - Caches filter results as bitset                                 │
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Caching Behavior by Query Type:</li>
+</ul>
+     </em> 
+<ul>
+<li>Cached:</li>
+<li>- Term query (low cardinality)</li>
+<li>- Range query (same ranges cached)</li>
+<li>- Filters (boolean AND/OR)</li>
+<li>- Aggregation (if same buckets)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Not Cached:</li>
+<li>- Full text queries (match, phrase)</li>
+<li>- Queries with scoring (must, should)</li>
+<li>- Wildcard/regex (non-deterministic results)</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Explicit Cache Control:</li>
+</ul>
+     </em>/
+<p>/<em>
+     GET /orders/_search?request_cache=true
+     &#123;
+       &quot;query&quot;: &#123; &quot;match_all&quot;: &#123;&#125; &#125;,
+       &quot;size&quot;: 0,
+       &quot;aggs&quot;: &#123;
+         &quot;by_status&quot;: &#123; &quot;terms&quot;: &#123; &quot;field&quot;: &quot;status&quot; &#125; &#125;
+       &#125;
+     &#125;
+</p>
+<p>// Size &gt; 0 not cached unless index.cache.query.enabled=true
+     // Or use cache: false to explicitly disable
+     GET /orders/_search?request_cache=false
+     &#123;
+       &quot;query&quot;: &#123; &quot;term&quot;: &#123; &quot;status&quot;: &quot;pending&quot; &#125; &#125;
+     &#125;
+</p>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>5. Aggregation Internals</h2>
+<h3>5.1 Aggregation Execution</h3>
+<pre><code>// Aggregation execution internals
+<p>public class AggregationInternals &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    AGGREGATION EXECUTION                             │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  Bucket Aggregations:                                               │
+     │  - Create buckets based on field values                             │
+     │  - Nested: execute children within parent buckets                  │
+     │                                                                      │
+     │  Example: terms on &quot;status&quot; -&gt; terms on &quot;customer_id&quot;              │
+     │                                                                      │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │ Status: PENDING                                                  ││
+     │  │   ├─ Customer A: 150                                             ││
+     │  │   ├─ Customer B: 89                                              ││
+     │  │   └─ Customer C: 45                                               ││
+     │  │                                                                   ││
+     │  │ Status: SHIPPED                                                  ││
+     │  │   ├─ Customer A: 200                                             ││
+     │  │   ├─ Customer B: 75                                              ││
+     │  │   └─ Customer C: 120                                             ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                                                                      │
+     │  Metric Aggregations:                                               │
+     │  - Single-value: avg, sum, min, max                                 │
+     │  - Multi-value: stats, extended_stats, percentiles                 │
+     │  - Pipeline: avg_bucket, derivative, moving_avg                    │
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Aggregation Optimization:</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>1. Shard-Level Aggregation:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Aggregations run on each shard first</li>
+<li>- Results merged at coordinating node</li>
+<li>- trade-off: accuracy vs. performance</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Example: terms aggregation</li>
+<li>- Shard 1: &#123;A: 100, B: 80, C: 50&#125;</li>
+<li>- Shard 2: &#123;A: 120, B: 60, D: 40&#125;</li>
+<li>- Merged: &#123;A: 220, B: 140, C: 50, D: 40&#125; (approximate!)</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>2. Pre-Aggregation:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Fielddata on fielddata field (preload)</li>
+<li>- doc_values enabled by default for aggregations</li>
+<li>- Investigate heavy terms aggregations</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>PUT /orders/_mapping</li>
+<li>&#123;</li>
+<li>&quot;properties&quot;: &#123;</li>
+<li>&quot;status&quot;: &#123;</li>
+<li>&quot;type&quot;: &quot;keyword&quot;,</li>
+<li>&quot;eager_global_ordinals&quot;: true  // Pre-load for aggregations</li>
+<li>&#125;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>3. Sampled Aggregations:</li>
+</ul>
+     </em> 
+<ul>
+<li>- For approximate results on large datasets</li>
+<li>- Faster execution</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>GET /orders/_search</li>
+<li>&#123;</li>
+<li>&quot;aggs&quot;: &#123;</li>
+<li>&quot;status_terms&quot;: &#123;</li>
+<li>&quot;terms&quot;: &#123;</li>
+<li>&quot;field&quot;: &quot;status&quot;,</li>
+<li>&quot;size&quot;: 10,</li>
+<li>&quot;shard_size&quot;: 25,</li>
+<li>&quot;shard_min_doc_count&quot;: 100  // Sampling threshold</li>
+<li>&#125;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<h3>5.2 Pipeline Aggregations</h3>
+<pre><code>// Pipeline aggregations
+<p>public class PipelineAggregations &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pipeline Aggregations:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Operate on output of other aggregations</li>
+<li>- Cannot have sub-aggregations</li>
+<li>- Common use: moving averages, derivatives</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Example: Monthly sales with 3-month moving average</li>
+</ul>
+     </em>/
+<p>/<em>
+     GET /orders/_search
+     &#123;
+       &quot;size&quot;: 0,
+       &quot;aggs&quot;: &#123;
+         &quot;monthly_sales&quot;: &#123;
+           &quot;date_histogram&quot;: &#123;
+             &quot;field&quot;: &quot;order_date&quot;,
+             &quot;calendar_interval&quot;: &quot;month&quot;
+           &#125;,
+           &quot;aggs&quot;: &#123;
+             &quot;total_sales&quot;: &#123;
+               &quot;sum&quot;: &#123; &quot;field&quot;: &quot;total&quot; &#125;
+             &#125;,
+             &quot;moving_avg&quot;: &#123;
+               &quot;moving_avg&quot;: &#123;
+                 &quot;buckets_path&quot;: &quot;total_sales&quot;,
+                 &quot;window&quot;: 3,
+                 &quot;shift&quot;: 0
+               &#125;
+             &#125;,
+             &quot;derivative&quot;: &#123;
+               &quot;derivative&quot;: &#123;
+                 &quot;buckets_path&quot;: &quot;total_sales&quot;
+               &#125;
+             &#125;
+           &#125;
+         &#125;
+       &#125;
+     &#125;
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Common Pipeline Aggregations:</li>
+</ul>
+     </em> 
+<ul>
+<li>- moving_avg: Rolling average over window</li>
+<li>- derivative: Rate of change between buckets</li>
+<li>- cumulative_sum: Running total</li>
+<li>- avg_bucket: Average of buckets</li>
+<li>- max_bucket: Maximum bucket value</li>
+<li>- bucket_selector: Filter based on bucket values</li>
+<li>- bucket_script: Custom calculation on buckets</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>6. Memory Management and Caching</h2>
+<h3>6.1 JVM Heap Usage in Elasticsearch</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                    ELASTICSEARCH JVM HEAP                                    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Heap = 50% of container/machine memory                                     │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                     HEAP BREAKDOWN                                    │ │
+│  ├────────────────────────────────────────────────────────────────────────┤ │
+│  │                                                                         │ │
+│  │  Field Data + Data + Request Cache          (30% for query cache)    │ │
+│  │  ┌─────────────────────────────────────────┐                          │ │
+│  │  │ Field Data (per field):                 │                          │ │
+│  │  │ - Uninverted form of inverted index    │                          │ │
+│  │  │ - Used for sorting/aggregations         │                          │ │
+│  │  │ - Heavy on memory!                      │                          │ │
+│  │  └─────────────────────────────────────────┘                          │ │
+│  │                                                                         │ │
+│  │  Node Query Cache (Filters):                  (shared per node)       │ │
+│  │  - Caches filter results                      │                          │ │
+│  │  - LRU eviction                              │                          │ │
+│  │                                                                         │ │
+│  │  Request Cache (Results):                    (per index segment)      │ │
+│  │  - Caches aggregation results                │                          │ │
+│  │  - Size: indices.requests.cache.size         │                          │ │
+│  │                                                                         │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                   OFF-HEAP (Direct Memory)                            │ │
+│  ├────────────────────────────────────────────────────────────────────────┤ │
+│  │                                                                         │ │
+│  │  - Lucene segment data (mmap)                  OS-managed              │ │
+│  │  - Network buffers                            (netty)                  │ │
+│  │  - Shard buffers                              (search)                 │ │
+│  │  - Bulk processing buffers                   (indexing)              │ │
+│  │                                                                         │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  Circuit Breakers:                                                          │
+│  - indices.breaker.fielddata.limit = 60%                                    │
+│  - indices.breaker.request.limit = 40%                                     │
+│  - indices.breaker.total.limit = 70%                                      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>6.2 Circuit Breakers</h3>
+<pre><code>// Circuit breaker configuration
+<p>public class CircuitBreakers &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Circuit Breaker Purpose:</li>
+</ul>
+     </em> 
+<ul>
+<li>Prevent OOM by bailing early when memory would be exceeded</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Types:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Fielddata Circuit Breaker:</li>
+<li>- Triggers when loading fielddata would exceed limit</li>
+<li>- indices.breaker.fielddata.limit = 60% (default)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. Request Circuit Breaker:</li>
+<li>- Triggers when request memory would exceed limit</li>
+<li>- indices.breaker.request.limit = 40%</li>
+</ul>
+     </em> 
+<ul>
+<li>3. In-Flight Request Circuit Breaker:</li>
+<li>- Triggers on total incoming request size</li>
+<li>- network.breaker.inflight_requests.limit = 100%</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>4. Script Compilation Circuit Breaker:</li>
+<li>- Limits inline script compilation</li>
+<li>-.script.max_compilations_rate = 1000/1m</li>
+</ul>
+     </em> 
+<ul>
+<li>5. Total Circuit Breaker:</li>
+<li>- Catches anything missed by others</li>
+<li>- indices.breaker.total.limit = 70%</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Handling Circuit Breaker Errors:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Error message: &quot;Data too large&quot;</li>
+<li>- Exception type: CircuitBreakingException</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Fix options:</li>
+<li>1. Increase circuit breaker limit</li>
+<li>2. Reduce data loaded (query optimization)</li>
+<li>3. Use doc_values instead of fielddata</li>
+<li>4. Add more memory</li>
+<li>5. Reduce index size (more shards)</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Monitoring Circuit Breakers:</li>
+</ul>
+     </em>/
+<p>/<em>
+     GET /_nodes/stats/breaker
+</p>
+<p>&#123;
+       &quot;nodes&quot;: [
+         &#123;
+           &quot;name&quot;: &quot;node-1&quot;,
+           &quot;breakers&quot;: &#123;
+             &quot;fielddata&quot;: &#123;
+               &quot;limit&quot;: 1000000000,
+               &quot;estimated&quot;: 500000000,
+               &quot;overhead&quot;: 1.03
+             &#125;,
+             &quot;request&quot;: &#123;
+               &quot;limit&quot;: 1000000000,
+               &quot;estimated&quot;: 10000000
+             &#125;
+           &#125;
+         &#125;
+       ]
+     &#125;
+</p>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>7. Data Tier Architecture</h2>
+<h3>7.1 Data Lifecycle Tiers</h3>
+<pre><code>// Data tier configuration
+<p>public class DataTierConfiguration &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    DATA TIER ARCHITECTURE                           │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  Hot Tier (Elasticsearch 7.10+):                                    │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │ - Recently indexed data                                           ││
+     │  │ - Active writes and frequent queries                             ││
+     │  │ - Node type: data_hot                                             ││
+     │  │ - Fast storage (NVMe SSD)                                         ││
+     │  │ - Memory: Higher heap allocation                                  ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  Warm Tier:                                                           │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │ - Older data, infrequent access                                   ││
+     │  │ - Read-only or rare writes                                        ││
+     │  │ - Node type: data_warm                                            ││
+     │  │ - Storage: Larger, slower SSD/HDD                                 ││
+     │  │ - Reduce replicas: from 2 to 1                                    ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  Cold Tier:                                                           │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │ - Rarely accessed data                                            ││
+     │  │ - Archive purposes                                                ││
+     │  │ - Node type: data_cold                                            ││
+     │  │ - Storage: HDD or object storage                                  ││
+     │  │ - Reduced replicas: 1 or 0                                        ││
+     │  │ - frozen tier: fully searchable with less resources              ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Index Lifecycle Management (ILM):</li>
+</ul>
+     </em>/
+<p>/<em>
+     PUT /_ilm/policy/orders-policy
+     &#123;
+       &quot;policy&quot;: &#123;
+         &quot;phases&quot;: &#123;
+           &quot;hot&quot;: &#123;
+             &quot;min_age&quot;: &quot;0ms&quot;,
+             &quot;actions&quot;: &#123;
+               &quot;rollover&quot;: &#123;
+                 &quot;max_age&quot;: &quot;7d&quot;,
+                 &quot;max_size&quot;: &quot;50gb&quot;,
+                 &quot;max_docs&quot;: 10000000
+               &#125;,
+               &quot;set_priority&quot;: &#123; &quot;priority&quot;: 100 &#125;
+             &#125;
+           &#125;,
+           &quot;warm&quot;: &#123;
+             &quot;min_age&quot;: &quot;30d&quot;,
+             &quot;actions&quot;: &#123;
+               &quot;shrink&quot;: &#123; &quot;number_of_shards&quot;: 1 &#125;,
+               &quot;forcemerge&quot;: &#123; &quot;max_num_segments&quot;: 1 &#125;,
+               &quot;set_priority&quot;: &#123; &quot;priority&quot;: 50 &#125;,
+               &quot;allocate&quot;: &#123;
+                 &quot;number_of_replicas&quot;: 1
+               &#125;
+             &#125;
+           &#125;,
+           &quot;cold&quot;: &#123;
+             &quot;min_age&quot;: &quot;90d&quot;,
+             &quot;actions&quot;: &#123;
+               &quot;set_priority&quot;: &#123; &quot;priority&quot;: 0 &#125;,
+               &quot;allocate&quot;: &#123;
+                 &quot;number_of_replicas&quot;: 0,
+                 &quot;include&quot;: &#123; &quot;data&quot;: &quot;cold&quot; &#125;
+               &#125;
+             &#125;
+           &#125;,
+           &quot;delete&quot;: &#123;
+             &quot;min_age&quot;: &quot;365d&quot;,
+             &quot;actions&quot;: &#123;
+               &quot;delete&quot;: &#123;&#125;
+             &#125;
+           &#125;
+         &#125;
+       &#125;
+     &#125;
+</p>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>8. Sharding and Rebalancing</h2>
+<h3>8.1 Shard Allocation Decisions</h3>
+<pre><code>// Shard allocation internals
+<p>public class ShardAllocation &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Shard Allocation Filters:</li>
+</ul>
+     </em> 
+<ul>
+<li>Elasticsearch decides shard placement based on:</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>1. Cluster Level:</li>
+<li>- cluster.routing.allocation.enable = all</li>
+<li>- node.ml: true/false (ML nodes)</li>
+<li>- node.data: true/false</li>
+</ul>
+     </em> 
+<ul>
+<li>2. Index Level:</li>
+<li>- index.routing.allocation.include.zone</li>
+<li>- index.routing.allocation.exclude.zone</li>
+<li>- index.routing.allocation.require.zone</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>3. Dynamic Allocation:</li>
+<li>- index.routing.rebalance.enable</li>
+<li>- index.routing.allocation.balance</li>
+</ul>
+     </em> 
+<ul>
+<li>Example:</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>PUT /orders/_settings</li>
+<li>&#123;</li>
+<li>&quot;index&quot;: &#123;</li>
+<li>&quot;routing&quot;: &#123;</li>
+<li>&quot;allocation&quot;: &#123;</li>
+<li>&quot;include&quot;: &#123;</li>
+<li>&quot;zone&quot;: &quot;us-east-1a&quot;</li>
+<li>&#125;,</li>
+<li>&quot;require&quot;: &#123;</li>
+<li>&quot;disk.threshold&quot;: &quot;low&quot;</li>
+<li>&#125;,</li>
+<li>&quot;exclude&quot;: &#123;</li>
+<li>&quot;_ip&quot;: &quot;192.168.1.100&quot;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+<li>&#125;</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Shard Rebalancing:</li>
+</ul>
+     </em> 
+<ul>
+<li>- cluster.routing.rebalance.enable = all</li>
+<li>- cluster.routing.allocation.cluster_concurrent_rebalance = 2</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Rebalance happens when:</li>
+<li>- New node joins</li>
+<li>- Node leaves</li>
+<li>- Primary shard on failed node needs new replica</li>
+<li>- Disk watermark exceeded</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>9. Security Implementation</h2>
+<h3>9.1 Authentication and Authorization</h3>
+<pre><code>// Security configuration
+<p>public class SecurityConfiguration &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Security Layers:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Node Authentication:</li>
+<li>- Transport layer security (TLS/SSL)</li>
+<li>- Certificate-based</li>
+<li>- xpack.security.transport.ssl.enabled = true</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. User Authentication:</li>
+<li>- Native (stored in ES)</li>
+<li>- LDAP/AD</li>
+<li>- SAML/OIDC (with Platinum license)</li>
+<li>- PKI (client certificates)</li>
+</ul>
+     </em> 
+<ul>
+<li>3. Authorization:</li>
+<li>- Role-based access control (RBAC)</li>
+<li>- Field-level security</li>
+<li>- Document-level security</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Built-in Roles:</li>
+</ul>
+     </em> 
+<ul>
+<li>- superuser: All access</li>
+<li>- kibana_admin: Kibana access</li>
+<li>- monitoring_user: Monitoring API</li>
+<li>- remote_monitoring_agent: Collection</li>
+<li>- own_index: Access own indexes</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Creating Custom Role:</li>
+</ul>
+     </em> 
+<ul>
+<li>POST /_security/role/orders-admin</li>
+<li>&#123;</li>
+<li>&quot;indices&quot;: [</li>
+<li>&#123;</li>
+<li>&quot;names&quot;: [&quot;orders<em>&quot;],</li>
+<li>&quot;privileges&quot;: [&quot;all&quot;]</li>
+<li>&#125;</li>
+<li>],</li>
+<li>&quot;run_as&quot;: [&quot;reporting_user&quot;],</li>
+<li>&quot;metadata&quot;: &#123;</li>
+<li>&quot;version&quot;: 1</li>
+<li>&#125;</li>
+<li>&#125;</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>10. Troubleshooting and Diagnostics</h2>
+<h3>10.1 Key Metrics and APIs</h3>
+<pre><code># Cluster health
+<p>GET /_cluster/health
+</p>
+<h1>Cluster stats</h1>
+<p>GET /_cluster/stats
+</p>
+<h1>Node stats</h1>
+<p>GET /_nodes/stats
+</p>
+<h1>Index stats</h1>
+<p>GET /orders/_stats
+</p>
+<h1>Segments info (detailed shard state)</h1>
+<p>GET /orders/_segments
+</p>
+<h1>Pending tasks</h1>
+<p>GET /_cluster/pending_tasks
+</p>
+<h1>Allocation explanation</h1>
+<p>POST /_cluster/reroute
+&#123;
+  &quot;commands&quot;: [
+    &#123;
+      &quot;allocate_replica&quot;: &#123;
+        &quot;index&quot;: &quot;orders&quot;,
+        &quot;shard&quot;: 0,
+        &quot;node&quot;: &quot;node-1&quot;
+      &#125;
+    &#125;
+  ]
+&#125;
+</p>
+</code></pre>
+<hr>
+<p>This comprehensive guide covers Elasticsearch internals at a deep technical level suitable for production deployments and optimization.
+</p>
+        </article>
+    </div>
+</body>
+</html>

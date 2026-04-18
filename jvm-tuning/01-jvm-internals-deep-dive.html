@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JVM Performance Deep Dive: Advanced Tuning and Optimization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>JVM Performance Deep Dive: Advanced Tuning and Optimization</h1>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#1-jvm-memory-architecture-deep-dive">JVM Memory Architecture Deep Dive</a></li>
+<li><a href="#2-garbage-collection-algorithms-in-depth">Garbage Collection Algorithms In-Depth</a></li>
+<li><a href="#3-hotspot-jit-compiler-internals">HotSpot JIT Compiler Internals</a></li>
+<li><a href="#4-class-loading-and-bytecode-execution">Class Loading and Bytecode Execution</a></li>
+<li><a href="#5-jvm-performance-tuning">JVM Performance Tuning</a></li>
+<li><a href="#6-memory-leaks-and-troubleshooting">Memory Leaks and Troubleshooting</a></li>
+<li><a href="#7-jvm-profiling-and-diagnostics">JVM Profiling and Diagnostics</a></li>
+<li><a href="#8-modern-jvm-features-and-optimizations">Modern JVM Features and Optimizations</a></li>
+</ol>
+<hr>
+<h2>1. JVM Memory Architecture Deep Dive</h2>
+<h3>1.1 Runtime Data Areas</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                           JVM RUNTIME DATA AREAS                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                     HEAP (Shared)                                       │ │
+│  │  ┌──────────────────────────────────────────────────────────────────┐  │ │
+│  │  │                     Young Generation                              │  │ │
+│  │  │  ┌─────────────┬─────────────┬─────────────┐                   │  │ │
+│  │  │  │    Eden     │  Survivor   │  Survivor   │                   │  │ │
+│  │  │  │             │     (S0)    │     (S1)    │                   │  │ │
+│  │  │  └─────────────┴─────────────┴─────────────┘                   │  │ │
+│  │  │                                                                   │  │ │
+│  │  └──────────────────────────────────────────────────────────────────┘  │ │
+│  │                              │                                          │ │
+│  │  ┌────────────────────────────▼────────────────────────────────────┐  │ │
+│  │  │                   Old Generation                                  │  │ │
+│  │  │  ┌──────────────────────────────────────────────────────────┐    │  │ │
+│  │  │  │                   Tenured Space                          │    │  │ │
+│  │  │  └──────────────────────────────────────────────────────────┘    │  │ │
+│  │  └──────────────────────────────────────────────────────────────────┘  │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                   METASPACE (Native Memory)                          │ │
+│  │  ┌──────────────────────────────────────────────────────────────────┐  │ │
+│  │  │ Class Metadata    │    Code Cache    │    Symbol Table       │  │ │
+│  │  └──────────────────────────────────────────────────────────────────┘  │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │              PER-THREAD AREAS (Stack + PC + Native)                   │ │
+│  │  ┌──────────────────────────────────────────────────────────────────┐  │ │
+│  │  │ Thread 1: [Stack Frame][PC][Native]  │  Thread 2: [Stack]...   │  │ │
+│  │  └──────────────────────────────────────────────────────────────────┘  │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>1.2 Object Allocation Deep Dive</h3>
+<pre><code>// HotSpot object allocation (simplified from source)
+<p>void<em> instanceOopKlass::allocate_instance(Klass</em> klass, TRAPS) &#123;
+    // 1. Check if TLAB (Thread Local Allocation Buffer) has room
+    if (UseTLAB) &#123;
+        HeapWord<em> result = thread-&gt;tlab().allocate(size);
+        if (result != NULL) return result;
+        // TLAB exhausted, go to slow path
+    &#125;
+</p>
+<p>// 2. Try allocation in Eden
+    result = Universe::heap()-&gt;allocate(size);
+</p>
+<p>// 3. If failed, trigger young GC
+    if (result == NULL) &#123;
+        // Call collector, then retry allocation
+        collect(GCCause::_allocation_failure);
+        result = Universe::heap()-&gt;allocate(size);
+</p>
+<p>// 4. If still failed, expand heap or throw OOM
+        if (result == NULL) &#123;
+            HandleException(THREAD, 
+                java_lang_OutOfMemoryError::out_of_memory_error());
+        &#125;
+    &#125;
+</p>
+<p>// 5. Initialize object header
+    return init_obj(result, klass);
+&#125;
+</p>
+</code></pre>
+<pre><code>// Understanding object header structure
+<p>public class ObjectHeaderDemo &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Object Header (64-bit JVM):</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    OBJECT HEADER (Mark Word)                        │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │  Locked state (biased):                                              │
+     │  [1110 0010] [thread: 50 bits] [epoch: 2] [age: 4] [biased: 1] [00]│
+     │                                                                       │
+     │  Locked state (thin):                                                │
+     │  [ptr to monitor]                                          [01]    │
+     │                                                                       │
+     │  Inflated (heavy):                                                   │
+     │  [ptr to monitor]                                          [10]    │
+     │                                                                       │
+     │  Unlocked (biased not biased):                                       │
+     │  [hashcode: 31 bits] [age: 4] [biased: 0] [00]                      │
+     │                                                                       │
+     │  GC state (during marking):                                          │
+     │  [forwarding ptr]                                           [01]    │
+     │                                                                       │
+     └─────────────────────────────────────────────────────────────────────┘
+     <em> 
+</p>
+<ul>
+<li>The &quot;Klass&quot; pointer follows the mark word:</li>
+</ul>
+     </em> 
+<ul>
+<li>[Mark Word (8 bytes)] [Klass Pointer (8 bytes)] = 16 bytes minimum</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>For arrays, add 4 bytes for length:</li>
+<li>[Mark (8)] [Klass (8)] [Length (4)] = 20 bytes, padded to 24</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>TLAB (Thread Local Allocation Buffer):</li>
+</ul>
+     </em> 
+<ul>
+<li>- Each thread pre-allocates a chunk of Eden</li>
+<li>- Fast path: just advance pointer in TLAB</li>
+<li>- No synchronization needed for most allocations!</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Configuration:</li>
+<li>-XX:+UseTLAB - enable (default)</li>
+<li>-XX:TLABSize - initial size</li>
+<li>-XX:ResizeTLAB - dynamic resize</li>
+</ul>
+     </em> 
+<ul>
+<li>TLAB waste:</li>
+<li>- If object doesn't fit in remaining TLAB, waste the rest</li>
+<li>- Larger TLAB = less waste but longer GC</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>1.3 Metaspace Deep Dive</h3>
+<pre><code>// Metaspace management
+<p>public class MetaspaceDeepDive &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Metaspace vs PermGen:</li>
+</ul>
+     </em> 
+<ul>
+<li>PermGen (pre-Java 8):</li>
+<li>- Fixed size, hard to tune</li>
+<li>- Part of heap (contiguous with old gen)</li>
+<li>- Filled up with classloader leaks</li>
+<li>- Full = PermGen OOM</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Metaspace (Java 8+):</li>
+<li>- Native memory, not heap</li>
+<li>- Grows dynamically (up to MaxMetaspaceSize)</li>
+<li>- Automatic cleanup when classes unloaded</li>
+<li>- Different OOM: OutOfMemoryError: Metaspace</li>
+</ul>
+     </em> 
+<ul>
+<li>Why metaspace isn't in heap:</li>
+<li>- Garbage collection is different</li>
+<li>- Can be much larger</li>
+<li>- No impact on GC pause times</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Metaspace structure:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                         METASPACE                                    │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │  ┌──────────────────────────────────────────────────────────────┐  │
+     │  │                Class Space (Compressed)                        │  │
+     │  │  - Compressed class pointers                                  │  │
+     │  │  - Max 4GB addressable                                        │  │
+     │  │  - 32-bit pointer to class data                               │  │
+     │  └──────────────────────────────────────────────────────────────┘  │
+     │  ┌──────────────────────────────────────────────────────────────┐  │
+     │  │                Non-Class Metaspace                             │  │
+     │  │  - Symbol tables                                               │  │
+     │  │  - Method data                                                │  │
+     │  │  - Code cache (JIT compiled code)                            │  │
+     │  └──────────────────────────────────────────────────────────────┘  │
+     │                                                                       │
+     │  Chunk: 64KB (default, aligned)                                      │
+     │  Region: Multiple chunks                                             │
+     │  Metachunk: Allocated from chunk                                     │
+     │                                                                       │
+     └─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Metaspace allocation flow:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. ClassLoader requests space for class metadata</li>
+<li>2. Metaspace allocates from current chunk</li>
+<li>3. If chunk full, allocate new chunk from VM</li>
+<li>4. If MetaspaceSize exceeded, trigger GC</li>
+<li>5. If still full, throw OOM</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Tunable parameters:</li>
+<li>-XX:MetaspaceSize=128m (initial threshold)</li>
+<li>-XX:MaxMetaspaceSize=unlimited (or specific size)</li>
+<li>-XX:MinMetaspaceFreeRatio=40% (after GC)</li>
+<li>-XX:MaxMetaspaceFreeRatio=70%</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>2. Garbage Collection Algorithms In-Depth</h2>
+<h3>2.1 Mark-Sweep-Compact</h3>
+<pre><code>// GC algorithm visualization
+<p>public class GCAlgorithms &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>MARK-SWEEP-COMPACT Algorithm:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    MARK PHASE                                       │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>1. Start from GC Roots:                                            │</li>
+<li>- Thread stacks (local variables)                                │</li>
+<li>- Static fields                                                  │</li>
+<li>- JNI references                                                 │</li>
+<li>- Class loaders                                                  │</li>
+<li>- Finalization queue                                            │</li>
+<li>│</li>
+<li>2. Traverse object graph:                                           │</li>
+<li>- Mark each reachable object as &quot;live&quot;                         │</li>
+<li>- Use BFS or DFS                                                │</li>
+<li>- Mark phase = O(number of reachable objects)                 │</li>
+<li>│</li>
+<li>Example:                                                            │</li>
+<li>Before: [A] ──► [B] ──► [C]          [D] ──► [E]                 │</li>
+<li>│                 │          │                 │        │</li>
+<li>└────────┬────────┘          └────────┬────────┘        │</li>
+<li>│                           │                   │</li>
+<li>GC Root                     GC Root                 │</li>
+<li>│</li>
+<li>After marking: A,B,C marked live. D,E unmarked (garbage)        │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em> 
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    SWEEP PHASE                                      │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>1. Scan all heap objects                                            │</li>
+<li>2. Identify unmarked objects (garbage)                            │</li>
+<li>3. Add to free list                                                  │</li>
+<li>4. Don't touch live objects                                         │</li>
+<li>│</li>
+<li>Problem: Memory fragmentation!                                      │</li>
+<li>[Live] [Free] [Live] [Free] [Live] [Free] [Live]                  │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    COMPACT PHASE                                    │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>1. Move all live objects together                                    │</li>
+<li>2. Update all references to point to new locations               │</li>
+<li>3. Update card table (for old-gen references to young)            │</li>
+<li>│</li>
+<li>Result: [Live][Live][Live][Live] .... [Free continuous space]     │</li>
+<li>│</li>
+<li>Cost:                                                                │</li>
+<li>- Stop-the-world                                                    │</li>
+<li>- Must update all references (expensive!)                         │</li>
+<li>- Time proportional to live objects                                │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>GC Root types in HotSpot:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Thread Stack:</li>
+<li>- Local variables (primitives and references)</li>
+<li>- Parameter references</li>
+<li>- Return address references</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. Static Fields:</li>
+<li>- Class variables (static)</li>
+<li>- From SystemClassLoader</li>
+</ul>
+     </em> 
+<ul>
+<li>3. JNI:</li>
+<li>- Global JNI references</li>
+<li>- Local JNI references (on native call stack)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>4. Synchronization:</li>
+<li>- Objects used as monitors</li>
+<li>- Objects in &quot;waiting to be notified&quot; queue</li>
+</ul>
+     </em> 
+<ul>
+<li>5. Finalization:</li>
+<li>- Objects in finalize() queue</li>
+<li>- Classloader instances (if not yet collected)</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>2.2 Generational Collection</h3>
+<pre><code>// Generational hypothesis
+<p>public class GenerationalGC &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Weak Generational Hypothesis:</li>
+</ul>
+     </em> 
+<ul>
+<li>&quot;Most objects become unused quickly, and most object references</li>
+<li>are short-lived.&quot;</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Evidence:</li>
+<li>- Studies show 98%+ of objects die young</li>
+<li>- Old objects rarely become unreachable</li>
+<li>- Copying collector efficient for high mortality</li>
+</ul>
+     </em> 
+<ul>
+<li>Result: Divide heap by age!</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    YOUNG GENERATION                                 │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>Eden: New allocations go here                                      │</li>
+<li>- [New][New][New][New]...                                        │</li>
+<li>│</li>
+<li>After GC:                                                          │</li>
+<li>- Surviving objects copied to S0                                  │</li>
+<li>- [Survivor][Survivor][Survivor][Survivor]...                    │</li>
+<li>│</li>
+<li>After next GC:                                                      │</li>
+<li>- S0 and S1 swap                                                  │</li>
+<li>- Age tracking in mark word                                      │</li>
+<li>- Objects &gt;= threshold promoted to Old                          │</li>
+<li>- Threshold: -XX:TenuringThreshold (default 15)                  │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Card Table (Write Barrier):</li>
+</ul>
+     </em> 
+<ul>
+<li>Why needed? Old gen objects reference young gen objects!</li>
+<li>Without card table, would have to scan entire old gen for refs.</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                   CARD TABLE STRUCTURE                               │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │  Heap is divided into 512-byte &quot;cards&quot;                              │
+     │  Each card has 1 byte in card table                                  │
+     │                                                                       │
+     │  When reference written:                                           │
+</p>
+<ul>
+<li>- Write barrier intercepts                                         │</li>
+<li>- Card marked &quot;dirty&quot; (0x00 → 0x01)                               │</li>
+<li>│</li>
+</ul>
+<p>│  Young GC:                                                          │
+</p>
+<ul>
+<li>- Scan only dirty cards from old gen                               │</li>
+<li>- Much faster than full scan!                                      │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em> 
+<ul>
+<li>HotSpot card table:</li>
+<li>- Card size: 512 bytes</li>
+<li>- Location: Reserved space in Java heap</li>
+<li>- Barrier: Assembler code in object field stores</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Young GC (Minor GC):</li>
+</ul>
+     </em> 
+<ul>
+<li>Trigger: Eden fills up</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>1. Stop all application threads (STW)</li>
+<li>2. Mark live objects in Eden + S0 (from roots)</li>
+<li>3. Copy live objects to S1 (increment age)</li>
+<li>4. If age &gt;= TenuringThreshold, copy to Old</li>
+<li>5. Swap S0 and S1</li>
+<li>6. Resume application threads</li>
+</ul>
+     </em> 
+<ul>
+<li>Speed: Usually fast (&lt; 50ms for most apps)</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>2.3 G1 (Garbage First) Algorithm</h3>
+<pre><code>// G1 algorithm deep dive
+<p>public class G1GCDeepDive &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>G1 Overview:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Introduced in Java 7, default since Java 9</li>
+<li>- Region-based, not fixed young/old split</li>
+<li>- Mixed collections for old gen</li>
+<li>- Configurable pause time goal</li>
+<li>- Compacts as it collects</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Region Structure:</li>
+</ul>
+     </em> 
+<ul>
+<li>Heap = N x 1MB regions (can be 1-32MB, default 8MB)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>┌───────┬───────┬───────┬───────┬───────┬───────┐</li>
+</ul>
+<p>│  E    │  S0   │  S1   │ Old   │ Hum   │ Free  │
+     │ (Eden)│(Survivor)│    │(Old) │(Humongous)│  │    │
+     ├───────┴───────┴───────┴───────┴───────┴───────┤
+</p>
+<ul>
+<li>Region 0  Region 1   Region 2   Region 3  Region 4  Region 5</li>
+</ul>
+     </em> 
+<ul>
+<li>Humongous objects: &gt; 50% of region size, stored in Humongous regions</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>G1 Collection Phases:</li>
+</ul>
+     </em> 
+<ul>
+<li>Initial Mark (STW):</li>
+<li>- Mark live objects in Root regions</li>
+<li>- Trigger: Mixed collection or when old gen reaches threshold</li>
+<li>- Overwrites: marking from previous pause</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Root Region Scan:</li>
+<li>- Scan root regions for references to young</li>
+<li>- Runs concurrently with application</li>
+</ul>
+     </em> 
+<ul>
+<li>Concurrent Mark:</li>
+<li>- Walk object graph, mark all live objects</li>
+<li>- Uses write barriers to track changes</li>
+<li>- Runs concurrently</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Remark (STW):</li>
+<li>- Complete marking</li>
+<li>- Handle SATB (Snapshot-At-The-Beginning) log</li>
+<li>- Reclaim empty regions</li>
+</ul>
+     </em> 
+<ul>
+<li>Cleanup (STW):</li>
+<li>- Identify completely empty regions</li>
+<li>- Calculate live object statistics</li>
+<li>- Prepare for next phase</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Mixed Collections:</li>
+</ul>
+     </em> 
+<ul>
+<li>After each young collection:</li>
+<li>- Increase number of old regions to collect</li>
+<li>- After ~10 mixed collections, switch to pure young</li>
+<li>- Trigger when old gen &gt; -XX:InitiatingHeapOccupancyPercent</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Collection Set (CSet):</li>
+<li>- Regions chosen for collection</li>
+<li>- Young regions (always included)</li>
+<li>- Old regions (subset, most garbage)</li>
+<li>- Humongous regions (always if marked empty)</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>G1 Key Parameters:</li>
+</ul>
+     </em> 
+<ul>
+<li>-XX:MaxGCPauseMillis=200 - Target max pause time</li>
+<li>-XX:G1HeapRegionSize=8m - Region size</li>
+<li>-XX:InitiatingHeapOccupancyPercent=45 - Start mixed GC</li>
+<li>-XX:G1NewSizePercent=5 - Min young gen size</li>
+<li>-XX:G1MaxNewSizePercent=60 - Max young gen size</li>
+<li>-XX:G1MixedGCLiveThresholdPercent=85 - Don't collect if &gt;85% live</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>2.4 ZGC and Shenandoah</h3>
+<pre><code>// Low-pause GC algorithms
+<p>public class LowPauseGC &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>ZGC (Z Garbage Collector):</li>
+</ul>
+     </em> 
+<ul>
+<li>- Java 11+ (experimental), Java 15+ (production)</li>
+<li>- Sub-millisecond pause times</li>
+<li>- Scales to multi-terabyte heaps</li>
+<li>- Concurrency: All major phases concurrent</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Colors (Colored Pointers):</li>
+</ul>
+     </em> 
+<ul>
+<li>ZGC uses 64-bit pointers with extra bits:</li>
+<li>- Mark bits: 3 (000 to 111 = 7 colors)</li>
+<li>- Remap bit: 1</li>
+<li>- Finalizable bit: 1</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Object color transitions:</li>
+<li>Mark0 → Mark1 → Mark2 → Mark0 (remap)</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                      ZGC WORKING                                    │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>Start:         All objects white                                    │</li>
+<li>│</li>
+<li>Mark Phase:   Objects reachable = Gray, mark in pointer           │</li>
+<li>References followed, marked in-place                │</li>
+<li>│</li>
+<li>Relocate:     Move objects, update references (concurrent)          │</li>
+<li>│</li>
+<li>Remap:        Update remaining references (concurrent)            │</li>
+<li>Remap bit set in old location                       │</li>
+<li>│</li>
+<li>Reference Processing: Handle soft/weak/phantom refs (concurrent)  │</li>
+<li>│</li>
+<li>Class Unloading: Unload classes (concurrent)                      │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>ZGC Configuration:</li>
+</ul>
+     </em> 
+<ul>
+<li>-XX:+UseZGC - Enable</li>
+<li>-XX:ParallelGCThreads=auto - GC threads</li>
+<li>-XX:ConcGCThreads=auto - Concurrent threads</li>
+<li>-XX:ZCollectionInterval=10 - Force collection every 10s</li>
+<li>-XX:ZAllocationSpikeTolerance=5 - Allow 5x allocation spike</li>
+<li>-XX:ZHeapInitialSize=10g - Initial heap</li>
+<li>-XX:ZHeapMaximumSize=100g - Max heap</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Use cases:</li>
+<li>- Large heaps (&gt; 100GB)</li>
+<li>- Ultra-low latency requirements</li>
+<li>- Consistent pause times regardless of heap size</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Shenandoah (Red Hat):</li>
+</ul>
+     </em> 
+<ul>
+<li>- Java 12+ (experimental), 15+ production-ready</li>
+<li>- Similar to ZGC but different approach</li>
+<li>- Uses Brooks pointers (forwarding pointers in objects)</li>
+<li>- Available in OpenJDK</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>-XX:+UseShenandoahGC - Enable</li>
+<li>-XX:ShenandoahGCHeuristics=adaptive - Auto-select strategy</li>
+<li>-XX:ShenandoahInitiationFreeThreshold=15 - Start GC when 15% free</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>3. HotSpot JIT Compiler Internals</h2>
+<h3>3.1 Tiered Compilation</h3>
+<pre><code>// JIT compilation flow
+<p>public class JITCompilationFlow &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Tiered Compilation:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                   COMPILATION TIERS                                 │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>Level 0: Interpreter (Interpreted)                                  │</li>
+<li>- Bytecode interpreter                                            │</li>
+<li>- Fast startup                                                    │</li>
+<li>- Slow execution                                                  │</li>
+<li>- Invoked immediately                                              │</li>
+<li>│</li>
+<li>Level 1: C1 (Client Compiler)                                     │</li>
+<li>- Quick compilation                                               │</li>
+<li>- No profiling                                                    │</li>
+<li>- Fast compilation                                                │</li>
+<li>- Triggers: -XX:Threshold1 (default 1000 invocations)             │</li>
+<li>│</li>
+<li>Level 2: C1 with Profiling                                         │</li>
+<li>- Collect type profiling                                          │</li>
+<li>- Branch probabilities                                            │</li>
+<li>- Triggers: -XX:Threshold2 (default 20000 invocations)          │</li>
+<li>│</li>
+<li>Level 3: C2 (Server Compiler)                                      │</li>
+<li>- Optimized compilation                                           │</li>
+<li>- Aggressive optimizations                                        │</li>
+<li>- Triggers: -XX:Threshold3 (default 20000 invocations)          │</li>
+<li>│</li>
+<li>Level 4: C2 with Tiered Compilation                               │</li>
+<li>- Re-compile with all profiling data                              │</li>
+<li>- Triggers: after enough invocations at level 3                  │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Profiling Data Collected:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Type profiling: What types are method parameters and fields?</li>
+<li>- Call profiling: Which methods are called?</li>
+<li>- Branch profiling: Which branches are taken?</li>
+<li>- Counter wrapping: When counters overflow, trigger compilation</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Example:</li>
+</ul>
+     </em> 
+<ul>
+<li>void process(Object obj) &#123;</li>
+<li>// Type profile: obj is String 90% of the time</li>
+<li>// Call profile: method1 called 80%, method2 called 20%</li>
+<li>obj.method1();</li>
+<li>&#125;</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>C2 can specialize: if (obj known to be String) use String.method1</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>JIT Compilation Process:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Method becomes &quot;hot&quot; (invoke counter exceeds threshold)</li>
+<li>2. Request added to compilation queue</li>
+<li>3. Compiler thread picks up method</li>
+<li>4. Parse bytecode to IR (Intermediate Representation)</li>
+<li>5. Optimize IR (inlining, escape analysis, etc.)</li>
+<li>6. Generate machine code</li>
+<li>7. Install in code cache</li>
+<li>8. Replace interpreter calls with compiled code</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>3.2 JIT Optimizations</h3>
+<pre><code>// JIT optimizations
+<p>public class JITOptimizations &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Key JIT Optimizations:</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>1. Method Inlining:</li>
+</ul>
+     </em> 
+<ul>
+<li>Replace method call with compiled method body</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>- Small methods: Always inline (&lt; 35 bytes)</li>
+<li>- Hot methods: Inlined when frequently called</li>
+<li>- Virtual methods: Devirtualized when possible</li>
+</ul>
+     </em> 
+<ul>
+<li>Example:</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>int add(int a, int b) &#123; return a + b; &#125;  // Inline!</li>
+</ul>
+     </em> 
+<ul>
+<li>if (x &gt; 10) return x;  // Inlined</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Can be controlled:</li>
+<li>-XX:MaxInlineSize=35</li>
+<li>-XX:FreqInlineSize=325</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>2. Escape Analysis:</li>
+</ul>
+     </em> 
+<ul>
+<li>Analyze if object escapes method</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>- If not escaped: Stack-allocate object (no heap!)</li>
+<li>- If not escape: Eliminate synchronization</li>
+</ul>
+     </em> 
+<ul>
+<li>Example:</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>StringBuilder sb = new StringBuilder();</li>
+<li>sb.append(&quot;hello&quot;);</li>
+<li>return sb.toString();  // All inlined, no allocation!</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>3. Constant Folding:</li>
+</ul>
+     </em> 
+<ul>
+<li>Compute constants at compile time</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>int x = 10 </em> 20;  // Compile: int x = 200;</li>
+<li>System.out.println(&quot;value=&quot; + 42);  // Print &quot;value=42&quot;</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>4. Loop Unrolling:</li>
+</ul>
+     </em> 
+<ul>
+<li>Execute multiple iterations in one loop cycle</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>for (int i = 0; i &lt; 8; i++) &#123;  // Unroll to:</li>
+<li>sum += arr[i];             // sum += arr[0] + ... + arr[7];</li>
+<li>&#125;                              //</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>5. Intrinsics:</li>
+</ul>
+     </em> 
+<ul>
+<li>Replace Java calls with optimized native code</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>- System.arraycopy()</li>
+<li>- String.charAt()</li>
+<li>- Math.sin(), Math.cos()</li>
+<li>- Array.equals()</li>
+<li>- Unsafe.getObject()</li>
+</ul>
+     </em> 
+<ul>
+<li>Controlled by: -XX:InlineIntrinsics</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>6. Lock Coarsening and Elision:</li>
+</ul>
+     </em> 
+<ul>
+<li>// Lock coarsening</li>
+<li>synchronized(obj) &#123;  // Multiple synchronized blocks</li>
+<li>x = 1;           // combined into one</li>
+<li>&#125;</li>
+<li>synchronized(obj) &#123;</li>
+<li>x = 2;</li>
+<li>&#125;</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>// Lock elision (escape analysis)</li>
+<li>synchronized(new Object()) &#123; // Lock on local object never escapes</li>
+<li>// Lock removed entirely</li>
+<li>&#125;</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>4. Class Loading and Bytecode Execution</h2>
+<h3>4.1 Class Loading Process</h3>
+<pre><code>// Class loading mechanism
+<p>public class ClassLoadingDeepDive &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Class Loading Process:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                   CLASS LOADING FLOW                                │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>1. Loading (Loading)                                                │</li>
+<li>- Read .class file bytes                                         │</li>
+<li>- Verify magic (0xCAFEBABE)                                     │</li>
+<li>- Create Class&lt;?&gt; in Metaspace                                  │</li>
+<li>- Not yet linked                                                │</li>
+<li>│</li>
+<li>2. Linking (Linking)                                               │</li>
+<li>a) Verification: Bytecode verification                         │</li>
+<li>- Type safety                                                │</li>
+<li>- Stack operations                                           │</li>
+<li>- Field/method access                                        │</li>
+<li>b) Preparation: Allocate static fields                         │</li>
+<li>- Zero-initialized                                           │</li>
+<li>c) Resolution: Symbolic refs → Direct refs                       │</li>
+<li>- Class, field, method references                           │</li>
+<li>│</li>
+<li>3. Initialization (Initialization)                                 │</li>
+<li>- Execute &lt;clinit&gt; (static initializer)                        │</li>
+<li>- Run static initializers                                      │</li>
+<li>- Thread-safe (only one thread)                                │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Class Loader Hierarchy:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                   CLASS LOADERS                                      │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>Bootstrap ClassLoader (null)                                        │</li>
+<li>- Loads JAVA_HOME/jre/lib/rt.jar, etc.                            │</li>
+<li>- Native code (C++)                                               │</li>
+<li>- Part of JVM                                                     │</li>
+<li>│</li>
+<li>Platform ClassLoader (Java 9+)                                      │</li>
+<li>- Loads java.<em>, javax.</em>, etc.                                      │</li>
+<li>- Replaces Extension ClassLoader (pre-9)                          │</li>
+<li>│</li>
+<li>Application ClassLoader                                            │</li>
+<li>- Loads -classpath, -cp, module path                              │</li>
+<li>- System class loader                                             │</li>
+<li>│</li>
+<li>Custom ClassLoader (User-defined)                                  │</li>
+<li>- extend ClassLoader                                               │</li>
+<li>- Used for plugins, hot deploy, etc.                              │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em> 
+</p>
+<ul>
+<li>Delegation: Parent-first (by default)</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Custom ClassLoader Example:</li>
+</ul>
+     </em>/
+<p>public class PluginClassLoader extends ClassLoader &#123;
+</p>
+<p>private final Path pluginPath;
+</p>
+<p>public PluginClassLoader(Path pluginPath, ClassLoader parent) &#123;
+            super(parent);
+            this.pluginPath = pluginPath;
+        &#125;
+</p>
+<p>@Override
+        protected Class&lt;?&gt; findClass(String name) throws ClassNotFoundException &#123;
+            // Convert class name to file path
+            String classFile = name.replace('.', '/') + &quot;.class&quot;;
+            Path classPath = pluginPath.resolve(classFile);
+</p>
+<p>if (!Files.exists(classPath)) &#123;
+                throw new ClassNotFoundException(name);
+            &#125;
+</p>
+<p>try &#123;
+                byte[] classBytes = Files.readAllBytes(classPath);
+                return defineClass(name, classBytes, 0, classBytes.length);
+            &#125; catch (IOException e) &#123;
+                throw new ClassNotFoundException(name, e);
+            &#125;
+        &#125;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Common Class Loading Pitfalls:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. ClassNotFoundException:</li>
+<li>- Class not on classpath</li>
+<li>- Delegation to wrong loader</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. NoClassDefFoundError:</li>
+<li>- Class was loaded but no longer available</li>
+<li>- Version mismatch</li>
+</ul>
+     </em> 
+<ul>
+<li>3. LinkageError:</li>
+<li>- Class loaded by different loaders (A and B)</li>
+<li>- A instanceof B = false!</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>4.2 Bytecode Deep Dive</h3>
+<pre><code>// Bytecode analysis
+<p>public class BytecodeAnalysis &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Bytecode Instruction Set:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                   BYTECODE INSTRUCTIONS                             │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>Stack:                                                              │</li>
+<li>- iconst_0-5, bipush, sipush   Push constants                     │</li>
+<li>- aload_0-3, aload             Load local variable               │</li>
+<li>- astore_0-3, astore           Store local variable               │</li>
+<li>- dup, pop, swap               Stack operations                   │</li>
+<li>│</li>
+<li>Arithmetic:                                                        │</li>
+<li>- iadd, ladd, fadd, dadd       Add                                  │</li>
+<li>- isub, lsub, fsub, dsub       Subtract                            │</li>
+<li>- imul, idiv, irem             Multiply/Divide/Remainder          │</li>
+<li>- ineg                         Negate                               │</li>
+<li>│</li>
+<li>Control Flow:                                                       │</li>
+<li>- ifeq, ifne, iflt, ifle      Comparison branches                 │</li>
+<li>- if_icmpeq, if_acmpeq         Object comparison branches         │</li>
+<li>- goto, goto_w                Unconditional branch                │</li>
+<li>- tableswitch, lookupswitch    Switch                               │</li>
+<li>- return, areturn              Return                              │</li>
+<li>│</li>
+<li>Object/Array:                                                       │</li>
+<li>- new, instanceof, checkcast  Object creation and casting        │</li>
+<li>- aaload, aastore             Array load/store                    │</li>
+<li>- arraylength                 Array length                         │</li>
+<li>│</li>
+<li>Method:                                                             │</li>
+<li>- invokevirtual               Instance method                     │</li>
+<li>- invokestatic                Static method                       │</li>
+<li>- invokespecial               Constructor/private                  │</li>
+<li>- invokeinterface             Interface method                    │</li>
+<li>│</li>
+<li>Synchronized:                                                       │</li>
+<li>- monitorenter, monitorexit   Synchronized block                   │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Bytecode Example:</li>
+</ul>
+     </em>/
+<p>public int calculate(int x, int y) &#123;
+        if (x &gt; y) &#123;
+            return x - y;
+        &#125;
+        return y - x;
+    &#125;
+</p>
+<p>/<em>
+    // Compiled bytecode:
+    0: iload_1           // Load x (local variable 1)
+    1: iload_2           // Load y (local variable 2)
+    2: if_icmple 9       // If x &lt;= y, jump to 9
+    5: iload_1           // Load x
+    6: iload_2           // Load y
+    7: isub              // x - y
+    8: ireturn           // Return int
+    9: iload_2           // Load y
+    10: iload_1          // Load x
+    11: isub             // y - x
+    12: ireturn          // Return int
+</p>
+    </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Frame Stack:</li>
+</ul>
+     </em> 
+<ul>
+<li>Each method invocation creates a stack frame:</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    STACK FRAME                                       │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │  Local Variables:                                                   │
+</p>
+<ul>
+<li>- this, param1, param2, ..., local vars                           │</li>
+<li>- Accessed by: aload_0, aload_1, astore_0, astore_1               │</li>
+</ul>
+<p>│                                                                       │
+     │  Operand Stack:                                                     │
+</p>
+<ul>
+<li>- Where operations happen                                           │</li>
+<li>- Max stack: method attributes                                      │</li>
+<li>- Pop/push during execution                                        │</li>
+<li>│</li>
+</ul>
+<p>│  Frame Data:                                                         │
+</p>
+<ul>
+<li>- Constant pool reference                                           │</li>
+<li>- Return address                                                    │</li>
+<li>- Monitor (for synchronized)                                       │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>5. JVM Performance Tuning</h2>
+<h3>5.1 Heap Sizing</h3>
+<pre><code>// Heap sizing guidance
+<p>public class HeapTuning &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Determining Heap Size:</li>
+</ul>
+     </em> 
+<ul>
+<li>Rule of thumb:</li>
+<li>- Start with 25-30% of available system memory</li>
+<li>- Tune based on actual usage patterns</li>
+<li>- Monitor and adjust</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Key metrics to watch:</li>
+<li>- Old gen usage after full GC</li>
+<li>- Survivor space usage</li>
+<li>- Metaspace usage</li>
+<li>- Direct memory usage</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Example Sizing:</li>
+</ul>
+     </em> 
+<ul>
+<li>For a server with 64GB RAM:</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Option 1: Large heap</li>
+<li>-Xms30g -Xmx30g</li>
+<li>- Good for large datasets</li>
+<li>- Risk: Long GC pauses</li>
+</ul>
+     </em> 
+<ul>
+<li>Option 2: Moderate with G1</li>
+<li>-Xms16g -Xmx16g</li>
+<li>-XX:MaxGCPauseMillis=200</li>
+<li>- Good balance for most workloads</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Option 3: Small heap with more containers</li>
+<li>-Xms4g -Xmx4g (per container)</li>
+<li>-XX:MaxRAMPercentage=75</li>
+<li>- If running in Kubernetes</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Young Generation Sizing:</li>
+</ul>
+     </em> 
+<ul>
+<li>-XX:NewRatio=2     (young = 1/3 of heap, default)</li>
+<li>-XX:NewSize=512m  (min young)</li>
+<li>-XX:MaxNewSize=2g (max young)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>More young = more memory for new objects, less promotion</li>
+<li>Less young = less GC pause, more promotion to old</li>
+</ul>
+     </em> 
+<ul>
+<li>Target: Minor GC should take &lt; 100ms</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>5.2 GC Tuning Strategies</h3>
+<pre><code>// GC tuning strategies
+<p>public class GCTuning &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>G1 Tuning:</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>1. Set pause time goal:</li>
+<li>-XX:MaxGCPauseMillis=200</li>
+</ul>
+     </em> 
+<ul>
+<li>G1 will try to meet this, may adjust young gen size</li>
+<li>If you need more throughput, increase this value</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>2. Set heap region size:</li>
+<li>-XX:G1HeapRegionSize=16m (for large objects)</li>
+<li>-XX:G1HeapRegionSize=4m (for many small objects)</li>
+</ul>
+     </em> 
+<ul>
+<li>If you see many humongous allocations, increase</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>3. Tune mixed collections:</li>
+<li>-XX:InitiatingHeapOccupancyPercent=45 (default)</li>
+<li>-XX:G1MixedGCLiveThresholdPercent=85 (don't collect regions &gt;85% full)</li>
+</ul>
+     </em> 
+<ul>
+<li>If old gen grows fast, decrease IHOP</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>ZGC Tuning:</li>
+</ul>
+     </em> 
+<ul>
+<li>-XX:+UseZGC</li>
+<li>-XX:ZHeapInitialSize=4g</li>
+<li>-XX:ZHeapMaximumSize=16g</li>
+<li>-XX:ParallelGCThreads=8</li>
+<li>-XX:ConcGCThreads=2</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>ZGC scales with available CPUs</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Common GC Problems and Solutions:</li>
+</ul>
+     </em> 
+<ul>
+<li>Problem: Long minor GC pauses</li>
+<li>Solution: Increase young gen size or reduce allocation rate</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Problem: Full GC takes too long</li>
+<li>Solution: Increase heap or switch to G1/ZGC</li>
+</ul>
+     </em> 
+<ul>
+<li>Problem: Old gen fills up</li>
+<li>Solution: Fix memory leaks, increase old gen ratio</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Problem: Metaspace OOM</li>
+<li>Solution: Increase MaxMetaspaceSize, check classloader leaks</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>6. Memory Leaks and Troubleshooting</h2>
+<h3>6.1 Common Leak Patterns</h3>
+<pre><code>// Memory leak patterns
+<p>public class MemoryLeakPatterns &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 1: Static Collections</li>
+</ul>
+     </em> 
+<ul>
+<li>Most common in enterprise applications:</li>
+</ul>
+<p><em>/
+</p>
+<p>// This NEVER gets cleaned!
+    public class BadCache &#123;
+        private static final Map&lt;String, Object&gt; CACHE = new HashMap&lt;&gt;();
+</p>
+<p>public void put(String key, Object value) &#123;
+            CACHE.put(key, value);  // Never removed!
+        &#125;
+</p>
+<p>// Fix: Use WeakHashMap or add TTL
+        // private static final Map&lt;String, WeakReference&lt;Object&gt;&gt; CACHE = ...
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Pattern 2: Listener/Callback Leaks</li>
+</ul>
+     </em>/
+<p>public class EventSource &#123;
+        private final List&lt;EventListener&gt; listeners = new ArrayList&lt;&gt;();
+</p>
+<p>public void addListener(EventListener l) &#123;
+            listeners.add(l);  // Never removed!
+        &#125;
+</p>
+<p>// Fix: Add removeListener() and call it!
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 3: ThreadLocal</li>
+</ul>
+     </em>/
+<p>public class ThreadLocalLeak &#123;
+        private static final ThreadLocal&lt;Connection&gt; conn = 
+            ThreadLocal.withInitial(() -&gt; &#123;
+                try &#123;
+                    return DataSource.getConnection();
+                &#125; catch (SQLException e) &#123;
+                    throw new RuntimeException(e);
+                &#125;
+            &#125;);
+</p>
+<p>// Problem: Thread pool reuses threads!
+        // If not removed, Connection lives for thread lifetime
+        // 
+        // Fix: Always clean up
+        // finally &#123; conn.remove(); &#125;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 4: Connection Leaks</li>
+</ul>
+     </em>/
+<p>public class ConnectionLeak &#123;
+        public void bad() throws SQLException &#123;
+            Connection c = ds.getConnection();  // Not closed!
+            // Fix: try-with-resources
+        &#125;
+</p>
+<p>public void good() throws SQLException &#123;
+            try (Connection c = ds.getConnection()) &#123;
+                // Auto-closed
+            &#125;
+        &#125;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 5: Inappropriate Object References</li>
+</ul>
+     </em>/
+<p>public class ObjectReferenceLeak &#123;
+        // This keeps entire object graph alive!
+        private static Object bigObject;
+</p>
+<p>public void leak() &#123;
+            bigObject = createLargeObject();
+        &#125;
+</p>
+<p>// Fix: Use weak references or clear explicitly
+    &#125;
+&#125;
+</p>
+</code></pre>
+<h3>6.2 Leak Detection Tools</h3>
+<pre><code>// Leak detection approaches
+<p>public class LeakDetection &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>1. Heap Dump Analysis:</li>
+</ul>
+     </em> 
+<ul>
+<li>jmap -dump:format=b,file=heap.bin &lt;pid&gt;</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Tools:</li>
+<li>- Eclipse MAT (Memory Analyzer Tool)</li>
+<li>- VisualVM</li>
+<li>- JProfiler</li>
+<li>- YourKit</li>
+</ul>
+     </em> 
+<ul>
+<li>Key MAT features:</li>
+<li>- Leak Suspects Report</li>
+<li>- Dominator Tree (who keeps what alive)</li>
+<li>- Path to GC Roots (why is it retained)</li>
+<li>- OQL (SQL for heap)</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>2. JProfiler Leak Detection:</li>
+</ul>
+     </em>/
+<p>/<em>
+</p>
+<ul>
+<li>- Allocate heap recorder</li>
+<li>- Take two snapshots</li>
+<li>- Compare - look for growing allocations</li>
+</ul>
+     </em> 
+<ul>
+<li>JProfiler &gt; Snapshots &gt; Compare</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>3. VisualVM with Heap Walker:</li>
+</ul>
+     </em>/
+<p>/<em>
+</p>
+<ul>
+<li>- Heap dump</li>
+<li>- Classes (sort by instances)</li>
+<li>- Right click &gt; Show in Heap Walker</li>
+<li>- Find retention path</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>4. JConsole / JMX:</li>
+</ul>
+     </em>/
+<p>/<em>
+</p>
+<ul>
+<li>- Monitor MBeans</li>
+<li>- Java.lang &gt; Memory &gt; HeapMemoryUsage</li>
+<li>- Trigger GC and watch</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>5. Java Flight Recorder (JFR):</li>
+</ul>
+     </em>/
+<p>/<em>
+</p>
+<ul>
+<li>Start recording:</li>
+<li>-XX:StartFlightRecording:filename=recording.jfr</li>
+</ul>
+     </em> 
+<ul>
+<li>Analyze:</li>
+<li>- Object Allocation Profiling</li>
+<li>- GC Configuration</li>
+<li>- Memory Leak detection events</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>7. JVM Profiling and Diagnostics</h2>
+<h3>7.1 Diagnostic Tools</h3>
+<pre><code>// JVM diagnostic tools
+<p>public class DiagnosticTools &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>jcmd - All-in-one diagnostic command:</li>
+</ul>
+     </em> 
+<ul>
+<li>jcmd &lt;pid&gt; VM.native_memory summary</li>
+<li>jcmd &lt;pid&gt; GC.heap_info</li>
+<li>jcmd &lt;pid&gt; Thread.print</li>
+<li>jcmd &lt;pid&gt; VM.log</li>
+<li>jcmd &lt;pid&gt; GC.run</li>
+<li>jcmd &lt;pid&gt; GC.class_histogram</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>jstack - Thread dumps:</li>
+</ul>
+     </em> 
+<ul>
+<li>jstack -l &lt;pid&gt;  // Full thread dump</li>
+<li>jstack -F &lt;pid&gt;  // Force if regular dump fails</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Shows:</li>
+<li>- Thread states</li>
+<li>- Lock information</li>
+<li>- Stack traces</li>
+<li>- Deadlock detection</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>jmap - Memory tools:</li>
+</ul>
+     </em> 
+<ul>
+<li>jmap -heap &lt;pid&gt;     // Heap summary</li>
+<li>jmap -clstats &lt;pid&gt;  // Classloader stats</li>
+<li>jmap -dump:format=b,file=heap.hprof &lt;pid&gt;</li>
+<li>jmap -histo &lt;pid&gt;    // Histogram of objects</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>jstat - Statistics:</li>
+</ul>
+     </em> 
+<ul>
+<li>jstat -gcutil &lt;pid&gt; 1000  // GC statistics every 1s</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Output:</li>
+<li>S0  S1  E   O   M   CCS  YGC YGCT  GGC  FGCT  GCT</li>
+<li>0   0  45  67  78  80    5  0.234   0     0    0.234</li>
+</ul>
+     </em> 
+<ul>
+<li>YGC = Young GC count</li>
+<li>YGCT = Young GC cumulative time</li>
+<li>GGC = Full GC count</li>
+<li>FGCT = Full GC cumulative time</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>7.2 Java Flight Recorder</h3>
+<pre><code>// JFR configuration
+<p>public class JFRConfiguration &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>JFR Events:</li>
+</ul>
+     </em> 
+<ul>
+<li>- jdk.ObjectAllocationInNewTLAB</li>
+<li>- jdk.ObjectAllocationOutsideTLAB</li>
+<li>- jdk.OldObjectSample (for leak detection)</li>
+<li>- jdk.GCConfiguration</li>
+<li>- jdk.GCHeapSummary</li>
+<li>- jdk.CPULoad</li>
+<li>- jdk.JavaExceptionThrow</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Enabled by default in Java 11+ (needs commercial license &lt; 11)</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Recording Types:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Continuous (background):</li>
+<li>-XX:StartFlightRecording:filename=recording.jfr</li>
+<li>-XX:StartFlightRecording=maxsize=100m,maxage=6h</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. On-demand (one-shot):</li>
+<li>jcmd &lt;pid&gt; JFR.start duration=60s filename=dump.jfr</li>
+</ul>
+     </em> 
+<ul>
+<li>3. Triggered (on event):</li>
+<li>jcmd &lt;pid&gt; JFR.start settings=profile ...</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Analyzing with jfr:</li>
+</ul>
+     </em> 
+<ul>
+<li>jfr print --events &quot;jdk.ObjectAllocationInNewTLAB&quot; recording.jfr</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>jfr print --json recording.jfr &gt; analysis.json</li>
+</ul>
+     </em> 
+<ul>
+<li>JMC (Java Mission Control):</li>
+<li>- GUI for JFR</li>
+<li>- Built-in analysis</li>
+<li>- Great for production debugging</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>8. Modern JVM Features and Optimizations</h2>
+<h3>8.1 Project Valhalla</h3>
+<pre><code>// Value types preview
+<p>public class ValhallaPreview &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Value Types (Project Valhalla):</li>
+</ul>
+     </em> 
+<ul>
+<li>- Currently in progress (preview in Java 21+)</li>
+<li>- Inline types with identity</li>
+<li>- No object header (except for alignment)</li>
+<li>- No nullability (can have default)</li>
+<li>- Comparisons by value, not reference</li>
+</ul>
+<p><em>/
+</p>
+<p>// Example (when released):
+</p>
+<p>/</em>
+     inline class Point &#123;
+         public final int x;
+         public final int y;
+</p>
+<p>public Point(int x, int y) &#123;
+             this.x = x;
+             this.y = y;
+         &#125;
+     &#125;
+</p>
+<p>// No object header - stored inline in containing object
+     // Point[] stored as contiguous int pairs!
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Benefits:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Better cache locality</li>
+<li>- No GC for small objects</li>
+<li>- Memory savings (no object header)</li>
+<li>- Automatic inlining by JIT</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>8.2 Project Loom (Virtual Threads)</h3>
+<pre><code>// Virtual threads preview
+<p>public class VirtualThreadsPreview &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Virtual Threads (Project Loom, Java 21+):</li>
+</ul>
+     </em> 
+<ul>
+<li>- Very lightweight threads (MB vs GB)</li>
+<li>- Millions per application possible</li>
+<li>- Managed by JVM, not OS</li>
+<li>- No more thread-per-request model limitations</li>
+</ul>
+<p><em>/
+</p>
+<p>// Creating virtual threads:
+</p>
+<p>/</em>
+     Thread virtualThread = Thread.startVirtualThread(() -&gt; &#123;
+         // Runs on virtual thread
+         // Can use regular blocking I/O
+     &#125;);
+</p>
+<p>// Or using executor
+     ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+     Future&lt;?&gt; result = executor.submit(() -&gt; process(request));
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>How it works:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Virtual thread runs on carrier thread</li>
+<li>- When blocking I/O, carrier thread &quot;parks&quot; virtual</li>
+<li>- Scheduler picks another virtual to run on carrier</li>
+<li>- Result: Many virtual threads, few carrier threads</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Traditional: 10k concurrent requests = 10k threads = lots of memory</li>
+<li>Virtual: 10k concurrent requests = 10k virtual, ~100 carrier</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Compatibility:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Works with existing thread APIs</li>
+<li>- No changes to synchronization needed (but don't hold locks!)</li>
+<li>- ThreadLocal can still be used but consider ThreadLocal::remove</li>
+</ul>
+<p>*/
+&#125;
+</p>
+</code></pre>
+<hr>
+<p>This comprehensive JVM internals guide covers deep technical details needed for advanced Java development and performance optimization.
+</p>
+        </article>
+    </div>
+</body>
+</html>

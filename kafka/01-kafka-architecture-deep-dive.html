@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kafka Architecture and Implementation Deep Dive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Kafka Architecture and Implementation Deep Dive</h1>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#1-broker-architecture-internals">Broker Architecture Internals</a></li>
+<li><a href="#2-partition-leadership-and-replication">Partition Leadership and Replication</a></li>
+<li><a href="#3-controller-and-cluster-coordination">Controller and Cluster Coordination</a></li>
+<li><a href="#4-log-storage-and-segment-management">Log Storage and Segment Management</a></li>
+<li><a href="#5-producer-internals-and-batching">Producer Internals and Batching</a></li>
+<li><a href="#6-consumer-group-protocol-deep-dive">Consumer Group Protocol Deep Dive</a></li>
+<li><a href="#7-exactly-once-semantics-implementation">Exactly-Once Semantics Implementation</a></li>
+<li><a href="#8-kafka-streams-architecture">Kafka Streams Architecture</a></li>
+<li><a href="#9-security-implementation">Security Implementation</a></li>
+<li><a href="#10-performance-optimization">Performance Optimization</a></li>
+<li><a href="#11-troubleshooting-production-issues">Troubleshooting Production Issues</a></li>
+</ol>
+<hr>
+<h2>1. Broker Architecture Internals</h2>
+<h3>1.1 Kafka Broker Components</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                         KAFKA BROKER ARCHITECTURE                            │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │                        KAFKA BROKER PROCESS                              ││
+│  ├─────────────────────────────────────────────────────────────────────────┤│
+│  │                                                                         ││
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐               ││
+│  │  │   Request     │  │    Log        │  │    quotas     │               ││
+│  │  │   Handler     │  │   Manager     │  │    Manager    │               ││
+│  │  │   Pool        │  │               │  │               │               ││
+│  │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘               ││
+│  │          │                   │                   │                       ││
+│  │          └───────────────────┼───────────────────┘                       ││
+│  │                              │                                            ││
+│  │  ┌───────────────────────────▼───────────────────────────────────────┐   ││
+│  │  │                     Socket Server                               │   ││
+│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐               │   ││
+│  │  │  │   Acceptor  │──│   Processor │──│  Selector   │               │   ││
+│  │  │  │   Thread    │  │   Threads   │  │  (NIO)      │               │   ││
+│  │  │  └─────────────┘  └─────────────┘  └─────────────┘               │   ││
+│  │  └───────────────────────────────────────────────────────────────────┘   ││
+│  │                              │                                            ││
+│  └──────────────────────────────┼────────────────────────────────────────────┘│
+│                                 │                                             │
+│  ┌──────────────────────────────▼────────────────────────────────────────────┐
+│  │                     ZOOKEEPER / KRaft                                      │
+│  │  - Broker registration and metadata                                       │
+│  │  - Partition leadership and ISR tracking                                  │
+│  │  - Controller election                                                     │
+│  │  - ACLs, quotas, config management                                        │
+│  └───────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+│  MESSAGE FLOW:                                                               │
+│  1. Client connects via Socket Server (port 9092)                           │
+│  2. Acceptor accepts connection, hands to Processor                        │
+│  3. Processor reads request, validates                                      │
+│  4. Handler dispatches to appropriate component                            │
+│  5. Handler processes, generates response                                   │
+│  6. Response written back to client                                         │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>1.2 Request Handling Pipeline</h3>
+<pre><code>// Simplified request processing flow
+<p>public class KafkaRequestPipeline &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Request Flow:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Client sends Request in Request API Key format</li>
+<li>2. KafkaSelector reads bytes from channel</li>
+<li>3. NetworkClient decodes request</li>
+<li>4. Handler lookup by API key</li>
+<li>5. Handler processes (may involve replicas, logs, etc.)</li>
+<li>6. Response created</li>
+<li>7. NetworkClient encodes response</li>
+<li>8. Selector writes to channel</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Request Types (API Keys):</li>
+</ul>
+     </em> 
+<ul>
+<li>PRODUCE (0): Send messages to broker</li>
+<li>FETCH (1): Read messages from broker</li>
+<li>LIST_OFFSETS (2): Find offset by timestamp</li>
+<li>METADATA (3): Get topic/partition info</li>
+<li>OFFSET_COMMIT (8): Commit consumer offset</li>
+<li>FIND_COORDINATOR (10): Find group coordinator</li>
+<li>JOIN_GROUP (11): Join consumer group</li>
+<li>SYNC_GROUP (14): Sync group assignment</li>
+<li>APIVER_V3 (18): API version info</li>
+<li>DELETE_RECORD (51): Delete records by offset</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Request Handler Thread Pool:</li>
+</ul>
+     </em> 
+<ul>
+<li>KafkaRequestHandlerPool:</li>
+<li>- num.network.threads = 8 (default)</li>
+<li>- Each handler is a KafkaRequestHandler</li>
+<li>- Handlers process requests in parallel</li>
+<li>- Queue between selector and handlers: requestChannel</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>requestChannel queue size: queued.max.requests = 500 (default)</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>2. Partition Leadership and Replication</h2>
+<h3>2.1 ISR (In-Sync Replicas) Management</h3>
+<pre><code>// ISR management in broker
+<p>public class ISRManagement &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>What is ISR?</li>
+</ul>
+     </em> 
+<ul>
+<li>In-Sync Replicas = Replicas that are &quot;caught up&quot; with leader</li>
+<li>- Partition has leader + N replicas</li>
+<li>- ISR = subset of replicas that have caught up</li>
+<li>- Definition of &quot;caught up&quot;:</li>
+<li>- replica.lag.time.max.ms (default 30s) behind leader</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Leader Election Priority:</li>
+<li>1. Prefer current leader if in ISR</li>
+<li>2. Else prefer replica in ISR with highest offset</li>
+<li>3. Else prefer replica outside ISR but caught up</li>
+<li>4. Else fail the election</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>ISR Shrink Trigger:</li>
+<li>- Replica falls behind by &gt; replica.lag.time.max.ms</li>
+<li>- Replica is down (no heartbeat)</li>
+<li>- Controller removes from ISR in ZK/KRaft</li>
+</ul>
+     </em> 
+<ul>
+<li>ISR Grow Trigger:</li>
+<li>- Replica catches up (within replica.lag.time.max.ms)</li>
+<li>- Replica sends FetchRequest to leader</li>
+<li>- Leader updates HW and adds to ISR</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Configuration:</li>
+</ul>
+     </em> 
+<ul>
+<li>broker:</li>
+<li>replica.lag.time.max.ms = 30000  # Max time without fetch</li>
+<li>replica.socket.timeout.ms = 30000</li>
+<li>replica.fetch.max.bytes = 1048576  # 1MB</li>
+<li>replica.fetch.min.bytes = 1</li>
+<li>replica.fetch.wait.max.ms = 500</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Under Replicated Partitions (URP):</li>
+</ul>
+     </em> 
+<ul>
+<li>When a replica is not in ISR:</li>
+<li>- UnderReplicatedPartitions metric increases</li>
+<li>- Alert if this persists (data risk!)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Causes:</li>
+<li>- Slow follower (network, CPU, disk I/O)</li>
+<li>- Follower crashed and restarting</li>
+<li>- Leader too fast for followers</li>
+</ul>
+     </em> 
+<ul>
+<li>Resolution:</li>
+<li>- Add more brokers</li>
+<li>- Improve follower hardware</li>
+<li>- Reduce produce ack requirements (acks=1)</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>2.2 Leader Election Process</h3>
+<pre><code>// Leader election logic in Kafka controller
+<p>// Simplified from Kafka codebase
+</p>
+<p>class PartitionLeaderElection &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Election trigger:</li>
+<li>1. Current leader dies (no heartbeat)</li>
+<li>2. Controller initiates election</li>
+<li>3. ZK/KRaft selects new leader</li>
+</ul>
+     </em> 
+<ul>
+<li>Election strategy: Unclean leader election (configurable)</li>
+<li>- controlled.shutdown.enable = true (default)</li>
+<li>- unclean.leader.election.enable = false (default in 2.4+)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Unsafe election (unclean.election.enable = true):</li>
+<li>- Choose any replica as leader (not in ISR!)</li>
+<li>- May lose messages!</li>
+<li>- Use only when availability &gt; data integrity</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Preferred Replica Election:</li>
+</ul>
+     </em> 
+<ul>
+<li>Kafka tries to use the first replica as leader (preferred)</li>
+<li>- Distribution across brokers for load balancing</li>
+<li>- Auto.leader.rebalance.enable = true (default)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Trigger manually:</li>
+<li>kafka-leader-election.sh --bootstrap-server broker:9092 \</li>
+<li>--topic test-topic --partition 0 --election-type PREFERRED</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>3. Controller and Cluster Coordination</h2>
+<h3>3.1 Controller Responsibilities</h3>
+<pre><code>// Controller major responsibilities
+<p>public class ControllerResponsibilities &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    KAFKA CONTROLLER                                 │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │ 1. Broker Management                                                │
+     │    - Register new brokers                                           │
+     │    - Remove dead brokers                                             │
+     │    - Broker state management                                         │
+     │                                                                      │
+     │ 2. Topic Management                                                 │
+     │    - Create/delete topics                                           │
+     │    - Partition reassignment                                          │
+     │    - Preferred replica election                                     │
+     │                                                                      │
+     │ 3. Partition Leadership                                             │
+     │    - Trigger leader elections                                        │
+     │    - Update ISR in ZK/KRaft                                          │
+     │    - Handle broker shutdown                                          │
+     │                                                                      │
+     │ 4. Group Coordination                                               │
+     │    - Partition assignment for consumer groups                       │
+     │    - Offset commit tracking                                          │
+     │                                                                      │
+     │ 5. Configuration Management                                         │
+     │    - Topic configs                                                   │
+     │    - Broker configs                                                  │
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Controller Election:</li>
+</ul>
+     </em> 
+<ul>
+<li>- First broker to create /controller ZK node becomes controller</li>
+<li>- All brokers watch /controller for changes</li>
+<li>- If controller dies, new election happens</li>
+<li>- zookeeper.session.timeout.ms = 30s (default)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Note: In KRaft mode (Kafka 2.8+), uses Raft consensus instead of ZK</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Controller &quot;Storms&quot;:</li>
+</ul>
+     </em> 
+<ul>
+<li>When many partitions lose leaders simultaneously:</li>
+<li>- Too many leader elections = controller overload</li>
+<li>- broker.session.timeout.ms = 18s (default)</li>
+<li>- Solution: Increase timeout, reduce partition count</li>
+<li>- Or use controlled.shutdown to allow orderly leader transfer</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>3.2 Partition Assignment Algorithm</h3>
+<pre><code>// Consumer group partition assignment
+<p>public class PartitionAssignment &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Assignment Strategies:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Range (default):</li>
+<li>- Partitions sorted by partition number</li>
+<li>- Consumers sorted by consumer ID</li>
+<li>- Assign contiguous ranges to each consumer</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. Round Robin:</li>
+<li>- Distribute partitions evenly across consumers</li>
+<li>- Better balance for topics with similar partitions</li>
+</ul>
+     </em> 
+<ul>
+<li>3. Sticky Assignor (Kafka 0.11+):</li>
+<li>- Maintains previous assignment when possible</li>
+<li>- Minimizes partition movements during rebalance</li>
+<li>- Recommended for most use cases</li>
+<li>- partition.assignment.strategy =</li>
+<li>org.apache.kafka.clients.consumer.StickyAssignor</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Range Assignment Example:</li>
+</ul>
+     </em> 
+<ul>
+<li>Topic: orders, partitions: 0,1,2,3,4,5</li>
+<li>Consumers: C1, C2, C3</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Sorted partitions: [0,1,2,3,4,5]</li>
+<li>Sorted consumers: [C1,C2,C3]</li>
+</ul>
+     </em> 
+<ul>
+<li>C1 gets: partitions 0,1 (0-1)</li>
+<li>C2 gets: partitions 2,3 (2-3)</li>
+<li>C3 gets: partitions 4,5 (4-5)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Issue: C1 gets more if partitions not evenly divisible!</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Rebalance Trigger:</li>
+<li>- Consumer joins group</li>
+<li>- Consumer leaves group</li>
+<li>- Consumer is considered dead (session timeout)</li>
+<li>- Topic subscription changes</li>
+<li>- Partition count changes</li>
+</ul>
+     </em> 
+<ul>
+<li>Rebalance Protocol:</li>
+<li>1. JoinGroup - Members join, elect leader</li>
+<li>2. SyncGroup - Leader assigns partitions to members</li>
+<li>3. Member gets assigned partitions</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>4. Log Storage and Segment Management</h2>
+<h3>4.1 Log Directory Structure</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                    KAFKA LOG DIRECTORY STRUCTURE                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  /var/lib/kafka/data/                                                       │
+│  ├── topicA-0/                                                              │
+│  │   ├── 00000000000000000000.log      # Actual message data              │
+│  │   ├── 00000000000000000000.index    # Offset index                     │
+│  │   ├── 00000000000000000000.timeindex# Timestamp index                  │
+│  │   ├── 00000000000000000000.txnindex# Transaction index                │
+│  │   ├── 00000000000000000000.sindex   # Sparse index                     │
+│  │   ├── 00000000000000001000.log      # Next segment (rolled)            │
+│  │   └── leader-epoch-checkpoint       # Leader epoch history            │
+│  │                                                                  │
+│  ├── topicA-1/                                                              │
+│  │   └── ...                                                              │
+│  │                                                                  │
+│  └── topicB-0/                                                              │
+│      └── ...                                                               │
+│                                                                              │
+│  Segment Files:                                                              │
+│  - .log: Actual data (messages)                                            │
+│  - .index: Maps offset to position in .log                                 │
+│  - .timeindex: Maps timestamp to offset                                     │
+│  - .txnindex: Transaction index for exactly-once                            │
+│  - .sindex: Snapshot index for state changes                               │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>4.2 Log Segment Rolling</h3>
+<pre><code>// Log segment management
+<p>public class LogSegmentManagement &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>When does Kafka roll to a new segment?</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Size-based (log.segment.bytes = 1GB default):</li>
+<li>- Current segment reaches 1GB</li>
+<li>- Roll to new segment</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. Time-based (log.roll.ms = 168 hours default):</li>
+<li>- Current segment open for 7 days</li>
+<li>- Roll regardless of size</li>
+</ul>
+     </em> 
+<ul>
+<li>3. Log append time:</li>
+<li>- Based on message timestamp, not wall-clock</li>
+<li>- log.message.timestamp.difference.max.ms = 2 hours</li>
+<li>- If message 2+ hours newer than last, force roll</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>4. Index size:</li>
+<li>- log.index.size.max.bytes = 10MB default</li>
+<li>- If index fills, force roll</li>
+</ul>
+     </em> 
+<ul>
+<li>5. Append Sequence:</li>
+<li>- log.roll.jitter.ms = 0 (add jitter to avoid stampede)</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Segment Naming:</li>
+</ul>
+     </em> 
+<ul>
+<li>Format: offset of first message in segment</li>
+<li>Example: 00000000000000000000.log (starts at offset 0)</li>
+<li>00000000000000100000.log (starts at offset 10000)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>This makes locating segment by offset O(1) - just divide by</li>
+<li>segment size!</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Retention Policies:</li>
+</ul>
+     </em> 
+<ul>
+<li>log.retention.hours = 168 (7 days)</li>
+<li>log.retention.check.interval.ms = 300000 (5 minutes)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Cleanup policies:</li>
+<li>- delete (default): Delete old segments</li>
+<li>- compact: Delete old versions, keep latest (keyed topics)</li>
+<li>- delete + compact: Both</li>
+</ul>
+     </em> 
+<ul>
+<li>Size-based retention:</li>
+<li>log.retention.bytes = -1 (unlimited)</li>
+<li>log.retention.check.interval.ms = 300000</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Log cleaner (for compaction):</li>
+<li>log.cleaner.enable = true (default)</li>
+<li>log.cleaner.min.compaction.lag.ms = 0</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>5. Producer Internals and Batching</h2>
+<h3>5.1 Producer Architecture</h3>
+<pre><code>// Kafka producer internal architecture
+<p>public class ProducerInternals &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                      KAFKA PRODUCER                                  │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │                      KafkaProducer                              ││
+     │  │                                                                   ││
+     │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          ││
+     │  │  │   Sender     │  │  Accumulator │  │  Partitioner │          ││
+     │  │  │  (IO Thread) │  │  (Batching)  │  │  (Routing)   │          ││
+     │  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          ││
+     │  │         │                 │                 │                    ││
+     │  │         └─────────────────┼─────────────────┘                    ││
+     │  │                           │                                      ││
+     │  │  ┌───────────────────────▼───────────────────────────────┐     ││
+     │  │  │                   RecordAccumulator                   │     ││
+     │  │  │  ┌──────────────────────────────────────────────────┐  │     ││
+     │  │  │  │ TopicPartition: &#123;                                │  │     ││
+     │  │  │  │   queue: [RecordBatch, RecordBatch, ...]        │  │     ││
+     │  │  │  │   batchSize: bytes                               │  │     ││
+     │  │  │  │   full: boolean                                  │  │     ││
+     │  │  │  │ &#125;                                                │  │     ││
+     │  │  │  └──────────────────────────────────────────────────┘  │     ││
+     │  │  └───────────────────────────────────────────────────────┘     ││
+     │  │                                                                   ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Batching Process:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. send() called with ProducerRecord</li>
+<li>2. Partitioner determines partition</li>
+<li>3. Record added to accumulator's deque for that partition</li>
+<li>4. If batch is full orlinger.ms timeout, ready for send</li>
+<li>5. Sender thread batches ready records per broker</li>
+<li>6. Send produce request to broker</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Accumulator Configuration:</li>
+</ul>
+     </em> 
+<ul>
+<li>buffer.memory = 32MB (default)</li>
+<li>- Total memory for batching</li>
+<li>- If full, send() blocks until space available</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>batch.size = 16KB (default)</li>
+<li>- Per-partition batch size</li>
+<li>- Increase for higher throughput</li>
+</ul>
+     </em> 
+<ul>
+<li>linger.ms = 0 (default)</li>
+<li>- Wait time to batch messages</li>
+<li>- Increase to improve compression/throughput</li>
+<li>- Set to 5-10ms for high throughput</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>compression.type = none (default)</li>
+<li>- lz4, snappy, zstd, gzip</li>
+<li>- CPU vs bandwidth tradeoff</li>
+<li>- zstd best compression ratio</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<h3>5.2 Partitioning Strategies</h3>
+<pre><code>// Custom partitioner implementation
+<p>public class CustomPartitioner implements Partitioner &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Default Partitioner (DefaultPartitioner):</li>
+</ul>
+     </em> 
+<ul>
+<li>- If key != null: hash(key) % partitions</li>
+<li>- If key == null: sticky partition (round-robin)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>This ensures:</li>
+<li>- Same key always goes to same partition (ordering)</li>
+<li>- Without key, even distribution</li>
+</ul>
+     </em>/
+<p>@Override
+    public int partition(String topic, Object key, byte[] keyBytes, 
+                        Object value, byte[] valueBytes, Cluster cluster) &#123;
+</p>
+<p>List&lt;PartitionInfo&gt; partitions = cluster.partitionsForTopic(topic);
+        int numPartitions = partitions.size();
+</p>
+<p>if (keyBytes == null) &#123;
+            // No key - use sticky partition
+            // Get metadata from producer for next sticky partition
+            return stickyPartitionCache.getOrDefault(topic, 0);
+        &#125;
+</p>
+<p>// Hash the key
+        return Utils.toPositive(Utils.murmur2(keyBytes)) % numPartitions;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Custom partitioner for priority queues:</li>
+</ul>
+     </em>/
+<p>public static class PriorityPartitioner implements Partitioner &#123;
+</p>
+<p>// High priority orders go to first N partitions
+        private static final int HIGH_PRIORITY_PARTITIONS = 2;
+</p>
+<p>@Override
+        public int partition(String topic, Object key, byte[] keyBytes,
+                            Object value, byte[] valueBytes, Cluster cluster) &#123;
+</p>
+<p>if (keyBytes == null) &#123;
+                // Round-robin for null keys
+                return Utils.toPositive(Utils.murmur2(valueBytes)) % 
+                    cluster.partitionsForTopic(topic).size();
+            &#125;
+</p>
+<p>// Parse key to extract priority
+            // Key format: &quot;priority-orderId&quot; e.g., &quot;HIGH-12345&quot;
+            String keyStr = new String(keyBytes);
+</p>
+<p>if (keyStr.startsWith(&quot;HIGH-&quot;)) &#123;
+                // Map to high-priority partitions (0 or 1)
+                return Utils.toPositive(Utils.murmur2(
+                    keyStr.substring(5).getBytes())) % HIGH_PRIORITY_PARTITIONS;
+            &#125; else if (keyStr.startsWith(&quot;MEDIUM-&quot;)) &#123;
+                // Map to medium partitions (2-4)
+                int total = cluster.partitionsForTopic(topic).size();
+                return HIGH_PRIORITY_PARTITIONS + 
+                    (Utils.toPositive(Utils.murmur2(keyStr.substring(7).getBytes())) 
+                     % (total - HIGH_PRIORITY_PARTITIONS));
+            &#125; else &#123;
+                // LOW - all remaining partitions
+                return (int) (System.currentTimeMillis() % 
+                    cluster.partitionsForTopic(topic).size());
+            &#125;
+        &#125;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>6. Consumer Group Protocol Deep Dive</h2>
+<h3>6.1 Consumer State Machine</h3>
+<pre><code>// Consumer group state transitions
+<p>public class ConsumerGroupStates &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Consumer Group States:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌──────────────┐</li>
+<li>│    EMPTY     │  Initial state, no members</li>
+<li>└──────┬───────┘</li>
+<li>│ members join</li>
+<li>▼</li>
+<li>┌──────────────┐</li>
+<li>│  PREPARING  │  Rebalance in progress</li>
+<li>│   REBALANCE  │</li>
+<li>└──────┬───────┘</li>
+<li>│ assignment complete</li>
+<li>▼</li>
+<li>┌──────────────┐</li>
+<li>│   STABLE     │  Normal operation</li>
+<li>└──────┬───────┘</li>
+<li>│ member leaves/crashes</li>
+<li>▼</li>
+<li>┌──────────────┐</li>
+<li>│  PREPARING   │  Rebalance starts again</li>
+<li>│  REBALANCE   │</li>
+<li>└──────┬───────┘</li>
+<li>│</li>
+<li>│ all leave</li>
+<li>▼</li>
+<li>┌──────────────┐</li>
+<li>│    EMPTY     │</li>
+<li>└──────────────┘</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>JoinGroup Request:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Members send JoinGroup with their subscription</li>
+<li>- Group coordinator collects all join requests</li>
+<li>- If first member, they become leader</li>
+<li>- Wait for all expected members (session.timeout)</li>
+<li>- Trigger rebalance</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>SyncGroup Request:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Leader receives partition assignment</li>
+<li>- Leader sends SyncGroup with assignments</li>
+<li>- Coordinator sends assignments to all members</li>
+<li>- Members begin fetching from assigned partitions</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Rebalance Protocols:</li>
+</ul>
+     </em> 
+<ul>
+<li>- protocol_type: &quot;consumer&quot; (standard)</li>
+<li>- protocol_name: &quot;range&quot;, &quot;roundrobin&quot;, &quot;sticky&quot;</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Supported protocols evolved:</li>
+<li>- 0.9: range, roundrobin</li>
+<li>- 0.10.2: sticky (added)</li>
+<li>- 1.0+: Enhanced sticky assignor</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<h3>6.2 Offset Management</h3>
+<pre><code>// Offset commit mechanisms
+<p>public class OffsetManagement &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Offset Storage:</li>
+</ul>
+     </em> 
+<ul>
+<li>Kafka topics: __consumer_offsets</li>
+<li>- 50 partitions by default</li>
+<li>- Compacted topic</li>
+<li>- Stores: (group, topic, partition) -&gt; offset</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Key format:</li>
+<li>groupId + topic + partition -&gt; offset + metadata + timestamp</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Automatic vs Manual Offset:</li>
+</ul>
+     </em> 
+<ul>
+<li>enable.auto.commit = true (default)</li>
+<li>- Auto-commit every auto.commit.interval.ms (default 5s)</li>
+<li>- Simple but can cause duplicate processing</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>enable.auto.commit = false</li>
+<li>- Manual commit via commitSync() or commitAsync()</li>
+<li>- More control, exactly-once support</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Commit Patterns:</li>
+</ul>
+     </em>/
+<p>// Sync commit - blocks until committed
+    public void syncCommit(Consumer&lt;String, String&gt; consumer) &#123;
+        try &#123;
+            // Process messages...
+            processMessage(record);
+</p>
+<p>// Commit after processing
+            consumer.commitSync();
+</p>
+<p>// Or commit specific offsets
+            consumer.commitSync(Collections.singletonMap(
+                new TopicPartition(record.topic(), record.partition()),
+                new OffsetAndMetadata(record.offset() + 1)
+            ));
+</p>
+<p>&#125; catch (CommitFailedException e) &#123;
+            // Handle - may retry
+        &#125;
+    &#125;
+</p>
+<p>// Async commit - non-blocking
+    public void asyncCommit(Consumer&lt;String, String&gt; consumer) &#123;
+        consumer.commitAsync((offsets, exception) -&gt; &#123;
+            if (exception != null) &#123;
+                // Handle commit failure
+                log.error(&quot;Commit failed&quot;, exception);
+            &#125; else &#123;
+                // Commit successful
+            &#125;
+        &#125;);
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Offset Reset Policy:</li>
+</ul>
+     </em> 
+<ul>
+<li>auto.offset.reset = &quot;latest&quot; (default)</li>
+<li>- latest: Start from newest available</li>
+<li>- earliest: Start from oldest</li>
+<li>- none: Throw exception if no committed offset</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Use consumer.seek() to jump to specific offset:</li>
+<li>consumer.seekToBeginning(Arrays.asList(partition));</li>
+<li>consumer.seek(new TopicPartition(&quot;topic&quot;, 0), 500L);</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>7. Exactly-Once Semantics Implementation</h2>
+<h3>7.1 Idempotent Producer</h3>
+<pre><code>// Idempotent producer implementation
+<p>public class IdempotentProducer &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>What is Idempotent Producer?</li>
+</ul>
+     </em> 
+<ul>
+<li>Enables exactly-once semantics for produce:</li>
+<li>- Guarantees each message written exactly once</li>
+<li>- Eliminates duplicates from retry</li>
+<li>- Requires: Kafka 0.11+</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>How it works:</li>
+<li>1. Each producer gets unique ID (ProducerId)</li>
+<li>2. Each batch gets sequence number (SequenceNumber)</li>
+<li>3. Broker maintains mapping of (ProducerId, SequenceNumber) -&gt; offset</li>
+<li>4. Duplicates detected and discarded at broker</li>
+</ul>
+     </em>/
+<p>public static Properties createIdempotentConfig() &#123;
+        Properties props = new Properties();
+        props.put(&quot;bootstrap.servers&quot;, &quot;broker1:9092&quot;);
+</p>
+<p>// Enable idempotence
+        props.put(&quot;enable.idempotence&quot;, true);
+</p>
+<p>// These are automatically set when idempotence is enabled:
+        // props.put(&quot;max.in.flight.requests.per.connection&quot;, 5);
+        // props.put(&quot;acks&quot;, &quot;all&quot;);
+        // props.put(&quot;retries&quot;, Integer.MAX_VALUE);
+</p>
+<p>// But can tune:
+        // Transaction timeout
+        props.put(&quot;transaction.timeout.ms&quot;, 60000);
+</p>
+<p>return props;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Idempotence Guarantees:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Exactly-once delivery to single partition</li>
+<li>- Across retries, duplicates eliminated</li>
+<li>- Order preserved within partition</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Limitations:</li>
+<li>- Per-partition semantics</li>
+<li>- Requires acks=all</li>
+<li>- Producer has state, cannot change on restart</li>
+<li>- Topic needs at least in-sync replicas for produce</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<h3>7.2 Transactions API</h3>
+<pre><code>// Kafka transactions for multi-partition exactly-once
+<p>public class TransactionalProducer &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Transactional Producer:</li>
+</ul>
+     </em> 
+<ul>
+<li>Enables:</li>
+<li>- Write to multiple partitions atomically</li>
+<li>- Exactly-once semantics across partitions</li>
+<li>- Abort on failure (rollback)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Use cases:</li>
+<li>- Multi-topic updates</li>
+<li>- &quot;Read-process-write&quot; patterns</li>
+<li>- Stream processing with state</li>
+</ul>
+     </em>/
+<p>public static void demonstrateTransactions(Producer&lt;String, String&gt; producer) &#123;
+</p>
+<p>// Initialize transaction
+        producer.initTransactions();
+</p>
+<p>// Start transaction
+        producer.beginTransaction();
+</p>
+<p>try &#123;
+            // Write to multiple topics
+            producer.send(new ProducerRecord&lt;&gt;(&quot;orders&quot;, key1, order1));
+            producer.send(new ProducerRecord&lt;&gt;(&quot;inventory&quot;, key2, inventoryUpdate));
+            producer.send(new ProducerRecord&lt;&gt;(&quot;notifications&quot;, key3, notification));
+</p>
+<p>// Commit transaction
+            producer.commitTransaction();
+</p>
+<p>&#125; catch (Exception e) &#123;
+            // Abort transaction
+            producer.abortTransaction();
+            throw e;
+        &#125;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Transaction Coordination:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Producer requests transaction ID from broker</li>
+<li>2. Coordinator registers transaction ID</li>
+<li>3. Producer sends produce requests with TransactionalId</li>
+<li>4. Broker tracks transaction state</li>
+<li>5. On commit, markers written to partition</li>
+<li>6. On abort, transaction rolled back</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>TransactionalId:</li>
+<li>- Unique identifier for producer</li>
+<li>- Enables broker to track producer across restarts</li>
+<li>- Recovery on failure</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Consumer Isolation:</li>
+</ul>
+     </em> 
+<ul>
+<li>Transactional consumer must use:</li>
+<li>isolation.level = read_committed (vs read_uncommitted)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>- read_committed: Only read committed transactions</li>
+<li>- read_uncommitted: Read all messages including aborted</li>
+</ul>
+     </em> 
+<ul>
+<li>read_committed returns:</li>
+<li>- Committed messages only</li>
+<li>- Additional field: transactionId (which transaction)</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>8. Kafka Streams Architecture</h2>
+<h3>8.1 Stream Task Architecture</h3>
+<pre><code>// Kafka Streams internal architecture
+<p>public class StreamArchitecture &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    KAFKA STREAMS ARCHITECTURE                       │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │                     StreamsBuilder                               ││
+     │  │  - Define topology (sources, transformations, sinks)            ││
+     │  │  - Build execution plan                                          ││
+     │  │                                                                   ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │                   StreamsPartitionAssignor                      ││
+     │  │  - Distribute tasks across instances                             ││
+     │  │  - Rebalance on scaling                                         ││
+     │  │                                                                   ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                              │                                        │
+     │                              ▼                                        │
+     │  ┌──────────────────────────────────────────────────────────────────┐│
+     │  │                     KafkaStreams                                 ││
+     │  │                                                                   ││
+     │  │  ┌──────────────────────────────────────────────────────────────┐ ││
+     │  │  │  StreamThread 1                                            │ ││
+     │  │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │ ││
+     │  │  │  │   Task 0    │ │   Task 1    │ │   Task 2    │          │ ││
+     │  │  │  │ (Partition 0) (Partition 1) (Partition 2)            │ ││
+     │  │  │  └─────────────┘ └─────────────┘ └─────────────┘          │ ││
+     │  │  │         │             │             │                      │ ││
+     │  │  │         └─────────────┴─────────────┘                      │ ││
+     │  │  │                   StreamsTask                                │ ││
+     │  │  │  - Process records, manage state                            │ ││
+     │  │  │  - Store: RocksDB, in-memory                                 │ ││
+     │  │  └──────────────────────────────────────────────────────────────┘ ││
+     │  │                                                                   ││
+     │  └──────────────────────────────────────────────────────────────────┘│
+     │                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Task Assignment:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Number of tasks = max(partitions across all source topics)</li>
+<li>- Each task owns 1+ partitions</li>
+<li>- Tasks distributed across StreamThreads</li>
+<li>- Each instance runs multiple tasks</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Example:</li>
+<li>- Topic A: 3 partitions</li>
+<li>- Topic B: 2 partitions</li>
+<li>- Total tasks = 3 (max of 3 and 2)</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>State Stores:</li>
+</ul>
+     </em> 
+<ul>
+<li>Persistent state stores (RocksDB):</li>
+<li>- Windowed stores (aggregations)</li>
+<li>- Key-value stores (tables)</li>
+<li>- SSD-backed, configurable</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>In-memory:</li>
+<li>- Faster but limited by RAM</li>
+<li>- Good for small state</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<h3>8.2 Windowing Deep Dive</h3>
+<pre><code>// Windowing implementation in Kafka Streams
+<p>public class WindowingImplementation &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Window Types:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Tumbling (fixed) Windows:</li>
+<li>- Non-overlapping, fixed size</li>
+<li>- TimeWindows.of(Duration.ofMinutes(5))</li>
+<li>- Example: 0-5, 5-10, 10-15</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. Hopping (sliding) Windows:</li>
+<li>- Overlapping, fixed size with advance</li>
+<li>- TimeWindows.of(Duration.ofMinutes(10)).advanceBy(Duration.ofMinutes(5))</li>
+<li>- Example: 0-10, 5-15, 10-20</li>
+</ul>
+     </em> 
+<ul>
+<li>3. Session Windows:</li>
+<li>- Group events within gap</li>
+<li>- SessionWindows.with(Duration.ofMinutes(30))</li>
+<li>- Gap-based, adaptive window sizes</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>4. Join Windows:</li>
+<li>- For stream joins</li>
+<li>- JoinWindows.of(Duration.ofMinutes(5))</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Time Semantics:</li>
+</ul>
+     </em> 
+<ul>
+<li>Event-time (default):</li>
+<li>- Based on message timestamp</li>
+<li>- Out-of-order handling via watermarks</li>
+<li>- Windows triggered when watermark passes</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Processing-time:</li>
+<li>- Based on processing time (wall-clock)</li>
+<li>- Faster but less accurate</li>
+<li>- Use: event-time = &quot;auto&quot; (default)</li>
+</ul>
+     </em> 
+<ul>
+<li>Ingestion-time:</li>
+<li>- Based on broker receive time</li>
+<li>- Less flexible than event-time</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Watermarks:</li>
+</ul>
+     </em> 
+<ul>
+<li>Watermark = &quot;time before which all data has arrived&quot;</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>- Watermark = max(event-time) - grace_period</li>
+<li>- Default grace = out-of-orderness</li>
+<li>- WithWatermark(of(Duration.ofMinutes(5)))</li>
+</ul>
+     </em> 
+<ul>
+<li>Late data handling:</li>
+<li>- Data with timestamp &lt; watermark is &quot;late&quot;</li>
+<li>- late data dropped by default</li>
+<li>- can emit to &quot;dead letter&quot; topic</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Example: Session window for user activity</li>
+</ul>
+     </em>/
+<p>KStream&lt;String, UserAction&gt; userActions = builder.stream(&quot;user-actions&quot;);
+</p>
+<p>KTable&lt;Windowed&lt;String&gt;, Long&gt; sessionCounts = userActions
+        .groupByKey()
+        .windowedBy(SessionWindows.with(Duration.ofMinutes(30)))
+        .count();
+</p>
+<p>// Result: sessions with activity within 30 minutes grouped together
+    // User A: action1 at 10:00, action2 at 10:15 -&gt; window 10:00-10:30
+    // User A: action3 at 10:45 -&gt; new window 10:45-11:15 (new session)
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>9. Security Implementation</h2>
+<h3>9.1 Authentication Mechanisms</h3>
+<pre><code>// Kafka security configuration
+<p>public class SecurityConfiguration &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>SASL/SSL Configuration:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────┬─────────────────────────────────────────────────┐</li>
+</ul>
+<p>│   Mechanism     │  Description                                     │
+     ├─────────────────┼─────────────────────────────────────────────────┤
+     │ PLAIN           │  Username/password, no encryption                │
+     │ SCRAM-SHA-256   │  Password-based, challenge-response              │
+     │ SCRAM-SHA-512   │  Stronger SCRAM variant                          │
+     │ GSSAPI (Kerberos)│  Enterprise SSO integration                     │
+     │ OAUTHBEARER     │  OAuth2 token-based                             │
+     └─────────────────┴─────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>PLAIN Configuration:</li>
+</ul>
+     </em> 
+<ul>
+<li># server.properties</li>
+<li>listeners=SASL_PLAINTEXT://0.0.0.0:9092</li>
+<li>security.inter.broker.protocol=SASL_PLAINTEXT</li>
+<li>sasl.mechanism.inter.broker.protocol=PLAIN</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li># JAAS config (kafka_server_jaas.conf)</li>
+<li>KafkaServer &#123;</li>
+<li>org.apache.kafka.common.security.plain.PlainLoginModule required</li>
+<li>username=&quot;admin&quot;</li>
+<li>password=&quot;admin-secret&quot;</li>
+<li>user_admin=&quot;admin-secret&quot;</li>
+<li>user_producer=&quot;producer-secret&quot;</li>
+<li>user_consumer=&quot;consumer-secret&quot;;</li>
+<li>&#125;;</li>
+</ul>
+     </em> 
+<ul>
+<li>Java client:</li>
+<li>props.put(&quot;security.protocol&quot;, &quot;SASL_PLAINTEXT&quot;);</li>
+<li>props.put(&quot;sasl.mechanism&quot;, &quot;PLAIN&quot;);</li>
+<li>props.put(&quot;sasl.jaas.config&quot;,</li>
+<li>&quot;org.apache.kafka.common.security.plain.PlainLoginModule required &quot; +</li>
+<li>&quot;username=\&quot;producer\&quot; password=\&quot;producer-secret\&quot;;&quot;);</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>SCRAM-SHA-256 (More secure):</li>
+</ul>
+     </em> 
+<ul>
+<li># server.properties</li>
+<li>sasl.mechanism.inter.broker.protocol=SCRAM-SHA_256</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li># JAAS</li>
+<li>KafkaServer &#123;</li>
+<li>org.apache.kafka.common.security.scram.ScramLoginModule required</li>
+<li>username=&quot;admin&quot;</li>
+<li>password=&quot;admin-secret&quot;;</li>
+<li>&#125;;</li>
+</ul>
+     </em> 
+<ul>
+<li>Advantages:</li>
+<li>- Passwords not sent in clear</li>
+<li>- Challenge-response prevents replay</li>
+<li>- Can store hashed passwords</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>9.2 Authorization</h3>
+<pre><code>// Authorization in Kafka
+<p>public class KafkaAuthorization &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>ACL-based Authorization:</li>
+</ul>
+     </em> 
+<ul>
+<li>ACL format:</li>
+<li>Principal = User:name</li>
+<li>Resource = Topic/Group/Cluster/TransactionalId</li>
+<li>Operation = Read/Write/Create/Delete/Describe/...</li>
+<li>Permission = Allow/Deny</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Command:</li>
+<li>kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 \</li>
+<li>--add --allow-principal User:producer \</li>
+<li>--operation Write --topic orders</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Common ACLs:</li>
+</ul>
+     </em>/
+<p>// Producer ACL
+    // kafka-acls.sh --add \
+    //   --allow-principal User:producer \
+    //   --producer \
+    //   --topic orders \
+    //   --group &quot;<em>&quot;
+</p>
+<p>// Consumer ACL
+    // kafka-acls.sh --add \
+    //   --allow-principal User:consumer \
+    //   --consumer \
+    //   --topic orders \
+    //   --group order-consumer-group
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>ACL Examples:</li>
+</ul>
+     </em>/
+<p>// Allow read on topic
+    // --operation Read --topic orders
+</p>
+<p>// Allow write on topic
+    // --operation Write --topic orders
+</p>
+<p>// Allow describe on topic (metadata)
+    // --operation Describe --topic orders
+</p>
+<p>// Allow all operations on group
+    // --operation All --group my-group
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Authorization Plugins:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Default: Simple ACL authorizer</li>
+<li>- Ranger: Enterprise authorization</li>
+<li>- Custom: Implement Authorizer interface</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>10. Performance Optimization</h2>
+<h3>10.1 Broker Tuning</h3>
+<pre><code># Kafka broker tuning for high throughput
+<h1>Socket server</h1>
+<p>num.network.threads = 8          # Process network requests
+num.io.threads = 16              # Process I/O operations
+socket.request.max.bytes = 104857600  # 100MB
+socket.receive.buffer.bytes = 102400  # 100KB
+socket.send.buffer.bytes = 102400
+</p>
+<h1>Log</h1>
+<p>log.segment.bytes = 1073741824   # 1GB segment
+log.segment.ms = 604800000        # 7 days
+log.retention.hours = 168         # 7 days
+log.retention.bytes = -1          # Unlimited
+log.index.size.max.bytes = 10485760  # 10MB index
+</p>
+<h1>Replication</h1>
+<p>replica.socket.timeout.ms = 30000
+replica.fetch.max.bytes = 1048576
+replica.fetch.min.bytes = 1
+replica.fetch.wait.max.ms = 500
+</p>
+<h1>Compression</h1>
+<p>compression.type = lz4  # lz4, snappy, zstd, gzip
+</p>
+</code></pre>
+<h3>10.2 Producer Tuning</h3>
+<pre><code>// High-throughput producer configuration
+<p>public class ProducerOptimization &#123;
+</p>
+<p>public static Properties optimizedProducer() &#123;
+        Properties props = new Properties();
+        props.put(&quot;bootstrap.servers&quot;, &quot;broker1:9092,broker2:9092,broker3:9092&quot;);
+</p>
+<p>// Batching
+        props.put(&quot;batch.size&quot;, 32768);         // 32KB (default 16KB)
+        props.put(&quot;linger.ms&quot;, 10);              // 10ms wait (default 0)
+</p>
+<p>// Buffer
+        props.put(&quot;buffer.memory&quot;, 134217728);   // 128MB (default 32MB)
+</p>
+<p>// Compression
+        props.put(&quot;compression.type&quot;, &quot;zstd&quot;);   // Best compression
+</p>
+<p>// Performance
+        props.put(&quot;max.in.flight.requests.per.connection&quot;, 5);
+        props.put(&quot;request.timeout.ms&quot;, 30000);
+        props.put(&quot;retries&quot;, Integer.MAX_VALUE);
+</p>
+<p>// Idempotence
+        props.put(&quot;enable.idempotence&quot;, true);
+</p>
+<p>return props;
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Key tuning parameters:</li>
+</ul>
+     </em> 
+<ul>
+<li>batch.size:</li>
+<li>- Larger = more messages per batch</li>
+<li>- Trade-off: larger batches use more memory</li>
+<li>- Monitor: batch-size-avg in metrics</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>linger.ms:</li>
+<li>- Wait up to N ms to fill batch</li>
+<li>- Set to 5-10ms for higher throughput</li>
+<li>- Increase latency slightly</li>
+</ul>
+     </em> 
+<ul>
+<li>compression.type:</li>
+<li>- zstd: Best ratio, CPU-intensive</li>
+<li>- lz4: Good ratio, fast (default)</li>
+<li>- snappy: Fast, lower ratio</li>
+</ul>
+<p>*/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>11. Troubleshooting Production Issues</h2>
+<h3>11.1 Consumer Lag</h3>
+<pre><code># Check consumer lag
+<p>kafka-consumer-groups.sh --bootstrap-server broker:9092 \
+  --group my-group --describe
+</p>
+<h1>For each partition:</h1>
+<h1>LAG = current offset - committed offset</h1>
+<h1>High lag causes:</h1>
+<h1>- Consumer not keeping up</h1>
+<h1>- Consumer crashed</h1>
+<h1>- Rebalancing taking long</h1>
+<h1>- Slow processing per message</h1>
+<h1>Fix:</h1>
+<h1>1. Scale consumers</h1>
+<h1>2. Improve processing logic</h1>
+<h1>3. Check for blocking I/O</h1>
+<h1>4. Ensure enough parallelism</h1>
+</code></pre>
+<h3>11.2 Under-Replicated Partitions</h3>
+<pre><code># Check URP
+<p>kafka-topics.sh --describe --topic orders --bootstrap-server broker:9092
+</p>
+<h1>If URP exists:</h1>
+<h1>- ISR contains only subset of replicas</h1>
+<h1>- Some replicas not catching up</h1>
+<h1>Common causes:</h1>
+<h1>1. Broker down</h1>
+<h1>2. Slow follower (network/disk)</h1>
+<h1>3. Full disk</h1>
+<h1>4. GC pauses on follower</h1>
+<h1>Check follower status</h1>
+<p>kafka-dump-log.sh --files /var/lib/kafka/data/topic-0/00000000000000000000.log \
+  --print-data-log | head -20
+</p>
+<h1>Fix:</h1>
+<h1>1. Restart dead brokers</h1>
+<h1>2. Add brokers</h1>
+<h1>3. Improve disk/network</h1>
+<h1>4. Tune GC</h1>
+</code></pre>
+<h3>11.3 Rebalance Storms</h3>
+<pre><code># When rebalance takes too long or happens frequently
+<h1>Cause: session.timeout.ms too short</h1>
+<h1>- Session timeout should allow for processing time</h1>
+<h1>- Usually &gt; 30s, maybe 10 minutes</h1>
+<h1>Cause: consumers leaving unexpectedly</h1>
+<h1>- Check logs for &quot;Member failed to join&quot;</h1>
+<h1>- Verify heartbeats</h1>
+<h1>Solution: sticky assignor</h1>
+<h1>partition.assignment.strategy=org.apache.kafka.clients.consumer.StickyAssignor</h1>
+<h1>Increase rebalance timeout</h1>
+<h1>group.initial.rebalance.delay.ms = 3000</h1>
+<h1>Allows new members to join before rebalance starts</h1>
+</code></pre>
+<hr>
+<p>This deep-dive guide provides comprehensive technical understanding of Kafka's internals, from broker architecture to production troubleshooting.
+</p>
+        </article>
+    </div>
+</body>
+</html>

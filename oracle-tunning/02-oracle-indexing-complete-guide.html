@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Indexing: The Complete Guide for High-Performance WMS Databases</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Indexing: The Complete Guide for High-Performance WMS Databases</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: Indexes Are Not Optional</h2>
+<p>In my 30+ years of Oracle consulting, I've seen one mistake repeated more than any other: developers who write beautiful SQL but ignore the foundation upon which performance is built—the index.
+</p>
+<p>At Manhattan Associates, we process 50,000 inventory movements per hour during peak. Without proper indexing, our WMS would grind to a halt. In this guide, I'll show you exactly which indexes to create and where to avoid them.
+</p>
+<p><strong>The Hard Truth</strong>: Your query might be logically perfect, but without the right index, Oracle will scan every single row in your table. That's the reality of full table scans, and it's the #1 performance killer I see in production WMS systems.
+</p>
+<hr>
+<h2>Chapter 1: How Oracle Actually Uses Indexes</h2>
+<h3>The Myth of "Using an Index"</h3>
+<p>When developers say "my query uses an index," they rarely understand what that actually means. Let me demystify this.
+</p>
+<pre><code>SELECT <em> FROM wms_inventory WHERE sku_id = 'SKU-001';
+</code></pre>
+<p>If there's an index on <code>sku_id</code>, Oracle doesn't just "use it." Here's what really happens:
+</p>
+<ol>
+<li>Oracle reads the index root block</li>
+<li>Traverses the B-tree to find the leaf block containing 'SKU-001'</li>
+<li>Gets the ROWID (physical address) from the index entry</li>
+<li>Uses ROWID to fetch the actual table row</li>
+</ol>
+<p><strong>This is 4 I/O operations</strong> for every single row returned. For 1 million rows, that's 4 million I/Os!
+</p>
+<h3>The Index Selection Decision</h3>
+<p>Oracle decides to use an index based on:
+</p>
+<table><thead><tr><th>Factor</th><th>Threshold</th><th>Result</th></tr></thead><tbody><tr><td>Selectivity</td><td>< 5% rows</td><td>Use index</td></tr><tr><td>Selectivity</td><td>5-20% rows</td><td>Maybe use index</td></tr><tr><td>Selectivity</td><td>> 20% rows</td><td>Full table scan</td></tr><tr><td>Table size</td><td>< 1000 rows</td><td>Always full scan</td></tr><tr><td>Buffer busy</td><td>High contention</td><td>Avoid index</td></tr></tbody></table>
+<p><strong>Donald Sez</strong>: "The optimizer is a cost accountant. It always chooses the cheapest path. Your job is to make the index path cheaper than the table scan."
+</p>
+<h3>The ROWID Reality</h3>
+<p>Every index returns a ROWID—an 18-character string that tells Oracle exactly where the row lives:
+</p>
+<pre><code>AAARoiAAFAAAAAPAAA-0000000001
+<p>|____||_______||_____|
+       Datafile  Block   Row#
+</p>
+</code></pre>
+<p>This is why index-only scans (covering indexes) are so fast—they never touch the table at all!
+</p>
+<hr>
+<h2>Chapter 2: Real-World Index Strategies for WMS</h2>
+<h3>Case Study: The Inventory Location Query</h3>
+<p>At a large 3PL running Manhattan WMS, this query was killing CPU during receiving:
+</p>
+<pre><code>SELECT location_id, sku_id, quantity 
+<p>FROM wms_inventory
+WHERE location_id LIKE 'RACK-A-' || :zone || '%'
+  AND quantity &gt; 0;
+</p>
+</code></pre>
+<p><strong>Execution Plan (Before):</strong>
+</p>
+<pre><code>-------------------------------------------------------------
+<p>| Id  | Operation            | Name                | Cost |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT    |                    | 8234 |
+|   1 |  TABLE ACCESS FULL  | WMS_INVENTORY       | 8234 |
+</p>
+<hr>
+</code></pre>
+<p><strong>Cost: 8234</strong>. This was scanning 12 million rows every time!
+</p>
+<p><strong>The Fix</strong>: Create a proper index
+</p>
+<pre><code>CREATE INDEX wms_inv_loc_qty_idx 
+<p>ON wms_inventory (location_id, quantity)
+COMPUTE STATISTICS;
+</p>
+</code></pre>
+<p><strong>Execution Plan (After):</strong>
+</p>
+<pre><code>-----------------------------------------------------------------
+<p>| Id  | Operation                    | Name                 | Cost |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT             |                     |   12 |
+|   1 |  INDEX RANGE SCAN            | WMS_INV_LOC_QTY_IDX |   12 |
+</p>
+<hr>
+</code></pre>
+<p><strong>Cost: 12</strong>. That's a 99.8% improvement!
+</p>
+<h3>The Composite Index Rule</h3>
+<p><strong>Critical Rule</strong>: In a composite index, put equality conditions first, then range conditions.
+</p>
+<pre><code>-- WRONG: Range first
+<p>CREATE INDEX idx1 ON table (status, region);  -- status is =
+WHERE status = 'PICKING' AND region = 'NE'  -- region is =
+</p>
+<p>-- RIGHT: Put = first
+CREATE INDEX idx2 ON table (region, status);  -- region is =
+WHERE status = 'PICKING' AND region = 'NE'  -- status is =
+</p>
+</code></pre>
+<p>Actually, in this case with both = conditions, column order doesn't matter. But watch this:
+</p>
+<pre><code>-- For this query, region must be FIRST in the index
+<p>WHERE region = 'NE'           -- equality
+  AND status LIKE 'PICK%'     -- range
+</p>
+<p>-- This index works perfectly
+CREATE INDEX idx ON table (region, status);
+</p>
+<p>-- This index CANNOT be used for the range on status
+CREATE INDEX idx ON table (status, region);
+</p>
+</code></pre>
+<h3>The Selectivity Trap</h3>
+<p>Here's a mistake I see constantly at Manhattan Associates:
+</p>
+<pre><code>-- Looks innocent but kills performance
+<p>SELECT </em> FROM wms_order_headers
+WHERE status = 'PENDING';
+</p>
+</code></pre>
+<p>Why? Because 40% of orders are 'PENDING'! With 10 million rows, that's 4 million rows returned—Oracle correctly chooses a full table scan.
+</p>
+<p><strong>The Fix</strong>: Add more predicates to increase selectivity
+</p>
+<pre><code>-- Much better selectivity!
+<p>SELECT <em> FROM wms_order_headers
+WHERE status = 'PENDING'
+  AND order_date &gt;= TRUNC(SYSDATE)
+  AND created_by = 'AUTO_CREATE';
+</p>
+</code></pre>
+<p>Now selectivity is ~0.01%—the index will be used.
+</p>
+<hr>
+<h2>Chapter 3: When NOT to Use Indexes</h2>
+<h3>The DML Overhead Reality</h3>
+<p>Every index is a double-edged sword. Yes, it speeds up SELECTs, but it slows down every INSERT, UPDATE, and DELETE.
+</p>
+<p><strong>At Manhattan Associates, we measure:</strong>
+</p>
+<ul>
+<li><strong>INSERT</strong>: +1 index = ~30% slower</li>
+<li><strong>UPDATE</strong>: +1 index = ~15% slower (depending on indexed columns)</li>
+<li><strong>DELETE</strong>: +1 index = ~20% slower</li>
+</ul>
+<p><strong>Real Example</strong>: The SKU Master Table
+</p>
+<pre><code>-- The SKU table gets 100,000 updates per hour
+<p>-- We removed 3 unused indexes and improved DML by 40%!
+</p>
+<p>-- BEFORE: 5 indexes
+-- - wms_sku_pk (primary key)
+-- - wms_sku_barcode_idx
+-- - wms_sku_category_idx
+-- - wms_sku_vendor_idx      &lt;-- NEVER used in WHERE!
+-- - wms_sku_lookup_idx      &lt;-- NEVER used in WHERE!
+</p>
+<p>-- AFTER: 3 indexes
+-- - wms_sku_pk (primary key)
+-- - wms_sku_barcode_idx     &lt;-- used in scans
+-- - wms_sku_category_idx    &lt;-- used in reports
+</p>
+</code></pre>
+<h3>When Full Table Scan is RIGHT</h3>
+<p>Believe it or not, sometimes you WANT a full table scan:
+</p>
+<ol>
+<li><strong>Returning > 20% of rows</strong>: Index is slower due to ROWID lookups</li>
+<li><strong>Small tables</strong>: < 1000 rows, scanning is faster</li>
+<li><strong>Missing statistics</strong>: Poor optimizer decisions</li>
+<li><strong>Hot blocks</strong>: Buffer busy waits on index access</li>
+</ol>
+<pre><code>-- This should FULL SCAN (returns 80% of table)
+<p>SELECT </em> FROM wms_inventory
+WHERE quantity &gt; 0;  -- Almost all inventory has qty &gt; 0
+</p>
+<p>-- Force the optimizer's hand if it chooses wrong
+SELECT /<em>+ FULL(wms_inventory) </em>/ <em>
+FROM wms_inventory 
+WHERE quantity &gt; 0;
+</p>
+</code></pre>
+<h3>The Function-Based Index Solution</h3>
+<p>Often you need to search on a function, but functions disable indexes:
+</p>
+<pre><code>-- This CANNOT use a normal index
+<p>SELECT </em> FROM wms_inventory WHERE UPPER(sku_desc) = 'ELECTRONICS';
+</p>
+<p>-- The solution: function-based index
+CREATE INDEX wms_inv_sku_desc_upper_idx 
+ON wms_inventory (UPPER(sku_desc));
+</p>
+<p>-- Now it works!
+SELECT <em> FROM wms_inventory WHERE UPPER(sku_desc) = 'ELECTRONICS';
+</p>
+</code></pre>
+<p><strong>Advanced Tip</strong>: For case-insensitive searches, consider:
+</p>
+<pre><code>-- Virtual column index (Oracle 11g+)
+<p>ALTER TABLE wms_inventory
+ADD sku_desc_upper VARCHAR2(200) 
+GENERATED ALWAYS AS (UPPER(sku_desc));
+</p>
+<p>CREATE INDEX wms_inv_sku_upper_vc_idx
+ON wms_inventory (sku_desc_upper);
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 4: Advanced Index Types</h2>
+<h3>Bitmap Indexes: The Data Warehouse Friend</h3>
+<p>For low-cardinality columns in read-heavy environments:
+</p>
+<pre><code>-- Status column has only 5 values, but millions of rows
+<p>-- Perfect for bitmap index!
+</p>
+<p>CREATE BITMAP INDEX wms_ord_status_bix
+ON wms_order_headers (status);
+</p>
+</code></pre>
+<p><strong>Warning</strong>: Never use bitmap indexes on tables with high DML! You'll get massive lock contention.
+</p>
+<h3>Unique Indexes: Enforcing Business Rules</h3>
+<pre><code>-- Ensure no duplicate LPNs in inventory
+<p>CREATE UNIQUE INDEX wms_inv_lpn_uix
+ON wms_inventory (lpn) 
+TABLESPACE idx_tbs;
+</p>
+<p>-- Ensure one active pick per location
+CREATE UNIQUE INDEX wms_pick_active_uix 
+ON wms_pick_tasks (location_id, status) 
+WHERE status = 'ACTIVE';  -- Partial unique index!
+</p>
+</code></pre>
+<h3>Invisible Indexes: The Safe Testing Method</h3>
+<p>Before creating a new index in production, test first!
+</p>
+<pre><code>-- Create but don't use
+<p>CREATE INDEX wms_inv_test_idx
+ON wms_inventory (region, status) 
+VISIBLE;
+</p>
+<p>-- Check if optimizer uses it
+SELECT </em> FROM table(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'ALL'));
+</p>
+<p>-- If it's used and helps, make visible
+ALTER INDEX wms_inv_test_idx VISIBLE;
+</p>
+<p>-- If it causes problems
+DROP INDEX wms_inv_test_idx;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 5: Index Maintenance and Monitoring</h2>
+<h3>Finding Unused Indexes</h3>
+<p>At Manhattan Associates, we run this quarterly:
+</p>
+<pre><code>SELECT 
+<p>i.index_name,
+    i.table_name,
+    s.scans,
+    s.gets,
+    s.rows_per_get
+FROM dba_indexes i
+JOIN (
+    SELECT 
+        index_name, 
+        sum(total_executions) as scans,
+        sum(total_physical_read_bytes) / 1024 / 1024 as gets,
+        sum(total_rows_returned) / NULLIF(sum(total_executions), 0) as rows_per_get
+    FROM v$object_usage
+    GROUP BY index_name
+) s ON i.index_name = s.index_name
+WHERE i.owner = 'WMSUSER'
+  AND s.scans = 0;
+</p>
+</code></pre>
+<p><strong>Result</strong>: We've identified and dropped 47 unused indexes, saving ~200GB of storage and improving DML by 15%!
+</p>
+<h3>Monitoring Index Fragmentation</h3>
+<pre><code>SELECT 
+<p>index_name,
+    blevel,
+    leaf_blocks,
+    del_lf_rows,
+    pct_used,
+    last_analyzed
+FROM dba_indexes 
+WHERE owner = 'WMSUSER'
+  AND blevel &gt; 3;  -- Height &gt; 3 is concerning
+</p>
+</code></pre>
+<p><strong>If blevel is high</strong>, rebuild the index:
+</p>
+<pre><code>ALTER INDEX wms_ord_pk REBUILD 
+<p>TABLESPACE idx_tbs
+COMPUTE STATISTICS;
+</p>
+</code></pre>
+<h3>The Index Rebuild Decision</h3>
+<p><strong>When to rebuild:</strong>
+</p>
+<ul>
+<li>Blevel > 3</li>
+<li>Del_lf_rows / (lf_rows + 1) > 20%</li>
+<li>Height > 4</li>
+</ul>
+<p><strong>When NOT to rebuild:</strong>
+</p>
+<ul>
+<li>On regularly analyzed tables</li>
+<li>With Oracle 11g+ (automatic segment space management handles this)</li>
+</ul>
+<hr>
+<h2>Chapter 6: The Manhattan Associates Index Standard</h2>
+<p>After decades of WMS tuning, here's our index standard:
+</p>
+<h3>Required Indexes on Every Table</h3>
+<ol>
+<li><strong>Primary key</strong> (always)</li>
+<li><strong>Foreign keys</strong> (if queried)</li>
+<li><strong>Columns in WHERE</strong> (if selectivity < 20%)</li>
+</ol>
+<h3>Index Naming Convention</h3>
+<pre><code>[wms]_[table]_[col1_col2]_idx
+<p>Example: wms_inv_sku_loc_idx
+</p>
+</code></pre>
+<h3>Our Default Index Structure</h3>
+<pre><code>-- For lookup tables: B-tree, all columns in WHERE
+<p>CREATE INDEX wms_lookup_idx
+ON wms_locations (location_id, location_type, zone_id)
+COMPUTE STATISTICS;
+</p>
+<p>-- For history tables: Partition by date, index partition key
+CREATE INDEX wms_inv_hist_region_idx 
+ON wms_inventory_history (region_id, transaction_date)
+LOCAL 
+COMPUTE STATISTICS;
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: Indexing Is Both Art and Science</h2>
+<p><strong>Donald Sez</strong>: "There's no magic formula for indexes. You must measure, test, and monitor. The index you create today might be the unused index you drop next year."
+</p>
+<p>The Manhattan Associates approach:
+</p>
+<ol>
+<li><strong>Start with primary/foreign keys</strong> - These are required</li>
+<li><strong>Add indexes for WHERE clauses</strong> - Monitor their use</li>
+<li><strong>Test with production volume</strong> - Development doesn't show reality</li>
+<li><strong>Remove unused indexes</strong> - They cost more than you think</li>
+<li><strong>Monitor continuously</strong> - Data changes, index needs change</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "Oracle Execution Plans Demystified: Read the Plan, Find the Problem" - Deep dive into interpreting and fixing bad execution plans.
+</p>
+        </article>
+    </div>
+</body>
+</html>

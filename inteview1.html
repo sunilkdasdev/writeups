@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏦 Deep Technical Answers for Backend Engineer - JPMorgan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>🏦 Deep Technical Answers for Backend Engineer - JPMorgan</h1>
+<hr>
+<h2>🎯 Core Java & JVM</h2>
+<h3>Q1: How does HashMap work internally? What's the time complexity?</h3>
+<pre><code>graph TD
+<p>A[&quot;Key: apple&quot;] --&gt; B[&quot;hashCode: 12345&quot;]
+    B --&gt; C[&quot;Index: 12345 % 16 = 9&quot;]
+    C --&gt; D[Array Index 9]
+    D --&gt; E&#123;Is bucket empty?&#125;
+    E --&gt;|Yes| F[Create Node]
+    E --&gt;|No| G[Check existing keys]
+    G --&gt; H&#123;Keys equal?&#125;
+    H --&gt;|Yes| I[Replace value]
+    H --&gt;|No| J[Add to linked list / tree]
+</p>
+</code></pre>
+<p>HashMap works on the principle of <strong>hashing</strong> with an underlying array of <code>Node<K,V></code> called <strong>buckets</strong>.
+</p>
+<p><strong>Internal Structure:</strong>
+</p>
+<ul>
+<li>Default initial capacity: <strong>16</strong> buckets</li>
+<li>Default load factor: <strong>0.75</strong></li>
+<li>Threshold = capacity × load factor (16 × 0.75 = 12)</li>
+</ul>
+<p><strong>Put Operation:</strong>
+</p>
+<ol>
+<li><code>hashCode()</code> is called on the key</li>
+<li>Hash is perturbed: <code>h = key.hashCode() ^ (h >>> 16)</code> to distribute bits</li>
+<li>Index = <code>(n - 1) & hash</code> (where n is array length)</li>
+<li>At calculated index:</li>
+</ol>
+<ul>
+<li>If empty → create node</li>
+<li>If collision → traverse linked list (or tree)</li>
+<li>If key exists → replace value</li>
+<li>If new key → add to chain</li>
+</ul>
+<p><strong>Java 8+ Optimization:</strong>
+</p>
+<ul>
+<li>When collision count > 8 <strong>AND</strong> total buckets > 64, linked list converts to <strong>Red-Black Tree</strong> (O(n) → O(log n))</li>
+<li>When tree size < 6, converts back to linked list</li>
+</ul>
+<p><strong>Time Complexity:</strong>
+</p>
+<table><thead><tr><th>Case</th><th>Complexity</th></tr></thead><tbody><tr><td>Best case (no collisions)</td><td>O(1)</td></tr><tr><td>Worst case (all keys same bucket, before treeify)</td><td>O(n)</td></tr><tr><td>After treeify</td><td>O(log n)</td></tr></tbody></table>
+<p><strong>Thread Safety:</strong> Not thread-safe. Concurrent modification can cause infinite loops (pre-Java 8), data corruption, or <code>ConcurrentModificationException</code>.
+</p>
+<p><strong>Memory:</strong> Each node stores hash, key, value, and next pointer (~32–48 bytes per entry).
+</p>
+<hr>
+<h3>Q2: ConcurrentHashMap vs Collections.synchronizedMap()</h3>
+<pre><code>graph TB
+<p>subgraph SM[&quot;Collections.synchronizedMap()&quot;]
+        A[Map Object] --&gt; B[Synchronized Wrapper]
+        B --&gt; C[Lock on entire map]
+        C --&gt; D[Thread 1 blocks Thread 2]
+    end
+</p>
+<p>subgraph CHM[&quot;ConcurrentHashMap (Java 8+)&quot;]
+        E[Map] --&gt; F[Segment 0]
+        E --&gt; G[Segment 1]
+        E --&gt; H[Segment N]
+        F --&gt; I[Lock per bin]
+        G --&gt; J[Lock per bin]
+        H --&gt; K[Lock per bin]
+    end
+</p>
+</code></pre>
+<table><thead><tr><th>Feature</th><th>Collections.synchronizedMap()</th><th>ConcurrentHashMap</th></tr></thead><tbody><tr><td><strong>Locking</strong></td><td>Entire map locked</td><td>Bucket-level (CAS + synchronized)</td></tr><tr><td><strong>Concurrent Reads</strong></td><td>Blocks (shared lock)</td><td>Fully concurrent, no blocking</td></tr><tr><td><strong>Concurrent Writes</strong></td><td>One at a time</td><td>Different buckets simultaneously</td></tr><tr><td><strong>Iterator</strong></td><td>Fail-fast (throws ConcurrentModificationException)</td><td>Weakly consistent (doesn't throw)</td></tr><tr><td><strong>Null keys/values</strong></td><td>Allowed</td><td>Not allowed</td></tr><tr><td><strong>Performance</strong></td><td>Degrades with contention</td><td>Scales linearly with cores</td></tr></tbody></table>
+<p><strong>ConcurrentHashMap Internals (Java 8+):</strong>
+</p>
+<ul>
+<li><code>transient volatile Node<K,V>[] table</code> — volatile array for visibility</li>
+<li><strong>CAS (Compare-And-Swap)</strong> for lock-free operations on empty bins</li>
+<li><strong><code>synchronized</code></strong> only on specific bins during write collisions</li>
+<li><strong><code>size()</code></strong> uses <code>baseCount</code> + <code>CounterCell</code> array to avoid contention</li>
+<li><strong>Multi-threaded resize</strong> — <code>ForwardingNode</code> marks migrated buckets; concurrent reads continue during resize</li>
+</ul>
+<hr>
+<h3>Q3: Garbage Collection — Algorithms and Selection</h3>
+<pre><code>graph TD
+<p>subgraph JVM[&quot;JVM Memory&quot;]
+        Y[Young Generation] --&gt; Eden
+        Y --&gt; S0[Survivor Space 0]
+        Y --&gt; S1[Survivor Space 1]
+        O[Old Generation] --&gt; Tenured
+        M[Metaspace] --&gt; ClassMeta[Class Metadata]
+    end
+</p>
+</code></pre>
+<p><strong>Memory Generations:</strong>
+</p>
+<ol>
+<li><strong>Young Generation</strong> (Eden + Survivor S0/S1) — new objects; Minor GC when Eden fills</li>
+<li><strong>Old Generation</strong> (Tenured) — long-lived objects; Major GC</li>
+<li><strong>Metaspace</strong> (Java 8+, replaces PermGen) — class metadata in native memory</li>
+</ol>
+<p><strong>GC Algorithms:</strong>
+</p>
+<table><thead><tr><th>GC</th><th>Description</th><th>Flag</th><th>Use Case</th></tr></thead><tbody><tr><td><strong>Serial</strong></td><td>Single-thread, stop-the-world</td><td><code>-XX:+UseSerialGC</code></td><td>Small heaps, single-threaded apps</td></tr><tr><td><strong>Parallel</strong></td><td>Multi-thread, throughput-focused</td><td><code>-XX:+UseParallelGC</code></td><td>Batch processing</td></tr><tr><td><strong>CMS</strong></td><td>Concurrent sweep, low pause <em>(deprecated Java 14)</em></td><td><code>-XX:+UseConcMarkSweepGC</code></td><td>Low-latency (legacy)</td></tr><tr><td><strong>G1</strong></td><td>Region-based, predictable pauses <em>(default Java 9+)</em></td><td><code>-XX:+UseG1GC</code></td><td>Most production workloads</td></tr><tr><td><strong>ZGC</strong></td><td>Colored pointers, sub-millisecond pauses</td><td><code>-XX:+UseZGC</code></td><td>Ultra-low latency, huge heaps</td></tr></tbody></table>
+<p><strong>G1 How It Works:</strong>
+</p>
+<ul>
+<li>Heap divided into <strong>regions</strong> (1–32 MB each)</li>
+<li>Concurrent global marking identifies live objects</li>
+<li><strong>Mixed collections</strong> collect young + old regions</li>
+<li>Remembered Sets track cross-region references</li>
+</ul>
+<p><strong>GC Selection Guide:</strong>
+</p>
+<table><thead><tr><th>Requirement</th><th>GC Choice</th></tr></thead><tbody><tr><td>Throughput</td><td>Parallel</td></tr><tr><td>Low latency (<100ms)</td><td>G1</td></tr><tr><td>Ultra-low latency (<10ms)</td><td>ZGC / Shenandoah</td></tr><tr><td>Small heap (<4 GB)</td><td>Serial / Parallel</td></tr><tr><td>Large heap (>100 GB)</td><td>G1 / ZGC</td></tr></tbody></table>
+<p><strong>Useful Flags:</strong>
+</p>
+<pre><code>-XX:+UseG1GC
+<p>-XX:MaxGCPauseMillis=200
+-XX:G1HeapRegionSize=16m
+-Xms4g -Xmx4g
+-XX:+PrintGCDetails -Xloggc:gc.log
+</p>
+</code></pre>
+<hr>
+<h3>Q4: Thread Dump Analysis for Production Debugging</h3>
+<pre><code>graph TD
+<p>A[Thread Dump] --&gt; B&#123;Analyze Patterns&#125;
+    B --&gt; C[BLOCKED - waiting on locks]
+    B --&gt; D[RUNNABLE - hot loops]
+    B --&gt; E[WAITING - pool starvation]
+    B --&gt; F[Deadlock detection]
+    C --&gt; G[Check lock owners / contention]
+    D --&gt; H[Look for CPU spikes]
+    E --&gt; I[Pool size too small?]
+    F --&gt; J[Circular wait detected]
+</p>
+</code></pre>
+<p><strong>Capturing Thread Dumps:</strong>
+</p>
+<pre><code># jstack
+<p>jstack -l &lt;pid&gt; &gt; threaddump.txt
+</p>
+<h1>jcmd</h1>
+<p>jcmd &lt;pid&gt; Thread.print
+</p>
+<h1>Unix signal</h1>
+<p>kill -3 &lt;pid&gt;
+</p>
+<h1>Kubernetes</h1>
+<p>kubectl exec &lt;pod&gt; -- jstack 1 &gt; threaddump.txt
+</p>
+</code></pre>
+<p><strong>Programmatic capture:</strong>
+</p>
+<pre><code>ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+<p>ThreadInfo[] infos = bean.dumpAllThreads(true, true);
+for (ThreadInfo info : infos) System.out.println(info);
+</p>
+</code></pre>
+<p><strong>Thread States:</strong>
+</p>
+<table><thead><tr><th>State</th><th>Meaning</th><th>Problem Indicator</th></tr></thead><tbody><tr><td><strong>RUNNABLE</strong></td><td>Executing</td><td>Same method repeatedly → infinite loop</td></tr><tr><td><strong>BLOCKED</strong></td><td>Waiting for monitor</td><td>Contention / deadlocks</td></tr><tr><td><strong>WAITING</strong></td><td>park() / wait()</td><td>Pool starvation</td></tr><tr><td><strong>TIMED_WAITING</strong></td><td>sleep() / wait(timeout)</td><td>Normal for thread pools</td></tr><tr><td><strong>TERMINATED</strong></td><td>Finished</td><td>Check if premature</td></tr></tbody></table>
+<p><strong>CPU Spike Investigation:</strong>
+</p>
+<pre><code># Find CPU-heavy thread
+<p>top -H -p &lt;pid&gt;
+</p>
+<h1>Convert TID to hex</h1>
+<p>printf &quot;%x\n&quot; &lt;thread_id&gt;
+</p>
+<h1>Find in dump</h1>
+<p>grep -A 20 &quot;nid=0x&lt;hex_id&gt;&quot; threaddump.txt
+</p>
+</code></pre>
+<p><strong>Automated Deadlock Detection:</strong>
+</p>
+<pre><code>ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+<p>scheduler.scheduleAtFixedRate(() -&gt; &#123;
+    long[] deadlocked = ManagementFactory.getThreadMXBean().findDeadlockedThreads();
+    if (deadlocked != null) alert(&quot;Deadlock detected!&quot;);
+&#125;, 0, 1, TimeUnit.MINUTES);
+</p>
+</code></pre>
+<p><strong>Key Takeaways:</strong>
+</p>
+<ul>
+<li>Always take <strong>3–5 thread dumps</strong> at intervals to see progression</li>
+<li>Correlate with CPU/memory metrics</li>
+<li><strong>BLOCKED</strong> chains → contention points</li>
+<li><strong>WAITING</strong> on locks → pool exhaustion</li>
+<li><strong>RUNNABLE</strong> in same method → infinite loop or busy-wait</li>
+</ul>
+<hr>
+<h2>⚡ Spring Boot & Microservices</h2>
+<h3>Q1: Spring Boot Auto-configuration</h3>
+<pre><code>graph TD
+<p>A[&quot;@SpringBootApplication&quot;] --&gt; B[EnableAutoConfiguration]
+    B --&gt; C[&quot;META-INF/spring.factories&quot;]
+    C --&gt; D[Auto-configuration classes]
+    D --&gt; E&#123;Conditional checks&#125;
+    E --&gt; F[ConditionalOnClass]
+    E --&gt; G[ConditionalOnMissingBean]
+    E --&gt; H[ConditionalOnProperty]
+    E --&gt; I[ConditionalOnWebApplication]
+    F --&gt; J[Configure beans]
+    G --&gt; J
+    H --&gt; J
+    I --&gt; J
+</p>
+</code></pre>
+<code>@SpringBootApplication</code> = <code>@Configuration</code> + <code>@EnableAutoConfiguration</code> + <code>@ComponentScan</code>
+<p><strong>Key Conditional Annotations:</strong>
+</p>
+<table><thead><tr><th>Annotation</th><th>Purpose</th></tr></thead><tbody><tr><td><code>@ConditionalOnClass</code></td><td>Configure if class is on classpath</td></tr><tr><td><code>@ConditionalOnMissingBean</code></td><td>Configure if bean not already defined</td></tr><tr><td><code>@ConditionalOnProperty</code></td><td>Based on property value</td></tr><tr><td><code>@ConditionalOnBean</code></td><td>If specific bean exists</td></tr><tr><td><code>@ConditionalOnWebApplication</code></td><td>Only in web context</td></tr></tbody></table>
+<p><strong>How DataSource Auto-configuration Works:</strong>
+</p>
+<pre><code>@Configuration
+<p>@ConditionalOnClass(DataSource.class)
+@ConditionalOnMissingBean(DataSource.class)
+@EnableConfigurationProperties(DataSourceProperties.class)
+public class DataSourceAutoConfiguration &#123;
+</p>
+<p>@Bean
+    @ConditionalOnProperty(name = &quot;spring.datasource.url&quot;)
+    public DataSource dataSource(DataSourceProperties properties) &#123;
+        return properties.initializeDataSourceBuilder().build();
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Override Auto-configuration:</strong>
+</p>
+<pre><code>// Define your own bean — overrides auto-config
+<p>@Bean
+public DataSource dataSource() &#123; return new HikariDataSource(); &#125;
+</p>
+<p>// Exclude entirely
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+</p>
+</code></pre>
+<p><strong>Debug auto-config report:</strong>
+</p>
+<pre><code>debug: true
+</code></pre>
+<hr>
+<h3>Q2: @Component vs @Service vs @Repository vs @Controller</h3>
+<pre><code>graph TD
+<p>A[&quot;@Component (base)&quot;] --&gt; C[&quot;@Service - Business Logic&quot;]
+    A --&gt; D[&quot;@Repository - Data Access&quot;]
+    A --&gt; E[&quot;@Controller - Web Layer&quot;]
+</p>
+</code></pre>
+<table><thead><tr><th>Annotation</th><th>Layer</th><th>Special Behavior</th></tr></thead><tbody><tr><td><code>@Component</code></td><td>Generic</td><td>None</td></tr><tr><td><code>@Service</code></td><td>Business</td><td>Semantic clarity; transaction boundaries</td></tr><tr><td><code>@Repository</code></td><td>Persistence</td><td><strong>Exception translation</strong> (vendor exceptions → <code>DataAccessException</code>)</td></tr><tr><td><code>@Controller</code></td><td>Web</td><td>View resolution</td></tr><tr><td><code>@RestController</code></td><td>Web</td><td>= <code>@Controller</code> + <code>@ResponseBody</code></td></tr></tbody></table>
+<p><strong>Why separate annotations?</strong> They enable layer-specific AOP pointcuts:
+</p>
+<pre><code>@Pointcut(&quot;@within(org.springframework.stereotype.Service)&quot;)
+<p>public void serviceMethods() &#123;&#125;
+</p>
+<p>@Around(&quot;serviceMethods()&quot;)
+public Object transactional(ProceedingJoinPoint pjp) &#123; /<em> Start transaction </em>/ &#125;
+</p>
+</code></pre>
+<p>Spring uses <code>@Repository</code> to trigger <code>PersistenceExceptionTranslationPostProcessor</code>, and <code>@Controller</code> for web mapping registration.
+</p>
+<hr>
+<h3>Q3: Service Discovery & API Gateway</h3>
+<pre><code>graph TB
+<p>C[Client] --&gt;|1. Request| G[API Gateway]
+    G --&gt;|2. Lookup| E[Eureka Server]
+    E --&gt;|3. Return instances| G
+    G --&gt;|4. Route| S1[Service A - Instance 1]
+    G --&gt;|4. Route| S2[Service A - Instance 2]
+    S1 --&gt;|5. Heartbeat| E
+    S2 --&gt;|5. Heartbeat| E
+</p>
+</code></pre>
+<p><strong>Eureka Server:</strong>
+</p>
+<pre><code>@SpringBootApplication
+<p>@EnableEurekaServer
+public class ServiceRegistryApplication &#123; ... &#125;
+</p>
+</code></pre>
+<p><strong>Eureka Client config:</strong>
+</p>
+<pre><code>spring:
+<p>application:
+    name: payment-service
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+</p>
+</code></pre>
+<p><strong>Spring Cloud Gateway Route Example:</strong>
+</p>
+<pre><code>@Bean
+<p>public RouteLocator routes(RouteLocatorBuilder builder) &#123;
+    return builder.routes()
+        .route(&quot;payment-service&quot;, r -&gt; r
+            .path(&quot;/api/payments/<strong>&quot;)
+            .filters(f -&gt; f
+                .circuitBreaker(c -&gt; c.setName(&quot;paymentCB&quot;)
+                    .setFallbackUri(&quot;forward:/fallback/payments&quot;))
+                .retry(c -&gt; c.setRetries(3)
+                    .setStatuses(HttpStatus.SERVICE_UNAVAILABLE))
+                .requestRateLimiter(c -&gt; c.setRateLimiter(redisRateLimiter())))
+            .uri(&quot;lb://payment-service&quot;))
+        .build();
+&#125;
+</p>
+</code></pre>
+</strong>API Gateway Responsibilities:<strong>
+<table><thead><tr><th>Responsibility</th><th>Implementation</th></tr></thead><tbody><tr><td>Routing</td><td>Path-based rules</td></tr><tr><td>Load Balancing</td><td>Spring Cloud LoadBalancer</td></tr><tr><td>Authentication</td><td>JWT / OAuth2 validation</td></tr><tr><td>Rate Limiting</td><td>Redis token bucket</td></tr><tr><td>Circuit Breaking</td><td>Resilience4J</td></tr><tr><td>Monitoring</td><td>Micrometer metrics</td></tr></tbody></table>
+</strong>Discovery Solutions Comparison:<strong>
+<table><thead><tr><th>Feature</th><th>Eureka</th><th>Consul</th><th>Kubernetes</th></tr></thead><tbody><tr><td></strong>CAP<strong></td><td>AP</td><td>CP</td><td>AP (etcd)</td></tr><tr><td></strong>Health Check<strong></td><td>Client heartbeat</td><td>Service check</td><td>Readiness/liveness</td></tr><tr><td></strong>Multi-DC<strong></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td></strong>KV Store<strong></td><td>No</td><td>Yes</td><td>Yes (ConfigMap)</td></tr></tbody></table>
+<hr>
+<h2>🔄 Messaging & Event-Driven Architecture</h2>
+<h3>Q1: Kafka vs RabbitMQ vs ActiveMQ</h3>
+</strong>Kafka — Distributed Event Streaming<strong>
+<p>Best for: high throughput (millions of msgs/sec), event sourcing, stream processing, log aggregation, long-term retention.
+</p>
+<pre><code>Properties props = new Properties();
+<p>props.put(&quot;acks&quot;, &quot;all&quot;);
+props.put(&quot;enable.idempotence&quot;, true);
+props.put(&quot;transactional.id&quot;, &quot;order-service-1&quot;);
+</p>
+<p>KafkaProducer&lt;String, String&gt; producer = new KafkaProducer&lt;&gt;(props);
+producer.initTransactions();
+try &#123;
+    producer.beginTransaction();
+    producer.send(new ProducerRecord&lt;&gt;(&quot;orders&quot;, key, value));
+    producer.commitTransaction();
+&#125; catch (Exception e) &#123;
+    producer.abortTransaction();
+&#125;
+</p>
+</code></pre>
+</strong>RabbitMQ — Smart Broker, Flexible Routing<strong>
+<p>Best for: complex routing (exchange types), task distribution, RPC / request-reply, low latency (<1ms).
+</p>
+<pre><code>@Bean
+<p>public TopicExchange ordersExchange() &#123;
+    return ExchangeBuilder.topicExchange(&quot;orders&quot;).durable(true).build();
+&#125;
+</p>
+<p>@Bean
+public Queue paymentQueue() &#123;
+    return QueueBuilder.durable(&quot;payments&quot;)
+        .withArgument(&quot;x-dead-letter-exchange&quot;, &quot;orders.dlx&quot;)
+        .withArgument(&quot;x-message-ttl&quot;, 60000)
+        .build();
+&#125;
+</p>
+<p>@RabbitListener(queues = &quot;payment.queue&quot;)
+@SendTo(&quot;payment.reply.queue&quot;)
+public String handlePayment(String message) &#123;
+    return &quot;Processed: &quot; + message;
+&#125;
+</p>
+</code></pre>
+</strong>ActiveMQ — JMS Standard, Enterprise Features<strong>
+<p>Best for: JMS compliance (Jakarta EE), XA distributed transactions, Java EE app servers, protocol bridging.
+</p>
+<pre><code>@Transactional
+<p>public void processOrder(Order order) &#123;
+    jmsTemplate.convertAndSend(&quot;order.queue&quot;, order); // JMS send
+    orderRepository.save(order);                       // DB write
+    // Both commit or rollback together via XA
+&#125;
+</p>
+</code></pre>
+</strong>Comparison Table:<strong>
+<table><thead><tr><th>Feature</th><th>Kafka</th><th>RabbitMQ</th><th>ActiveMQ</th></tr></thead><tbody><tr><td></strong>Throughput<strong></td><td>1M+ msgs/sec</td><td>~50k msgs/sec</td><td>~10k msgs/sec</td></tr><tr><td></strong>Latency<strong></td><td>10–100ms</td><td><1ms</td><td>1–10ms</td></tr><tr><td></strong>Message Model<strong></td><td>Pull-based</td><td>Push-based</td><td>Push-based</td></tr><tr><td></strong>Ordering<strong></td><td>Within partition</td><td>Per queue</td><td>Per queue</td></tr><tr><td></strong>Retention<strong></td><td>Configurable (days/weeks)</td><td>Until acked</td><td>Until acked</td></tr><tr><td></strong>Routing<strong></td><td>Topic only</td><td>Exchange types</td><td>JMS selectors</td></tr><tr><td></strong>Exactly-once<strong></td><td>Yes (since 0.11)</td><td>No</td><td>No</td></tr><tr><td></strong>Transactions<strong></td><td>Producer/consumer txn</td><td>AMQP txns</td><td>XA, JMS txn</td></tr></tbody></table>
+</strong>Selection Guide:<strong>
+<table><thead><tr><th>Requirement</th><th>Recommended</th></tr></thead><tbody><tr><td>Message replay</td><td></strong>Kafka<strong></td></tr><tr><td>Low latency (<5ms)</td><td></strong>RabbitMQ<strong></td></tr><tr><td>JMS / Java EE</td><td></strong>ActiveMQ<strong></td></tr><tr><td>Distributed transactions (XA)</td><td></strong>ActiveMQ<strong></td></tr><tr><td>Stream processing</td><td></strong>Kafka<strong></td></tr><tr><td>Complex routing</td><td></strong>RabbitMQ<strong></td></tr><tr><td>Long retention</td><td></strong>Kafka<strong></td></tr></tbody></table>
+<hr>
+<h3>Q2: Exactly-once vs At-least-once vs At-most-once</h3>
+<table><thead><tr><th>Aspect</th><th>At-Most-Once</th><th>At-Least-Once</th><th>Exactly-Once</th></tr></thead><tbody><tr><td></strong>Durability<strong></td><td>May lose messages</td><td>Never lost</td><td>Never lost</td></tr><tr><td></strong>Duplicates<strong></td><td>No</td><td>Possible</td><td>No</td></tr><tr><td></strong>Throughput<strong></td><td>Highest</td><td>Medium</td><td>Lowest</td></tr><tr><td></strong>Complexity<strong></td><td>Simple</td><td>Medium</td><td>Complex</td></tr><tr><td></strong>Idempotency needed<strong></td><td>No</td><td>Yes</td><td>Yes</td></tr><tr><td></strong>Transactions<strong></td><td>No</td><td>No</td><td>Yes</td></tr></tbody></table>
+</strong>At-Most-Once (Fire and Forget):<strong>
+<pre><code>props.put(&quot;acks&quot;, &quot;0&quot;); // No acknowledgment — may lose
+</code></pre>
+<p>Use for: metrics, heartbeats, non-critical logs.
+</p>
+</strong>At-Least-Once:<strong>
+<pre><code>props.put(&quot;acks&quot;, &quot;all&quot;);
+<p>props.put(&quot;retries&quot;, 10);
+// Consumer commits AFTER processing
+consumer.commitSync();
+</p>
+</code></pre>
+<p>Use for: most business events (requires idempotent consumers).
+</p>
+</strong>Exactly-Once (Kafka):<strong>
+<pre><code>props.put(&quot;enable.idempotence&quot;, true);
+<p>props.put(&quot;transactional.id&quot;, &quot;order-service-1&quot;);
+props.put(&quot;isolation.level&quot;, &quot;read_committed&quot;); // Consumer side
+</p>
+<p>producer.initTransactions();
+producer.beginTransaction();
+producer.send(record);
+producer.sendOffsetsToTransaction(offsets, groupMetadata);
+producer.commitTransaction();
+</p>
+</code></pre>
+</strong>Idempotent Consumer Pattern:<strong>
+<pre><code>@Transactional
+<p>public void handleMessage(String messageId, Order order) &#123;
+    if (processedRepo.existsById(messageId)) return; // Already handled
+</p>
+<p>orderRepository.save(order);
+    processedRepo.save(new ProcessedMessage(messageId));
+    // Both commit or rollback together
+&#125;
+</p>
+</code></pre>
+</strong>JPMorgan Use Cases:<strong>
+<table><thead><tr><th>Use Case</th><th>Delivery Semantic</th></tr></thead><tbody><tr><td>Stock trades</td><td>Exactly-once</td></tr><tr><td>Order placements</td><td>Exactly-once</td></tr><tr><td>Audit logs</td><td>Exactly-once</td></tr><tr><td>Notifications</td><td>At-least-once</td></tr><tr><td>Analytics events</td><td>At-most-once</td></tr><tr><td>Heartbeats</td><td>At-most-once</td></tr></tbody></table>
+<hr>
+<h2>🗄️ Databases & Data Modeling</h2>
+<h3>Q1: Nth Highest Salary — Multiple Approaches</h3>
+</strong>Sample Schema:<strong>
+<pre><code>CREATE TABLE employees (
+<p>id INT PRIMARY KEY,
+    name VARCHAR(100),
+    salary DECIMAL(10,2),
+    department_id INT
+);
+</p>
+</code></pre>
+</strong>Approach 1 — LIMIT/OFFSET (MySQL, PostgreSQL):<strong>
+<pre><code>SELECT DISTINCT salary
+<p>FROM employees
+ORDER BY salary DESC
+LIMIT 1 OFFSET 2; -- N=3, OFFSET = N-1
+</p>
+</code></pre>
+</strong>Approach 2 — ROW_NUMBER():<strong>
+<pre><code>WITH ranked AS (
+<p>SELECT salary,
+           ROW_NUMBER() OVER (ORDER BY salary DESC) AS rn
+    FROM (SELECT DISTINCT salary FROM employees) t
+)
+SELECT salary FROM ranked WHERE rn = 3;
+</p>
+</code></pre>
+</strong>Approach 3 — DENSE_RANK() (handles ties correctly):<strong>
+<pre><code>WITH ranked AS (
+<p>SELECT salary,
+           DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+)
+SELECT DISTINCT salary FROM ranked WHERE rnk = 3;
+-- Ranks: 100000-&gt;1, 90000-&gt;2, 85000-&gt;3 (no gaps)
+</p>
+</code></pre>
+</strong>Approach 4 — Correlated Subquery:<strong>
+<pre><code>SELECT DISTINCT salary
+<p>FROM employees e1
+WHERE 3 = (
+    SELECT COUNT(DISTINCT salary)
+    FROM employees e2
+    WHERE e2.salary &gt;= e1.salary
+);
+</p>
+</code></pre>
+</strong>Comparison:<strong>
+<table><thead><tr><th>Approach</th><th>Pros</th><th>Cons</th><th>Best For</th></tr></thead><tbody><tr><td>LIMIT/OFFSET</td><td>Simple</td><td>Scans large result</td><td>Small tables</td></tr><tr><td>ROW_NUMBER()</td><td>Standard, handles ties</td><td>Window sort overhead</td><td>PostgreSQL, Oracle</td></tr><tr><td>DENSE_RANK()</td><td>No rank gaps</td><td>Slightly more compute</td><td>When rank semantics matter</td></tr><tr><td>Correlated subquery</td><td>Works everywhere</td><td>Slow on large tables</td><td>Legacy databases</td></tr></tbody></table>
+<hr>
+<h3>Q2: ACID Properties in Detail</h3>
+<pre><code>graph TD
+<p>A[Atomicity - All or Nothing] --&gt; T[Transaction]
+    B[Consistency - Valid State Only] --&gt; T
+    C[Isolation - Concurrent Execution] --&gt; T
+    D[Durability - Persisted After Commit] --&gt; T
+    T --&gt; E[&quot;Account A: -$100&quot;]
+    T --&gt; F[&quot;Account B: +$100&quot;]
+</p>
+</code></pre>
+</strong>1. Atomicity<strong>
+<pre><code>@Transactional
+<p>public void transferMoney(Long fromId, Long toId, BigDecimal amount) &#123;
+    accountRepository.withdraw(fromId, amount);
+    accountRepository.deposit(toId, amount);
+    // If either fails, both roll back
+&#125;
+</p>
+</code></pre>
+<p>Implemented via </strong>Write-Ahead Logging (WAL)<strong> and undo logs.
+</p>
+</strong>2. Consistency<strong>
+<p>Database constraints enforce consistency:
+</p>
+<pre><code>CREATE TABLE accounts (
+<p>id INT PRIMARY KEY,
+    balance DECIMAL(10,2) CHECK (balance &gt;= 0),
+    account_type VARCHAR(20) CHECK (account_type IN ('SAVINGS', 'CHECKING')),
+    customer_id INT REFERENCES customers(id)
+);
+</p>
+</code></pre>
+</strong>3. Isolation — Levels and Phenomena<strong>
+<table><thead><tr><th>Isolation Level</th><th>Dirty Read</th><th>Non-repeatable Read</th><th>Phantom Read</th></tr></thead><tbody><tr><td>READ UNCOMMITTED</td><td>Allowed</td><td>Allowed</td><td>Allowed</td></tr><tr><td>READ COMMITTED</td><td>Prevented</td><td>Allowed</td><td>Allowed</td></tr><tr><td>REPEATABLE READ</td><td>Prevented</td><td>Prevented</td><td>Allowed</td></tr><tr><td>SERIALIZABLE</td><td>Prevented</td><td>Prevented</td><td>Prevented</td></tr></tbody></table>
+</strong>4. Durability<strong>
+<pre><code>-- PostgreSQL durability settings
+<p>synchronous_commit = on  -- Wait for WAL flush
+fsync = on               -- Force OS to flush to disk
+full_page_writes = on    -- Prevent partial page writes
+</p>
+</code></pre>
+</strong>JPMorgan — Isolation Level Selection:<strong>
+<table><thead><tr><th>Requirement</th><th>Isolation Level</th></tr></thead><tbody><tr><td>Account balance / trade execution</td><td>SERIALIZABLE</td></tr><tr><td>Order history reads</td><td>REPEATABLE READ</td></tr><tr><td>Read-only reporting</td><td>READ COMMITTED</td></tr><tr><td>Real-time analytics</td><td>READ UNCOMMITTED</td></tr></tbody></table>
+<pre><code>@Transactional(isolation = Isolation.SERIALIZABLE)
+<p>public Trade executeTrade(TradeOrder order) &#123;
+    Account account = accountRepository.findById(order.getAccountId());
+    if (account.getBalance().compareTo(order.getAmount()) &lt; 0)
+        throw new InsufficientFundsException();
+</p>
+<p>Trade trade = tradeRepository.save(order.toTrade());
+    account.setBalance(account.getBalance().subtract(order.getAmount()));
+    accountRepository.save(account);
+    return trade;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>🏗️ System Design</h2>
+<h3>Q1: Payment Processing System Design</h3>
+<pre><code>graph TD
+<p>Client --&gt;|1. Payment Request| API[API Gateway]
+    API --&gt;|2. Route| PS[Payment Service]
+</p>
+<p>subgraph PaySvc[&quot;Payment Service&quot;]
+        PS --&gt; V[Validator]
+        PS --&gt; PE[Payment Engine]
+        PS --&gt; DB[(Payment DB)]
+    end
+</p>
+<p>PE --&gt;|3. Call| PSP[Payment Service Provider]
+    PSP --&gt;|4. Response| PE
+    PE --&gt;|5. Event| K[Kafka]
+    K --&gt; N[Notification Service]
+    K --&gt; L[Ledger Service]
+    K --&gt; A[Analytics Service]
+    PS --&gt;|6. Response| Client
+</p>
+</code></pre>
+</strong>Payment State Machine:<strong>
+<pre><code>graph LR
+<p>INITIATED --&gt; VALIDATED
+    VALIDATED --&gt; AUTHORIZED
+    AUTHORIZED --&gt; CAPTURED
+    CAPTURED --&gt; SETTLED
+    AUTHORIZED --&gt; VOIDED
+    VALIDATED --&gt; DECLINED
+    CAPTURED --&gt; REFUNDED
+</p>
+</code></pre>
+</strong>Idempotency Handling (Critical):<strong>
+<pre><code>@Transactional
+<p>public PaymentResponse process(PaymentRequest request, String idempotencyKey) &#123;
+    Optional&lt;IdempotencyRecord&gt; existing = idempotencyRepo.findById(idempotencyKey);
+    if (existing.isPresent()) return existing.get().getResponse(); // Return cached
+</p>
+<p>PaymentResponse response = executePayment(request);
+    idempotencyRepo.save(new IdempotencyRecord(
+        idempotencyKey, request, response,
+        Instant.now().plus(Duration.ofDays(1))
+    ));
+    return response;
+&#125;
+</p>
+</code></pre>
+</strong>Database Schema:<strong>
+<pre><code>CREATE TABLE payments (
+<p>id UUID PRIMARY KEY,
+    idempotency_key VARCHAR(255) UNIQUE NOT NULL,
+    amount DECIMAL(19,2) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    source_account_id UUID,
+    destination_account_id UUID,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
+);
+</p>
+<p>CREATE TABLE payment_events (
+    id UUID PRIMARY KEY,
+    payment_id UUID NOT NULL REFERENCES payments(id),
+    event_type VARCHAR(50) NOT NULL,
+    previous_status VARCHAR(50),
+    new_status VARCHAR(50),
+    metadata JSONB,
+    created_at TIMESTAMP NOT NULL,
+    INDEX idx_payment_id (payment_id)
+);
+</p>
+</code></pre>
+</strong>Event-Driven Ledger Consumer:<strong>
+<pre><code>@KafkaListener(topics = &quot;payment-events&quot;, groupId = &quot;ledger-group&quot;)
+<p>public void handlePaymentEvent(PaymentEvent event) &#123;
+    switch (event.getType()) &#123;
+        case CAPTURED -&gt; ledgerService.creditAccount(event);
+        case REFUNDED -&gt; ledgerService.debitAccount(event);
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Reconciliation:*<em>
+<pre><code>@Scheduled(cron = &quot;0 0 2 </em> <em> </em>&quot;) // Daily at 2 AM
+<p>public void reconcile() &#123;
+    List&lt;Payment&gt; payments = paymentRepo.findByDate(LocalDate.now().minusDays(1));
+    List&lt;SettlementReport&gt; reports = pspClient.getSettlementReports();
+    List&lt;Discrepancy&gt; discrepancies = compare(payments, reports);
+    if (!discrepancies.isEmpty())
+        alertService.sendAlert(&quot;Reconciliation discrepancy&quot;, discrepancies);
+&#125;
+</p>
+</code></pre>
+<p><strong>Non-Functional Requirements:</strong>
+</p>
+<table><thead><tr><th>Requirement</th><th>Target</th><th>Implementation</th></tr></thead><tbody><tr><td>Availability</td><td>99.99%</td><td>Multi-region active-active</td></tr><tr><td>Durability</td><td>Zero data loss</td><td>Sync replication, WAL</td></tr><tr><td>Consistency</td><td>Strong (balances)</td><td>SERIALIZABLE isolation</td></tr><tr><td>Latency</td><td><100ms p99</td><td>Caching, async processing</td></tr><tr><td>Security</td><td>PCI DSS Level 1</td><td>Encryption, tokenization</td></tr><tr><td>Audit</td><td>Complete trail</td><td>Event sourcing</td></tr></tbody></table>
+        </article>
+    </div>
+</body>
+</html>

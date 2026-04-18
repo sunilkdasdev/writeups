@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caching Systems Deep Dive: Architecture, Patterns, and Implementation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Caching Systems Deep Dive: Architecture, Patterns, and Implementation</h1>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#1-cache-fundamentals-and-architecture">Cache Fundamentals and Architecture</a></li>
+<li><a href="#2-distributed-caching-with-redis">Distributed Caching with Redis</a></li>
+<li><a href="#3-cache-patterns-and-strategies">Cache Patterns and Strategies</a></li>
+<li><a href="#4-cache-invalidation-and-consistency">Cache Invalidation and Consistency</a></li>
+<li><a href="#5-memcached-architecture">Memcached Architecture</a></li>
+<li><a href="#6-cdn-and-edge-caching">CDN and Edge Caching</a></li>
+<li><a href="#7-local-caching-caffeine-guava-ehcache">Local Caching (Caffeine, Guava, Ehcache)</a></li>
+<li><a href="#8-cache-performance-optimization">Cache Performance Optimization</a></li>
+<li><a href="#9-cache-security-and-monitoring">Cache Security and Monitoring</a></li>
+<li><a href="#10-multi-layer-caching-strategies">Multi-Layer Caching Strategies</a></li>
+</ol>
+<hr>
+<h2>1. Cache Fundamentals and Architecture</h2>
+<h3>1.1 Why Caching Matters</h3>
+<pre><code>// The fundamental cache problem
+<p>public class CacheMotivation &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Without cache: Every request hits database</li>
+</ul>
+     </em> 
+<ul>
+<li>Request 1: SELECT <em> FROM users WHERE id = 1  ---&gt; 50ms</li>
+<li>Request 2: SELECT </em> FROM users WHERE id = 1  ---&gt; 50ms</li>
+<li>Request 3: SELECT <em> FROM users WHERE id = 1  ---&gt; 50ms</li>
+</ul>
+     </em> 
+<ul>
+<li>With cache: First request hits DB, subsequent use cache</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Request 1: GET cache:user:1 -&gt; MISS -&gt; DB 50ms -&gt; SET cache -&gt; RETURN</li>
+<li>Request 2: GET cache:user:1 -&gt; HIT -&gt; RETURN 1ms</li>
+<li>Request 3: GET cache:user:1 -&gt; HIT -&gt; RETURN 1ms</li>
+</ul>
+     </em> 
+<ul>
+<li>Speed improvement: 50x faster</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Cache hit ratio formula:</li>
+</ul>
+     </em> 
+<ul>
+<li>Hit Ratio = Hits / (Hits + Misses)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>95% hit ratio: 5% requests hit database</li>
+<li>99% hit ratio: 1% requests hit database</li>
+<li>99.9% hit ratio: 0.1% requests hit database</li>
+</ul>
+     </em> 
+<ul>
+<li>Impact of hit ratio:</li>
+<li>- 80% hit: 1 in 5 requests hits DB</li>
+<li>- 90% hit: 1 in 10 requests hits DB</li>
+<li>- 95% hit: 1 in 20 requests hits DB</li>
+<li>- 99% hit: 1 in 100 requests hits DB</li>
+<li>- 99.9% hit: 1 in 1000 requests hits DB</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>1.2 Cache Architecture Patterns</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                    CACHE ARCHITECTURE PATTERNS                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. Local (In-Memory) Cache                                                │
+│  ┌──────────────────────────────────────────────────────────────────────────┐ │
+│  │  Application                                                           │ │
+│  │  ┌─────────────┐                                                      │ │
+│  │  │  Caffeine   │                                                      │ │
+│  │  │  Guava      │                                                      │ │
+│  │  │  Ehcache    │                                                      │ │
+│  │  └─────────────┘                                                      │ │
+│  └──────────────────────────────────────────────────────────────────────────┘ │
+│  - Fastest (nanoseconds)                                                   │
+│  - Limited by JVM heap                                                     │
+│  - Not shared across instances                                             │
+│                                                                              │
+│  2. Distributed Cache                                                      │
+│  ┌──────────────────────────────────────────────────────────────────────────┐ │
+│  │  Application     ──►   Redis/Memcached    ──►   Database              │ │
+│  │       │                    │                      │                       │ │
+│  │       └───────────────────┼──────────────────────┘                       │ │
+│  │                     (Network)                                           │ │
+│  └──────────────────────────────────────────────────────────────────────────┘ │
+│  - Shared across instances                                                 │
+│  - Slower than local (milliseconds)                                       │
+│  - Can handle larger datasets                                            │
+│                                                                              │
+│  3. Multi-Layer Caching                                                    │
+│  ┌──────────────────────────────────────────────────────────────────────────┐ │
+│  │  Request ──► L1 (Local) ──► L2 (Distributed) ──► Database             │ │
+│  │              │              │                                           │ │
+│  │              HIT           MISS                                         │ │
+│  │              HIT           HIT                                           │ │
+│  └──────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>1.3 Cache Categories by Visibility</h3>
+<pre><code>// Cache categories
+<p>public class CacheCategories &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>1. Application-Level Cache</li>
+<li>- Managed by application code</li>
+<li>- Explicit get/put operations</li>
+<li>- Full control over caching logic</li>
+</ul>
+     </em> 
+<ul>
+<li>Example: Redis, Memcached</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>2. Database Query Cache</li>
+<li>- Caches query results</li>
+<li>- Invalidated on table/row changes</li>
+<li>- Limited flexibility</li>
+</ul>
+     </em> 
+<ul>
+<li>Example: MySQL query cache (deprecated in 8.0)</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>3. Object-Relational Mapping (ORM) Cache</li>
+<li>- Caches entity objects</li>
+<li>- Hibernate first-level (session), second-level (process)</li>
+<li>- Transparent to application</li>
+</ul>
+     </em> 
+<ul>
+<li>Example: Hibernate, JPA</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>4. Web Response Cache</li>
+<li>- Caches HTTP responses</li>
+<li>- CDN, reverse proxies</li>
+<li>- Full page or fragments</li>
+</ul>
+     </em> 
+<ul>
+<li>Example: Varnish, Nginx caching, CloudFront</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>5. Distributed Cache</li>
+<li>- Cache-aside pattern</li>
+<li>- Read-through, write-through</li>
+<li>- Cluster-aware</li>
+</ul>
+     </em> 
+<ul>
+<li>Example: Redis Cluster, Memcached</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>2. Distributed Caching with Redis</h2>
+<h3>2.1 Redis Architecture Deep Dive</h3>
+<pre><code>// Redis architecture and data structures
+<p>public class RedisArchitecture &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Redis Data Structures:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    REDIS DATA TYPES                                   │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+     │  STRING: &quot;hello&quot;, &quot;123&quot;, &quot;\x00\x01&quot;                                │
+     │  - Used for: Cache, counters, session, simple values              │
+</p>
+<ul>
+<li>- Commands: GET, SET, INCR, APPEND                                 │</li>
+</ul>
+<p>│                                                                      │
+     │  LIST: [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;]                                        │
+</p>
+<ul>
+<li>- Used for: Queues, chronological data, recent items            │</li>
+<li>- Commands: LPUSH, RPUSH, LRANGE, BLPOP                           │</li>
+<li>│</li>
+</ul>
+<p>│  SET: &#123;&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;&#125;                               │
+</p>
+<ul>
+<li>- Used for: Tags, unique items, membership testing                │</li>
+<li>- Commands: SADD, SREM, SISMEMBER, SMEMBERS                       │</li>
+<li>│</li>
+</ul>
+<p>│  SORTED SET: &#123;&quot;a&quot;: 1.0, &quot;b&quot;: 2.0, &quot;c&quot;: 3.0&#125;                      │
+</p>
+<ul>
+<li>- Used for: Leaderboards, priorities, rankings                     │</li>
+<li>- Commands: ZADD, ZRANGE, ZRANK, ZRANGEBYSCORE                     │</li>
+<li>│</li>
+</ul>
+<p>│  HASH: &#123;name: &quot;John&quot;, age: 30, city: &quot;NYC&quot;&#125;                        │
+</p>
+<ul>
+<li>- Used for: Objects, user profiles, metadata                      │</li>
+<li>- Commands: HSET, HGET, HGETALL, HMGET                             │</li>
+<li>│</li>
+</ul>
+<p>│  HYPERLOGLOG: (probabilistic)                                      │
+</p>
+<ul>
+<li>- Used for: Unique visits, cardinality estimation                  │</li>
+<li>- Commands: PFADD, PFCOUNT                                         │</li>
+<li>│</li>
+</ul>
+<p>│  BITMAP: [0,1,0,1,1,0]                                            │
+</p>
+<ul>
+<li>- Used for: Daily active users, boolean flags                      │</li>
+<li>- Commands: SETBIT, GETBIT, BITCOUNT, BITOP                         │</li>
+<li>│</li>
+</ul>
+<p>│  STREAM: log stream with consumer groups                           │
+</p>
+<ul>
+<li>- Used for: Event sourcing, message queues, audit logs             │</li>
+<li>- Commands: XADD, XREAD, XGROUP                                   │</li>
+</ul>
+<p>│                                                                      │
+     └─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Redis Persistence:</li>
+</ul>
+     </em> 
+<ul>
+<li>RDB (Redis Database):</li>
+<li>- Point-in-time snapshots</li>
+<li>- fork() creates child process</li>
+<li>- Good for backups, disaster recovery</li>
+<li>- Config: save 900 1, save 300 10, save 60 10000</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>AOF (Append Only File):</li>
+<li>- Write every command to log</li>
+<li>- Three modes: always, everysec, no</li>
+<li>- Better durability than RDB</li>
+<li>- More disk space, slightly slower</li>
+</ul>
+     </em> 
+<ul>
+<li>Hybrid: RDB + AOF (recommended)</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Redis Cluster:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Automatic sharding across 16384 slots</li>
+<li>- 16384 slots / number of masters = slots per master</li>
+<li>- Minimum 3 masters for quorum</li>
+<li>- Automatic failover with replicas</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Key distribution:</li>
+<li>CRC16(key) % 16384 = slot</li>
+</ul>
+     </em> 
+<ul>
+<li># redis.conf</li>
+<li>cluster-enabled yes</li>
+<li>cluster-config-file nodes.conf</li>
+<li>cluster-node-timeout 15000</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>2.2 Redis Client Implementation</h3>
+<pre><code>// Redis client patterns
+<p>public class RedisClientPatterns &#123;
+</p>
+<p>// Jedis (synchronous) client
+    public static class JedisExample &#123;
+</p>
+<p>public void basicOperations() &#123;
+            Jedis jedis = new Jedis(&quot;localhost&quot;, 6379);
+</p>
+<p>// String operations
+            jedis.set(&quot;user:1:name&quot;, &quot;John&quot;);
+            jedis.get(&quot;user:1:name&quot;);
+            jedis.incr(&quot;counter&quot;);
+            jedis.expire(&quot;user:1:name&quot;, 3600);  // TTL 1 hour
+</p>
+<p>// Hash operations
+            Map&lt;String, String&gt; user = new HashMap&lt;&gt;();
+            user.put(&quot;name&quot;, &quot;John&quot;);
+            user.put(&quot;email&quot;, &quot;john@example.com&quot;);
+            jedis.hmset(&quot;user:1&quot;, user);
+            jedis.hgetAll(&quot;user:1&quot;);
+</p>
+<p>// List operations
+            jedis.lpush(&quot;queue:orders&quot;, &quot;order:1001&quot;);
+            String order = jedis.rpop(&quot;queue:orders&quot;);
+</p>
+<p>// Set operations
+            jedis.sadd(&quot;user:1:tags&quot;, &quot;premium&quot;, &quot;active&quot;, &quot;vip&quot;);
+            Set&lt;String&gt; tags = jedis.smembers(&quot;user:1:tags&quot;);
+</p>
+<p>// Sorted set for leaderboard
+            jedis.zadd(&quot;leaderboard&quot;, 1500.0, &quot;player:1&quot;);
+            jedis.zrevrange(&quot;leaderboard&quot;, 0, 9);  // Top 10
+</p>
+<p>jedis.close();
+        &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Connection pooling for high concurrency:</li>
+</ul>
+         </em>/
+<p>public void poolExample() &#123;
+            JedisPoolConfig config = new JedisPoolConfig();
+            config.setMaxTotal(50);
+            config.setMaxIdle(20);
+            config.setMinIdle(5);
+            config.setMaxWaitMillis(2000);
+</p>
+<p>JedisPool pool = new JedisPool(config, &quot;localhost&quot;, 6379);
+</p>
+<p>try (Jedis jedis = pool.getResource()) &#123;
+                // Use jedis
+            &#125;
+</p>
+<p>pool.close();
+        &#125;
+    &#125;
+</p>
+<p>// Lettuce (reactive/async) client
+    public static class LettuceExample &#123;
+</p>
+<p>public void asyncOperations() &#123;
+            RedisClient client = RedisClient.create(&quot;redis://localhost:6379&quot;);
+            StatefulRedisConnection&lt;String, String&gt; connection = 
+                client.connect().sync();
+</p>
+<p>// Synchronous (from async)
+            String value = connection.get(&quot;key&quot;);
+</p>
+<p>// For async:
+            // RedisAsyncCommands async = connection.async();
+            // Future&lt;String&gt; future = async.get(&quot;key&quot;);
+</p>
+<p>connection.close();
+            client.shutdown();
+        &#125;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<h3>2.3 Redis Pub/Sub and Streams</h3>
+<pre><code>// Redis messaging patterns
+<p>public class RedisMessaging &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pub/Sub Pattern:</li>
+</ul>
+     </em> 
+<ul>
+<li>- Fire and forget</li>
+<li>- No persistence</li>
+<li>- Real-time message delivery</li>
+<li>- At-least-once delivery</li>
+</ul>
+<p><em>/
+</p>
+<p>public static class PubSubExample &#123;
+</p>
+<p>public void publisher(Jedis jedis) &#123;
+            jedis.publish(&quot;orders&quot;, &quot;new:1001&quot;);
+            jedis.publish(&quot;notifications&quot;, &quot;user:123:login&quot;);
+        &#125;
+</p>
+<p>public void subscriber(Jedis jedis) &#123;
+            jedis.subscribe(new JedisPubSub() &#123;
+                @Override
+                public void onMessage(String channel, String message) &#123;
+                    System.out.println(&quot;Received: &quot; + message + &quot; from &quot; + channel);
+                &#125;
+            &#125;, &quot;orders&quot;, &quot;notifications&quot;);
+        &#125;
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Redis Streams (Kafka-like):</li>
+</ul>
+     </em> 
+<ul>
+<li>- Persistent messages</li>
+<li>- Consumer groups</li>
+<li>- Message IDs</li>
+<li>- Range queries</li>
+<li>- At-least-once delivery</li>
+</ul>
+<p><em>/
+</p>
+<p>public static class StreamExample &#123;
+</p>
+<p>public void producer(Jedis jedis) &#123;
+            // Add to stream
+            Map&lt;String, String&gt; event = new HashMap&lt;&gt;();
+            event.put(&quot;type&quot;, &quot;order_created&quot;);
+            event.put(&quot;order_id&quot;, &quot;1001&quot;);
+            event.put(&quot;amount&quot;, &quot;150.00&quot;);
+</p>
+<p>String messageId = jedis.xadd(&quot;events&quot;, null, event);
+            System.out.println(&quot;Message ID: &quot; + messageId);
+            // Example: 1526985034072-0
+        &#125;
+</p>
+<p>public void consumer(Jedis jedis) &#123;
+            // Create consumer group
+            jedis.xgroupCreate(&quot;events&quot;, &quot;group1&quot;, &quot;0&quot;, true);
+</p>
+<p>// Read new messages
+            List&lt;Map.Entry&lt;String, Map&lt;String, String&gt;&gt;&gt; messages = 
+                jedis.xreadGroup(
+                    &quot;group1&quot;,    // group name
+                    &quot;consumer1&quot;, // consumer name
+                    &quot;&gt;&quot;,        // read new messages only
+                    &quot;COUNT&quot;, 10,
+                    &quot;BLOCK&quot;, 5000,  // block 5 seconds
+                    &quot;events&quot;    // stream
+                );
+</p>
+<p>for (Map.Entry&lt;String, Map&lt;String, String&gt;&gt; entry : messages) &#123;
+                String messageId = entry.getKey();
+                Map&lt;String, String&gt; data = entry.getValue();
+</p>
+<p>System.out.println(&quot;ID: &quot; + messageId + &quot;, Data: &quot; + data);
+</p>
+<p>// Acknowledge processing
+                jedis.xack(&quot;events&quot;, &quot;group1&quot;, messageId);
+            &#125;
+        &#125;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>3. Cache Patterns and Strategies</h2>
+<h3>3.1 Cache-Aside Pattern</h3>
+<pre><code>// Cache-Aside (Lazy Loading) Pattern
+<p>public class CacheAsidePattern &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Read Operation:</li>
+<li>1. Check cache</li>
+<li>2. If hit, return cached data</li>
+<li>3. If miss, query database</li>
+<li>4. Store result in cache</li>
+<li>5. Return data</li>
+</ul>
+     </em> 
+<ul>
+<li>Write Operation:</li>
+<li>1. Update database</li>
+<li>2. Delete cache entry (not update!)</li>
+<li>- Why delete? Update could fail after DB update</li>
+<li>- Next read will populate cache correctly</li>
+</ul>
+<p><em>/
+</p>
+<p>private Jedis jedis;
+    private UserDao userDao;
+</p>
+<p>public User getUserById(Long userId) &#123;
+        // Step 1: Check cache
+        String cacheKey = &quot;user:&quot; + userId;
+        String cached = jedis.get(cacheKey);
+</p>
+<p>if (cached != null) &#123;
+            return JSON.parseObject(cached, User.class);
+        &#125;
+</p>
+<p>// Step 2: Cache miss - query database
+        User user = userDao.findById(userId);
+</p>
+<p>if (user != null) &#123;
+            // Step 3: Store in cache with TTL
+            jedis.setex(cacheKey, 3600, JSON.toJSONString(user));
+        &#125;
+</p>
+<p>return user;
+    &#125;
+</p>
+<p>public void updateUser(User user) &#123;
+        // Step 1: Update database first
+        userDao.update(user);
+</p>
+<p>// Step 2: Delete cache (not update!)
+        // If we update cache and DB update fails,
+        // cache has stale data
+        jedis.del(&quot;user:&quot; + user.getId());
+</p>
+<p>// Alternative: Set with short TTL as safety net
+        jedis.setex(&quot;user:&quot; + user.getId(), 60, JSON.toJSONString(user));
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Cache-Aside Pros:</li>
+<li>- Simple implementation</li>
+<li>- Cache only stores what's needed</li>
+<li>- No cache code in application logic</li>
+</ul>
+     </em> 
+<ul>
+<li>Cache-Aside Cons:</li>
+<li>- First request always slow (cache miss)</li>
+<li>- Cache may have stale data</li>
+<li>- Need to handle cache misses</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>3.2 Write-Through and Write-Behind</h3>
+<pre><code>// Write patterns
+<p>public class WritePatterns &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Write-Through:</li>
+</ul>
+     </em> 
+<ul>
+<li>Update both cache and database at the same time</li>
+<li>Cache always consistent with database</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────┐</li>
+<li>│  Write ──► Cache ──► Database                          │</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>public static class WriteThrough &#123;
+</p>
+<p>private CacheStore cache;
+        private Database db;
+</p>
+<p>public void save(Entity entity) &#123;
+            // Update both simultaneously
+            db.save(entity);
+            cache.put(entity.getId(), entity);
+        &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pros:</li>
+<li>- Data always consistent</li>
+<li>- Read after write always hits cache</li>
+</ul>
+         </em> 
+<ul>
+<li>Cons:</li>
+<li>- Slower writes (two operations)</li>
+<li>- Cache could become bottleneck</li>
+</ul>
+<p><em>/
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Write-Behind (Write-Back):</li>
+</ul>
+     </em> 
+<ul>
+<li>Update cache immediately, batch database writes</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────┐</li>
+<li>│  Write ──► Cache ──► [Queue] ──► Database (async)         │</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>public static class WriteBehind &#123;
+</p>
+<p>private CacheStore cache;
+        private BlockingQueue&lt;Entity&gt; writeQueue;
+</p>
+<p>public void save(Entity entity) &#123;
+            // Update cache immediately
+            cache.put(entity.getId(), entity);
+</p>
+<p>// Queue for async database write
+            writeQueue.offer(entity);
+        &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Background thread processes queue:</li>
+</ul>
+         </em>/
+<p>public void processWrites() &#123;
+            while (true) &#123;
+                List&lt;Entity&gt; batch = new ArrayList&lt;&gt;();
+                Entity entity;
+</p>
+<p>// Batch up to 100 or wait 1 second
+                while ((entity = writeQueue.poll(1, TimeUnit.SECONDS)) != null 
+                        &amp;&amp; batch.size() &lt; 100) &#123;
+                    batch.add(entity);
+                &#125;
+</p>
+<p>if (!batch.isEmpty()) &#123;
+                    db.batchSave(batch);
+                &#125;
+            &#125;
+        &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pros:</li>
+<li>- Very fast writes</li>
+<li>- Batch database operations</li>
+</ul>
+         </em> 
+<ul>
+<li>Cons:</li>
+<li>- Risk of data loss if cache/server fails</li>
+<li>- Complex implementation</li>
+<li>- Need to handle queue overflow</li>
+</ul>
+<p><em>/
+    &#125;
+&#125;
+</p>
+</code></pre>
+<h3>3.3 Read-Through and Refresh-Ahead</h3>
+<pre><code>// Advanced caching patterns
+<p>public class AdvancedPatterns &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Read-Through:</li>
+</ul>
+     </em> 
+<ul>
+<li>Cache automatically loads from database on miss</li>
+<li>Application only talks to cache</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────┐</li>
+<li>│  Request ──► Cache (missing) ──► Load from DB ──► Return│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>public static class ReadThrough &#123;
+</p>
+<p>// Example with Spring Cache
+        @Cacheable(value = &quot;users&quot;, key = &quot;#userId&quot;)
+        public User getUser(Long userId) &#123;
+            // Only called on cache miss
+            return database.findById(userId);
+        &#125;
+</p>
+<p>// Application code only calls cache
+        public User getUserWrapper(Long userId) &#123;
+            return cacheLoader.load(userId);  // Automatic DB load
+        &#125;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Refresh-Ahead (Speculative Loading):</li>
+</ul>
+     </em> 
+<ul>
+<li>Proactively refresh cache entries before they expire</li>
+<li>Reduces thundering herd on cache expiration</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>┌─────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│  Cache Entry                                            │
+     │  - TTL: 1 hour                                          │
+     │  - Refresh threshold: 80% (48 min)                      │
+     │  - Background refresh at 48 min                        │
+     └─────────────────────────────────────────────────────────┘
+</p>
+     </em>/
+<p>public static class RefreshAhead &#123;
+</p>
+<p>// Caffeine supports refresh-ahead
+        LoadingCache&lt;String, Data&gt; cache = Caffeine.newBuilder()
+            .refreshAfterWrite(10, TimeUnit.MINUTES)  // Refresh after 10 min
+            .maximumSize(10000)
+            .build(key -&gt; &#123;
+                // This is called to refresh expired entries
+                return database.findByKey(key);
+            &#125;);
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>How it works:</li>
+</ul>
+         </em> 
+<ul>
+<li>1. Entry created at T=0, TTL=10min</li>
+<li>2. At T=8min, entry accessed</li>
+<li>3. Caffeine checks: (now - lastWrite) &gt; refreshAfterWrite <em> 0.8</li>
+<li>4. If true, triggers async refresh</li>
+<li>5. While refreshing, returns old value (stale but available)</li>
+<li>6. Next access gets new value</li>
+</ul>
+         </em> 
+<ul>
+<li>Benefit: No cache misses, no thundering herd</li>
+</ul>
+<p><em>/
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>4. Cache Invalidation and Consistency</h2>
+<h3>4.1 Invalidation Strategies</h3>
+<pre><code>// Cache invalidation strategies
+<p>public class CacheInvalidation &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>1. TTL (Time To Live):</li>
+</ul>
+     </em> 
+<ul>
+<li>- Simple, automatic</li>
+<li>- Eventually consistent</li>
+<li>- Good for non-critical data</li>
+</ul>
+<p><em>/
+</p>
+<p>public void ttlInvalidation(Jedis jedis, String key) &#123;
+        // Set with TTL
+        jedis.setex(&quot;user:123&quot;, 3600, &quot;data&quot;);  // 1 hour
+</p>
+<p>// Or set then expire
+        jedis.set(&quot;temp:data&quot;, &quot;value&quot;);
+        jedis.expire(&quot;temp:data&quot;, 300);  // 5 minutes
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>2. Write-Invalidate:</li>
+</ul>
+     </em> 
+<ul>
+<li>On write, delete cache entry</li>
+<li>Next read will repopulate from DB</li>
+</ul>
+<p><em>/
+</p>
+<p>public void writeInvalidate(Jedis jedis) &#123;
+        userDao.update(user);
+        jedis.del(&quot;user:&quot; + user.getId());  // Delete, don't update
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>3. Event-Based Invalidation:</li>
+</ul>
+     </em> 
+<ul>
+<li>Database triggers event on change</li>
+<li>Event triggers cache invalidation</li>
+</ul>
+<p><em>/
+</p>
+<p>public static class EventBasedInvalidation &#123;
+</p>
+<p>public void databaseTrigger() &#123;
+            // In database trigger or application
+            // After UPDATE/DELETE
+            jedis.del(&quot;user:&quot; + userId);
+            jedis.publish(&quot;cache:invalidate&quot;, &quot;user:&quot; + userId);
+        &#125;
+</p>
+<p>public void subscriber(Jedis jedis) &#123;
+            jedis.subscribe(new JedisPubSub() &#123;
+                @Override
+                public void onMessage(String channel, String message) &#123;
+                    // Invalidate related cache entries
+                    String prefix = message.split(&quot;:&quot;)[0];
+                    Set&lt;String&gt; keys = jedis.keys(prefix + &quot;:</em>&quot;);
+                    jedis.del(keys.toArray(new String[0]));
+                &#125;
+            &#125;, &quot;cache:invalidate&quot;);
+        &#125;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>4. Version-Based Invalidation:</li>
+</ul>
+     </em> 
+<ul>
+<li>Store version number with cache</li>
+<li>Check version on read</li>
+<li>Invalidate when version changes</li>
+</ul>
+<p><em>/
+</p>
+<p>public void versionInvalidation(Jedis jedis, long userId) &#123;
+        long newVersion = userDao.getVersion(userId);
+        jedis.hset(&quot;user:&quot; + userId, &quot;version&quot;, String.valueOf(newVersion));
+</p>
+<p>// On read, check version
+        String cachedVersion = jedis.hget(&quot;user:&quot; + userId, &quot;version&quot;);
+        if (!String.valueOf(newVersion).equals(cachedVersion)) &#123;
+            jedis.del(&quot;user:&quot; + userId);  // Invalidate
+        &#125;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<h3>4.2 Handling Cache Stampede</h3>
+<pre><code>// Cache stampede prevention
+<p>public class CacheStampedePrevention &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>What is Cache Stampede?</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Cache entry expires at T</li>
+<li>2. Multiple requests see cache miss at T+1, T+2, T+3...</li>
+<li>3. All hit database simultaneously</li>
+<li>4. Database overwhelmed</li>
+<li>5. No request gets data (all waiting)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Solution: Use distributed lock</li>
+</ul>
+     </em>/
+<p>private Jedis jedis;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Approach 1: Mutex / Single-Flight</li>
+</ul>
+     </em>/
+<p>public Data getWithLock(String key) &#123;
+        // Try to get distributed lock
+        String lockKey = &quot;lock:&quot; + key;
+        String lockValue = UUID.randomUUID().toString();
+</p>
+<p>Boolean acquired = jedis.set(lockKey, lockValue,
+            SetParams.nx().ex(10));  // 10 second lock
+</p>
+<p>if (Boolean.TRUE.equals(acquired)) &#123;
+            try &#123;
+                // Double-check after acquiring lock
+                String cached = jedis.get(key);
+                if (cached != null) &#123;
+                    return JSON.parseObject(cached, Data.class);
+                &#125;
+</p>
+<p>// Load from database
+                Data data = database.load(key);
+</p>
+<p>// Store in cache
+                jedis.setex(key, 3600, JSON.toJSONString(data));
+                return data;
+            &#125; finally &#123;
+                // Only delete if we own the lock
+                if (lockValue.equals(jedis.get(lockKey))) &#123;
+                    jedis.del(lockKey);
+                &#125;
+            &#125;
+        &#125; else &#123;
+            // Wait and retry
+            try &#123;
+                Thread.sleep(100);
+            &#125; catch (InterruptedException e) &#123;
+                Thread.currentThread().interrupt();
+            &#125;
+            return getWithLock(key);  // Retry
+        &#125;
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Approach 2: Probabilistic Early Expiration</li>
+</ul>
+     </em> 
+<ul>
+<li>Randomly refresh cache before expiration</li>
+<li>Reduces chance of mass expiration</li>
+</ul>
+<p><em>/
+</p>
+<p>public void probabilisticRefresh(CaffeineCache cache, String key) &#123;
+        // Check if close to expiration and random chance
+        if (shouldRefresh(key)) &#123;
+            // Refresh in background, don't block
+            executor.submit(() -&gt; &#123;
+                try &#123;
+                    cache.put(key, database.load(key));
+                &#125; catch (Exception e) &#123;
+                    // Log but don't fail
+                &#125;
+            &#125;);
+        &#125;
+    &#125;
+</p>
+<p>private boolean shouldRefresh(String key) &#123;
+        // Get remaining TTL
+        Optional&lt;Long&gt; ttl = cache.getIfPresent(key);
+</p>
+<p>if (!ttl.isPresent()) return false;
+</p>
+<p>// Refresh if 10% of TTL remains and 10% random chance
+        long remaining = ttl.get();
+        long initialTTL = cache.get().getExpireAfterWrite();
+</p>
+<p>return remaining &lt; (initialTTL </em> 0.1) &amp;&amp; Math.random() &lt; 0.1;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>5. Memcached Architecture</h2>
+<h3>5.1 Memcached Deep Dive</h3>
+<pre><code>// Memcached architecture
+<p>public class MemcachedArchitecture &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Memcached vs Redis:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────┬─────────────────────────┬──────────────────────┐</li>
+</ul>
+<p>│     Feature          │      Memcached         │        Redis          │
+     ├─────────────────────┼─────────────────────────┼──────────────────────┤
+     │  Data Structures     │  Strings only          │  Strings, Lists,     │
+     │                     │                         │  Sets, ZSets, Hashes  │
+     ├─────────────────────┼─────────────────────────┼──────────────────────┤
+     │  Persistence        │  None (memory only)     │  RDB + AOF           │
+     ├─────────────────────┼─────────────────────────┼──────────────────────┤
+     │  Replication        │  No (master/slave only)│  Master/slave,       │
+     │                     │  via consistent hashing│  Cluster             │
+     ├─────────────────────┼─────────────────────────┼──────────────────────┤
+     │  Transactions       │  No                     │  Yes (MULTI/EXEC)    │
+     ├─────────────────────┼─────────────────────────┼──────────────────────┤
+     │  Pub/Sub           │  No                     │  Yes                 │
+     ├─────────────────────┼─────────────────────────┼──────────────────────┤
+     │  Performance        │  Very fast, simple     │  Fast, more features │
+     ├─────────────────────┼─────────────────────────┼──────────────────────┤
+     │  Memory Model       │  Slab allocator        │  Free list + malloc  │
+     ├─────────────────────┼─────────────────────────┼──────────────────────┤
+     │  Use Case          │  Simple caching,        │  Complex data,       │
+     │                     │  session storage        │  queues, pub/sub     │
+     └─────────────────────┴─────────────────────────┴──────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Memcached Memory Architecture:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    MEMCACHED MEMORY                                  │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>Slab 1 (64B):    [Item][Item][Item][Item][Item]...                │</li>
+<li>Slab 2 (128B):   [Item][Item][Item][Item]...                     │</li>
+<li>Slab 3 (256B):   [Item][Item][Item]...                           │</li>
+<li>Slab 4 (512B):   [Item][Item]...                                  │</li>
+<li>...                                                              │</li>
+<li>Slab N (1MB):    [Item]                                          │</li>
+<li>│</li>
+<li>Each slab class stores items of fixed size                        │</li>
+<li>No memory fragmentation                                          │</li>
+<li>Items never moved or resized                                     │</li>
+<li>│</li>
+<li>Item structure:                                                  │</li>
+<li>[Key][Flags][Expiry][CAS][Value]                                 │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Memcached client (Spymemcache):</li>
+</ul>
+     </em>/
+<p>public void memcachedExample() &#123;
+        // Connect to multiple servers
+        List&lt;InetSocketAddress&gt; servers = Arrays.asList(
+            new InetSocketAddress(&quot;server1&quot;, 11211),
+            new InetSocketAddress(&quot;server2&quot;, 11211),
+            new InetSocketAddress(&quot;server3&quot;, 11211)
+        );
+</p>
+<p>// Ketema consistent hashing for distribution
+        KetemaClient client = new KetemaClient.Builder()
+            .addServers(servers)
+            .hashAlg(HashAlgorithm.KETEMA_HASH)
+            .build();
+</p>
+<p>// Store with expiration
+        client.set(&quot;user:123&quot;, 3600, userJson);
+</p>
+<p>// Get
+        String cached = client.get(&quot;user:123&quot;);
+</p>
+<p>// Delete
+        client.delete(&quot;user:123&quot;);
+</p>
+<p>// Increment/Decrement (atomic)
+        client.incr(&quot;counter&quot;, 1);
+        client.decr(&quot;counter&quot;, 1);
+</p>
+<p>// Multi-get (batch)
+        Map&lt;String, Object&gt; results = client.getBulk(
+            Arrays.asList(&quot;user:1&quot;, &quot;user:2&quot;, &quot;user:3&quot;)
+        );
+</p>
+<p>client.shutdown();
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>6. CDN and Edge Caching</h2>
+<h3>6.1 CDN Architecture</h3>
+<pre><code>// CDN caching
+<p>public class CDNArchitecture &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>CDN Architecture:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                         CDN FLOW                                      │
+     ├─────────────────────────────────────────────────────────────────────┤
+     │                                                                      │
+</p>
+<ul>
+<li>User ──► Edge Server (closest) ──► Origin Server                    │</li>
+<li>│                    │                                        │</li>
+<li>│ HIT               │                                        │</li>
+<li>▼                  │ MISS                                     │</li>
+<li>Return             Fetch                                      │</li>
+<li>│                  │                                         │</li>
+<li>│                  ▼                                         │</li>
+<li>│              Cache (if cacheable)                         │</li>
+<li>│                  │                                         │</li>
+<li>└──────────────────┘                                         │</li>
+<li>│</li>
+<li>Popular CDNs: CloudFront, Cloudflare, Akamai, Fastly, MaxCDN        │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>CDN Configuration:</li>
+</ul>
+     </em>/
+<p>public static class CloudFrontConfig &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Cache behaviors:</li>
+</ul>
+         </em> 
+<ul>
+<li>1. Static content (images, CSS, JS):</li>
+<li>- Long cache (days/weeks)</li>
+<li>- No query string</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. Dynamic content (API responses):</li>
+<li>- Short cache (seconds/minutes)</li>
+<li>- Based on query params</li>
+</ul>
+         </em> 
+<ul>
+<li>3. No cache (personalized):</li>
+<li>- Always origin</li>
+</ul>
+<p><em>/
+</p>
+<p>// Cache policy: Cache for 1 day
+        /</em>
+</p>
+<ul>
+<li>&#123;</li>
+<li>&quot;Comments&quot;: &quot;Object caching&quot;,</li>
+<li>&quot;MinTTL&quot;: 86400,</li>
+<li>&quot;DefaultTTL&quot;: 86400,</li>
+<li>&quot;MaxTTL&quot;: 31536000,</li>
+<li>&quot;Forward&quot;: &quot;none&quot;</li>
+<li>&#125;</li>
+</ul>
+<p><em>/
+</p>
+<p>// Cache with query string
+        /</em>
+</p>
+<ul>
+<li>&#123;</li>
+<li>&quot;Forward&quot;: &quot;whitelist&quot;,</li>
+<li>&quot;QueryStringWhitelist&quot;: [&quot;version&quot;, &quot;locale&quot;]</li>
+<li>&#125;</li>
+</ul>
+<p><em>/
+</p>
+<p>// Cache invalidation
+        /</em>
+</p>
+<ul>
+<li>aws cloudfront create-invalidation \</li>
+<li>--distribution-id XYZ123 \</li>
+<li>--paths &quot;/images/<em>&quot; &quot;/api/data&quot;</li>
+</ul>
+         </em>/
+<p>&#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Cache-Control Headers:</li>
+</ul>
+     </em>/
+<p>public void cacheHeaders(HttpServletResponse response) &#123;
+        // Public cache, max-age 1 hour
+        response.setHeader(&quot;Cache-Control&quot;, &quot;public, max-age=3600&quot;);
+</p>
+<p>// Private (browser only), max-age 10 min
+        response.setHeader(&quot;Cache-Control&quot;, &quot;private, max-age=600&quot;);
+</p>
+<p>// No cache, always revalidate
+        response.setHeader(&quot;Cache-Control&quot;, &quot;no-cache, no-store&quot;);
+        response.setHeader(&quot;Pragma&quot;, &quot;no-cache&quot;);
+</p>
+<p>// ETag for conditional requests
+        response.setHeader(&quot;ETag&quot;, &quot;abc123&quot;);
+</p>
+<p>// Last modified
+        response.setHeader(&quot;Last-Modified&quot;, &quot;Mon, 01 Jan 2024 00:00:00 GMT&quot;);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>7. Local Caching (Caffeine, Guava, Ehcache)</h2>
+<h3>7.1 Caffeine Deep Dive</h3>
+<pre><code>// Caffeine cache implementation
+<p>public class CaffeineCaching &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Caffeine is the most performant in-memory cache for Java</li>
+<li>10-100x faster than Guava Cache</li>
+</ul>
+     </em> 
+<ul>
+<li>Features:</li>
+<li>- Automatic loading of entries</li>
+<li>- Size-based eviction (based on weight)</li>
+<li>- Time-based expiration</li>
+<li>- Reference-based eviction (weak/soft references)</li>
+<li>- Statistics</li>
+<li>- Removal notifications</li>
+</ul>
+<p><em>/
+</p>
+<p>public void caffeineBasics() &#123;
+        Cache&lt;String, User&gt; cache = Caffeine.newBuilder()
+            .maximumSize(10_000)                // Max entries
+            .maximumWeight(100_000_000)         // Or max weight in bytes
+            .weigher((key, user) -&gt; user.getSerializedSize())
+            .expireAfterWrite(10, TimeUnit.MINUTES)  // Or .expireAfterAccess()
+            .expireAfter(new Expiry&lt;String, User&gt;() &#123;
+                @Override
+                public long expireAfterCreate(String key, User value, long currentTime) &#123;
+                    // Return TTL in nanoseconds
+                    return TimeUnit.HOURS.toNanos(1);
+                &#125;
+</p>
+<p>@Override
+                public long expireAfterUpdate(String key, User value, 
+                        long currentTime, long currentDuration) &#123;
+                    return currentDuration;  // Keep current TTL
+                &#125;
+</p>
+<p>@Override
+                public long expireAfterRead(String key, User value,
+                        long currentTime, long currentDuration) &#123;
+                    return currentDuration;  // Reset TTL on access
+                &#125;
+            &#125;)
+            .refreshAfterWrite(5, TimeUnit.MINUTES)  // Async refresh
+            .recordStats()  // Enable statistics
+            .removalListener((key, value, cause) -&gt; &#123;
+                // Removal notification
+                // cause: EXPLICIT, REPLACED, SIZE, EXPIRED, COLLECTED
+            &#125;)
+            .build();
+</p>
+<p>// Basic operations
+        cache.put(&quot;user:1&quot;, user);
+        User cached = cache.getIfPresent(&quot;user:1&quot;);
+</p>
+<p>// Get with loader (cache-aside)
+        User user = cache.get(&quot;user:1&quot;, () -&gt; database.load(&quot;user:1&quot;));
+</p>
+<p>// Invalidate
+        cache.invalidate(&quot;user:1&quot;);
+        cache.invalidateAll();
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Cache Loading Patterns:</li>
+</ul>
+     </em>/
+<p>public void loadingCache() &#123;
+        // Pre-load on creation
+        LoadingCache&lt;String, User&gt; cache = Caffeine.newBuilder()
+            .maximumSize(10_000)
+            .build(key -&gt; database.load(key));
+</p>
+<p>// Async loading
+        AsyncLoadingCache&lt;String, User&gt; asyncCache = Caffeine.newBuilder()
+            .maximumSize(10_000)
+            .buildAsync(key -&gt; database.loadAsync(key));
+</p>
+<p>// Usage
+        User user = cache.get(&quot;user:1&quot;);
+</p>
+<p>// Async usage
+        CompletableFuture&lt;User&gt; future = asyncCache.get(&quot;user:1&quot;);
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Statistics:</li>
+</ul>
+     </em>/
+<p>public void statistics() &#123;
+        CacheStats stats = cache.stats();
+</p>
+<p>// Hit rate
+        double hitRate = stats.hitRate();
+        double missRate = stats.missRate();
+</p>
+<p>// Counts
+        long hits = stats.hitCount();
+        long misses = stats.missCount();
+        long evictions = stats.evictionCount();
+        long loads = stats.loadSuccessCount();
+        long loadFailures = stats.loadFailureCount();
+</p>
+<p>// Timing
+        long loadTimeNanos = stats.totalLoadTime();
+        double avgLoadTimeNanos = stats.averageLoadPenalty();
+</p>
+<p>System.out.printf(&quot;Hit Rate: %.2f%%, Miss Rate: %.2f%%, Evictions: %d%n&quot;,
+            hitRate <em> 100, missRate </em> 100, evictions);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>8. Cache Performance Optimization</h2>
+<h3>8.1 Benchmarking and Optimization</h3>
+<pre><code>// Cache performance optimization
+<p>public class CacheOptimization &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Measuring Cache Performance:</li>
+</ul>
+     </em>/
+<p>public void benchmark() &#123;
+        // Create stopwatch for measurement
+        Stopwatch stopwatch = Stopwatch.started();
+</p>
+<p>// Benchmark GET
+        for (int i = 0; i &lt; 1_000_000; i++) &#123;
+            cache.get(&quot;key:&quot; + (i % 10_000));
+        &#125;
+</p>
+<p>long getTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+        System.out.printf(&quot;1M GETs: %dms (%.2f us/op)%n&quot;, 
+            getTime, getTime <em> 1000.0 / 1_000_000);
+</p>
+<p>// Benchmark PUT
+        stopwatch.reset().start();
+        for (int i = 0; i &lt; 1_000_000; i++) &#123;
+            cache.put(&quot;key:&quot; + (i % 10_000), data);
+        &#125;
+</p>
+<p>long putTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+        System.out.printf(&quot;1M PUTs: %dms (%.2f us/op)%n&quot;, 
+            putTime, putTime </em> 1000.0 / 1_000_000);
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Optimization Techniques:</li>
+</ul>
+     </em>/
+<p>public void optimizationTechniques() &#123;
+        /*<em>
+</p>
+<ul>
+<li>1. Batch Operations:</li>
+</ul>
+         </em>/
+<p>// Instead of individual gets
+        for (Key key : keys) &#123;
+            cache.get(key);
+        &#125;
+</p>
+<p>// Use multi-get
+        cache.getAll(keys);  // Much faster!
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>2. Key Design:</li>
+</ul>
+         </em> 
+<ul>
+<li>- Short keys save memory</li>
+<li>- Group related keys</li>
+<li>- Use consistent prefixes</li>
+</ul>
+<p><em>/
+</p>
+<p>// Bad: &quot;user:john:profile:preferences:theme&quot;
+        // Good: &quot;u:john:p:t&quot; (with documentation)
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>3. Compression:</li>
+</ul>
+         </em>/
+<p>// Compress large values
+        byte[] compressed = compress(originalData);
+        cache.put(key, compressed);
+</p>
+<p>// Or use cached's built-in compression if available
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>4. Serialization:</li>
+</ul>
+         </em>/
+<p>// JSON (slow, readable)
+        String json = JSON.toJSONString(data);
+</p>
+<p>// Protocol Buffers (fast, compact)
+        byte[] protobuf = data.toProto().toByteArray();
+</p>
+<p>// Kryo (fast, compact)
+        byte[] kryo = kryo.serialize(data);
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>5. Connection Pooling:</li>
+</ul>
+         </em>/
+<p>// For distributed caches, use connection pool
+        // - Reduces connection overhead
+        // - Handles connection failures
+        // - Balances load
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>9. Cache Security and Monitoring</h2>
+<h3>9.1 Cache Security</h3>
+<pre><code>// Cache security
+<p>public class CacheSecurity &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Redis Security:</li>
+</ul>
+     </em>/
+<p>public void redisSecurity() &#123;
+        // redis.conf configurations
+</p>
+<p>// 1. Require password
+        /<em>
+</p>
+<ul>
+<li>requirepass your_password_here</li>
+</ul>
+         </em>/
+<p>// 2. Bind to specific interface
+        /<em>
+</p>
+<ul>
+<li>bind 127.0.0.1 192.168.1.100</li>
+</ul>
+         </em>/
+<p>// 3. Rename dangerous commands
+        /<em>
+</p>
+<ul>
+<li>rename-command FLUSHDB &quot;FLUSHDB_9f3a2b1c&quot;</li>
+<li>rename-command FLUSHALL &quot;FLUSHALL_8x7d2c1e9&quot;</li>
+<li>rename-command CONFIG &quot;CONFIG_7d4e8f2a&quot;</li>
+</ul>
+         </em>/
+<p>// 4. Enable TLS
+        /<em>
+</p>
+<ul>
+<li>tls-port 6380</li>
+<li>port 0</li>
+<li>tls-cert-file /path/to/redis.crt</li>
+<li>tls-key-file /path/to/redis.key</li>
+<li>tls-ca-cert-file /path/to/ca.crt</li>
+</ul>
+         </em>/
+<p>&#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Data Encryption:</li>
+</ul>
+     </em>/
+<p>public void clientSideEncryption(Jedis jedis) &#123;
+        // Encrypt before storing
+        String sensitive = &quot;credit-card-1234&quot;;
+        String encrypted = encrypt(sensitive);  // AES encryption
+</p>
+<p>jedis.set(&quot;data:&quot; + id, encrypted);
+</p>
+<p>// Decrypt after retrieval
+        String stored = jedis.get(&quot;data:&quot; + id);
+        String decrypted = decrypt(stored);
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Access Control in Application:</li>
+</ul>
+     </em>/
+<p>public void accessPatterns() &#123;
+        /*<em>
+</p>
+<ul>
+<li>1. Input validation on cache keys</li>
+<li>2. Sanitize user input before using in keys</li>
+<li>3. Rate limit cache operations</li>
+<li>4. Log suspicious access patterns</li>
+</ul>
+         </em>/
+<p>// Validate key format
+        String key = userInput.replaceAll(&quot;[^a-zA-Z0-9:_-]&quot;, &quot;&quot;);
+        if (!key.matches(&quot;^[a-zA-Z0-9:_-]+$&quot;)) &#123;
+            throw new IllegalArgumentException(&quot;Invalid key&quot;);
+        &#125;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>10. Multi-Layer Caching Strategies</h2>
+<h3>10.1 Three-Tier Caching Architecture</h3>
+<pre><code>// Multi-layer caching
+<p>public class MultiLayerCaching &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Three-Tier Cache Architecture:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────────────────────────────────────────────────┐</li>
+</ul>
+<p>│                    REQUEST FLOW                                    │
+     ├─────────────────────────────────────────────────────────────────┤
+     │                                                                  │
+</p>
+<ul>
+<li>L1: Local Cache (Caffeine)                                       │</li>
+<li>- Fastest access (&lt; 1 microsecond)                           │</li>
+<li>- Process-local                                              │</li>
+<li>- Limited size                                               │</li>
+<li>- Hit rate: ~80%                                             │</li>
+<li>│                                                 │</li>
+<li>▼ (miss)                                          │</li>
+<li>L2: Distributed Cache (Redis)                                   │</li>
+<li>- Fast access (&lt; 1 millisecond)                             │</li>
+<li>- Shared across processes                                   │</li>
+<li>- Larger dataset                                             │</li>
+<li>- Hit rate: ~95% (combined)                                │</li>
+<li>│                                                 │</li>
+<li>▼ (miss)                                         │</li>
+<li>L3: Database (PostgreSQL/MySQL)                                  │</li>
+<li>- Slowest (&lt; 10 milliseconds)                                │</li>
+<li>- Source of truth                                            │</li>
+<li>- Always available                                          │</li>
+<li>│</li>
+</ul>
+<p>└─────────────────────────────────────────────────────────────────┘
+     <em>/
+</p>
+<p>private final CaffeineCache l1Cache;
+    private final Jedis l2Cache;
+    private final UserDao userDao;
+</p>
+<p>public User getUser(Long userId) &#123;
+        String l1Key = &quot;user:&quot; + userId;
+</p>
+<p>// L1: Local cache (fastest)
+        User user = l1Cache.getIfPresent(l1Key);
+        if (user != null) &#123;
+            return user;
+        &#125;
+</p>
+<p>// L2: Distributed cache
+        String l2Key = &quot;user:distributed:&quot; + userId;
+        String cached = l2Cache.get(l2Key);
+        if (cached != null) &#123;
+            user = JSON.parseObject(cached, User.class);
+</p>
+<p>// Populate L1 cache
+            l1Cache.put(l1Key, user);
+            return user;
+        &#125;
+</p>
+<p>// L3: Database
+        user = userDao.findById(userId);
+        if (user != null) &#123;
+            // Populate both caches
+            l1Cache.put(l1Key, user);
+            l2Cache.setex(l2Key, 3600, JSON.toJSONString(user));
+        &#125;
+</p>
+<p>return user;
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Invalidation Strategy:</li>
+</ul>
+     </em>/
+<p>public void invalidateUser(Long userId) &#123;
+        String l1Key = &quot;user:&quot; + userId;
+        String l2Key = &quot;user:distributed:&quot; + userId;
+</p>
+<p>// Invalidate both layers
+        l1Cache.invalidate(l1Key);
+        l2Cache.del(l2Key);
+</p>
+<p>// Or use event-based invalidation
+        // Publish invalidation event to all instances
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<p>This comprehensive guide covers caching systems architecture, patterns, and implementation in depth.
+</p>
+        </article>
+    </div>
+</body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Statistics: The Hidden Performance Driver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Statistics: The Hidden Performance Driver</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: The Invisible Problem</h2>
+<p>In my decades of consulting, I've solved thousands of performance problems. You know what the #1 cause is? It's not bad SQL. It's not missing indexes. It's outdated or missing statistics.
+</p>
+<p>At Manhattan Associates, I've seen queries that ran perfectly for months suddenly crawl to a halt. The SQL didn't change. The data changed. The statistics became stale, and the optimizer started making terrible decisions.
+</p>
+<p><strong>The Shocking Reality</strong>: 80% of the performance problems I fix are solved simply by gathering fresh statistics. True story.
+</p>
+<hr>
+<h2>Chapter 1: What Exactly Are Statistics?</h2>
+<h3>The Data Dictionary Secrets</h3>
+<p>Oracle stores statistics about your data in the data dictionary:
+</p>
+<pre><code>-- See what Oracle knows about your table
+<p>SELECT
+    table_name,
+    num_rows,
+    blocks,
+    avg_row_len,
+    last_analyzed
+FROM dba_tables 
+WHERE owner = 'WMSUSER'
+  AND table_name = 'WMS_ORDER_HEADERS';
+</p>
+</code></pre>
+<p><strong>What these mean:</strong>
+</p>
+<ul>
+<li><strong>NUM_ROWS</strong>: Total rows in the table (not blocks!)</li>
+<li><strong>BLOCKS</strong>: Number of database blocks used</li>
+<li><strong>AVG_ROW_LEN</strong>: Average row size</li>
+<li><strong>LAST_ANALYZED</strong>: When stats were gathered</li>
+</ul>
+<h3>Column Statistics</h3>
+<pre><code>-- See column-level statistics
+<p>SELECT
+    column_name,
+    num_distinct,
+    low_value,
+    high_value,
+    density,
+    histogram_type
+FROM dba_tab_columns 
+WHERE owner = 'WMSUSER'
+  AND table_name = 'WMS_ORDER_HEADERS';
+</p>
+</code></pre>
+<p><strong>Key columns:</strong>
+</p>
+<ul>
+<li><strong>NUM_DISTINCT</strong>: Number of distinct values (affects selectivity!)</li>
+<li><strong>LOW_VALUE/HIGH_VALUE</strong>: Data range</li>
+<li><strong>DENSITY</strong>: 1/NUM_DISTINCT (lower = more selective)</li>
+<li><strong>HISTOGRAM_TYPE</strong>: Height-based or frequency (data distribution)</li>
+</ul>
+<h3>Index Statistics</h3>
+<pre><code>SELECT 
+<p>index_name,
+    blevel,
+    leaf_blocks,
+    distinct_keys,
+    clustering_factor,
+    num_rows
+FROM dba_indexes 
+WHERE owner = 'WMSUSER'
+  AND table_name = 'WMS_ORDER_HEADERS';
+</p>
+</code></pre>
+<p><strong>Critical metrics:</strong>
+</p>
+<ul>
+<li><strong>BLEVEL</strong>: Tree height (>4 is concerning!)</li>
+<li><strong>LEAF_BLOCKS</strong>: Index size in blocks</li>
+<li><strong>DISTINCT_KEYS</strong>: Unique index values</li>
+<li><strong>CLUSTERING_FACTOR</strong>: How well data aligns with index (low = better!)</li>
+</ul>
+<hr>
+<h2>Chapter 2: The Selectivity Disaster</h2>
+<h3>Why Selectivity Matters</h3>
+<p>Oracle uses selectivity to estimate how many rows will be returned:
+</p>
+<pre><code>-- If status has 5 distinct values and 100,000 rows:
+<p>-- Selectivity = 1/5 = 0.2 = 20% = 20,000 rows estimated
+</p>
+<p>SELECT <em> FROM wms_orders WHERE status = 'PENDING';
+-- Optimizer estimates 20,000 rows
+</p>
+<p>-- If region has 50 distinct values:
+-- Selectivity = 1/50 = 0.02 = 2% = 2,000 rows estimated
+</p>
+<p>SELECT </em> FROM wms_orders WHERE region = 'NE';
+-- Optimizer estimates 2,000 rows
+</p>
+</code></pre>
+<p><strong>The problem</strong>: When estimates are wrong, Oracle chooses wrong plans!
+</p>
+<h3>The Histogram Solution</h3>
+<p>When data is unevenly distributed, you need histograms:
+</p>
+<pre><code>-- No histogram: assumes even distribution
+<p>-- WMS_ORDER_HEADERS: 1M rows
+-- status = 'PENDING': 500K rows (50%)
+-- status = 'SHIPPED': 100K rows (10%)
+-- status = 'CANCELLED': 400K rows (40%)
+</p>
+<p>-- Without histogram: optimizer thinks each = 33%
+-- With histogram: optimizer knows exact distribution
+</p>
+</code></pre>
+<p><strong>Gathering histograms:</strong>
+</p>
+<pre><code>BEGIN
+<p>DBMS_STATS.GATHER_TABLE_STATS(
+        ownname          =&gt; 'WMSUSER',
+        tabname          =&gt; 'WMS_ORDER_HEADERS',
+        method_opt       =&gt; 'FOR ALL INDEXED COLUMNS SIZE AUTO',
+        -- AUTO lets Oracle decide when histograms are needed
+        estimate_percent =&gt; DBMS_STATS.AUTO_SAMPLE_SIZE,
+        cascade          =&gt; TRUE
+    );
+END;
+/
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 3: The Stale Stats Problem</h2>
+<h3>The 10046 Trace That Revealed Everything</h3>
+<p>At a 3PL client, a simple order lookup went from 0.2 seconds to 45 seconds overnight:
+</p>
+<pre><code>-- The query (unchanged for 2 years!)
+<p>SELECT * FROM wms_order_headers
+WHERE order_id = :bind_var;
+</p>
+</code></pre>
+<p><strong>What changed?</strong>
+</p>
+<pre><code>-- Check when stats were last gathered
+<p>SELECT last_analyzed FROM dba_tables
+WHERE table_name = 'WMS_ORDER_HEADERS';
+</p>
+<p>-- Result: 6 MONTHS AGO!
+</p>
+<p>-- The table grew from 100K rows to 12M rows
+-- But optimizer still thought it was 100K!
+</p>
+</code></pre>
+<p><strong>The execution plan before stats:</strong>
+</p>
+<pre><code>---------------------------------------------------
+<p>| Id  | Operation                  | Name        |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT           |             |
+|   1 |  TABLE ACCESS BY INDEX ROWID| ORD_HDR_PK |
+|   2 |   INDEX UNIQUE SCAN        | ORD_HDR_PK |
+</p>
+<hr>
+</code></pre>
+<p>Wait, that's still using the index! Let me adjust...
+</p>
+<p>Actually the problem was more subtle. Let me show a real case:
+</p>
+<h3>The Real Problem: Multi-Table Join</h3>
+<pre><code>SELECT h.order_id, l.sku_id, i.location_id
+<p>FROM wms_order_headers h
+JOIN wms_order_lines l ON h.order_id = l.order_id
+JOIN wms_inventory i ON l.sku_id = i.sku_id
+WHERE h.order_date &gt; SYSDATE - 7;
+</p>
+</code></pre>
+<p><strong>Before fresh stats:</strong>
+</p>
+<ul>
+<li>Estimated rows: 1,000</li>
+<li>Actual rows: 500,000</li>
+<li>Plan: Nested loops (fast for small, slow for large)</li>
+</ul>
+<p><strong>After fresh stats:</strong>
+</p>
+<ul>
+<li>Estimated rows: 450,000</li>
+<li>Plan: Hash join (correct for large!)</li>
+</ul>
+<hr>
+<h2>Chapter 4: Gathering Statistics Correctly</h2>
+<h3>The Auto Approach (Recommended for 11g+)</h3>
+<pre><code>-- Let Oracle decide what's best
+<p>BEGIN
+    DBMS_STATS.SET_AUTO_TASK_STATUS(
+        enabled =&gt; TRUE
+    );
+</p>
+<p>-- This enables automatic statistics gathering
+    -- Runs in maintenance window (usually overnight)
+END;
+/
+</p>
+</code></pre>
+<p><strong>But this isn't enough for high-DML tables!</strong>
+</p>
+<h3>Manual Gathering for Critical Tables</h3>
+<pre><code>-- For high-DML WMS tables, gather manually after big loads
+<p>-- After nightly batch import:
+BEGIN
+    DBMS_STATS.GATHER_TABLE_STATS(
+        ownname          =&gt; 'WMSUSER',
+        tabname          =&gt; 'WMS_INVENTORY',
+        estimate_percent =&gt; 100,  -- Full table scan for accuracy
+        method_opt       =&gt; 'FOR ALL INDEXED COLUMNS SIZE SKEWONLY',
+        degree           =&gt; DBMS_STATS.AUTO_DEGREE,
+        cascade          =&gt; TRUE
+    );
+END;
+/
+</p>
+</code></pre>
+<p><strong>Donald Sez</strong>: "For tables with billions of rows, use 100% sampling. The accuracy is worth the time."
+</p>
+<h3>The Partitioned Table Strategy</h3>
+<p>For large partitioned tables:
+</p>
+<pre><code>-- Gather stats per partition (faster!)
+<p>BEGIN
+    DBMS_STATS.GATHER_PARTITION_STATS(
+        ownname       =&gt; 'WMSUSER',
+        tabname       =&gt; 'WMS_ORDER_HEADERS',
+        partname      =&gt; 'P2024_Q1',
+        estimate_percent =&gt; 100,
+        granularity   =&gt; 'PARTITION'
+    );
+END;
+/
+</p>
+<p>-- Or gather all at once with GRANULARITY
+BEGIN
+    DBMS_STATS.GATHER_TABLE_STATS(
+        ownname       =&gt; 'WMSUSER',
+        tabname       =&gt; 'WMS_ORDER_HEADERS',
+        granularity   =&gt; 'AUTO'
+    );
+END;
+/
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 5: Locking and Transferring Statistics</h2>
+<h3>The Locking Problem</h3>
+<p>When you gather fresh stats, Oracle might overwrite good stats:
+</p>
+<pre><code>-- Lock statistics to prevent accidental changes
+<p>BEGIN
+    DBMS_STATS.LOCK_TABLE_STATS(
+        ownname =&gt; 'WMSUSER',
+        tabname =&gt; 'WMS_ORDER_HEADERS'
+    );
+END;
+/
+-- Now stats won't change!
+</p>
+<p>-- To unlock:
+BEGIN
+    DBMS_STATS.UNLOCK_TABLE_STATS(
+        ownname =&gt; 'WMSUSER',
+        tabname =&gt; 'WMS_ORDER_HEADERS'
+    );
+END;
+/
+</p>
+</code></pre>
+<p><strong>Use case</strong>: Production tables that are static but still need consistent plans
+</p>
+<h3>Moving Statistics Between Systems</h3>
+<p>When testing doesn't match production:
+</p>
+<pre><code>-- On PROD: Export stats
+<p>BEGIN
+    DBMS_STATS.CREATE_STAT_TABLE(
+        ownname  =&gt; 'WMSUSER',
+        stat_tab =&gt; 'STATS_EXPORT'
+    );
+</p>
+<p>DBMS_STATS.EXPORT_TABLE_STATS(
+        ownname    =&gt; 'WMSUSER',
+        tabname    =&gt; 'WMS_ORDER_HEADERS',
+        stat_table =&gt; 'WMSUSER.STATS_EXPORT',
+        statid     =&gt; 'PROD_STATS'
+    );
+END;
+/
+</p>
+<p>-- Copy export table to TEST
+-- On TEST: Import stats
+BEGIN
+    DBMS_STATS.IMPORT_TABLE_STATS(
+        ownname    =&gt; 'WMSUSER',
+        tabname    =&gt; 'WMS_ORDER_HEADERS',
+        stat_table =&gt; 'WMSUSER.STATS_EXPORT',
+        statid     =&gt; 'PROD_STATS'
+    );
+END;
+/
+</p>
+</code></pre>
+<p><strong>This is GOLD for reproducing production performance issues in test!</strong>
+</p>
+<hr>
+<h2>Chapter 6: The Statistics Performance Checklist</h2>
+<h3>Daily Checklist</h3>
+<pre><code>-- Check for stale stats
+<p>SELECT
+    owner,
+    table_name,
+    last_analyzed,
+    blocks,
+    num_rows,
+    (SYSDATE - last_analyzed) days_old
+FROM dba_tables
+WHERE owner = 'WMSUSER'
+  AND last_analyzed &lt; SYSDATE - 7
+ORDER BY blocks DESC;
+</p>
+</code></pre>
+<h3>Weekly Checklist</h3>
+<pre><code> -- Find tables with skewed data but no histograms
+<p>SELECT
+    c.table_name,
+    c.column_name,
+    c.histogram_type
+FROM dba_tab_columns c
+JOIN dba_tables t ON c.owner = t.owner AND c.table_name = t.table_name
+WHERE c.owner = 'WMSUSER'
+  AND c.histogram_type = 'NONE'
+  AND c.num_distinct &gt; 10
+  AND t.blocks &gt; 10000;
+</p>
+</code></pre>
+<h3>The Quick Fix Script</h3>
+<pre><code>-- Run this for any slow query situation!
+<p>BEGIN
+    -- Gather stats for all related tables
+    DBMS_STATS.GATHER_SCHEMA_STATS(
+        ownname         =&gt; 'WMSUSER',
+        estimate_percent =&gt; DBMS_STATS.AUTO_SAMPLE_SIZE,
+        method_opt       =&gt; 'FOR ALL COLUMNS SIZE AUTO',
+        degree           =&gt; DBMS_STATS.AUTO_DEGREE,
+        cascade          =&gt; TRUE,
+        options          =&gt; 'GATHER AUTO'
+    );
+END;
+/
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: Statistics Are Your Best Investment</h2>
+<p><strong>Donald Sez</strong>: "I can tune any query once I have accurate statistics. Without good stats, even the best-tuned query will fail."
+</p>
+<p>At Manhattan Associates, we:
+</p>
+<ol>
+<li><strong>Gather stats after every bulk load</strong> - No exceptions</li>
+<li><strong>Check stats before troubleshooting</strong> - Always check first</li>
+<li><strong>Use AUTO_SAMPLE_SIZE</strong> - Let Oracle decide</li>
+<li><strong>Export/import for testing</strong> - Match production reality</li>
+<li><strong>Monitor last_analyzed dates</strong> - Catch stale stats early</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "Oracle Query Rewrite Techniques: Making Bad SQL Good" - How to rewrite queries for better performance without changing application logic.
+</p>
+        </article>
+    </div>
+</body>
+</html>

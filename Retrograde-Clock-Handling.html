@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>*Why they happen, how they affect connection pools (HikariCP), and what to do when the Internet is unavailable*</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<p>#Handling Retrograde Clock Changes in Java Applications
+</p>
+<p>``` markdown
+#   
+<em>Why they happen, how they affect connection pools (HikariCP), and what to do when the Internet is unavailable</em>
+</p>
+<p>---
+</p>
+<p>## Table of Contents
+</p>
+<ol>
+<li><a href="#what-is-a-retrograde-clock-change">What is a “Retrograde Clock Change”?</a>  </li>
+<li><a href="#why-hikaricp-logs-this-warning">Why HikariCP Logs This Warning</a>  </li>
+<li><a href="#root-causes-of-backward-clock-adjustments">Root Causes of Backward Clock Adjustments</a>  </li>
+<li><a href="#ensuring-reliable-time-on-servers">Ensuring Reliable Time on Servers</a>  </li>
+<li><a href="#using-a-monotonic-clock-with-hikaricp">Using a Monotonic Clock with HikariCP</a>  </li>
+<li><a href="#operating-without-internet-access">Operating Without Internet Access</a>  </li>
+<li><a href="#best-practice-checklist">Best‑Practice Checklist</a>  </li>
+<li><a href="#references--further-reading">References & Further Reading</a>  </li>
+</ol>
+<p>---
+</p>
+<p>## 1. What is a “Retrograde Clock Change”?
+</p>
+<p>A <strong>retrograde clock change</strong> occurs when the system’s wall‑clock <strong>moves backwards</strong> – the current timestamp is <em>earlier</em> than a timestamp that was recorded a moment ago.
+</p>
+<p>Typical symptom in logs (example from HikariCP):
+</p>
+<pre><code>
+<p>HikariPool-1 - Retrograde clock change detected (housekeeper delta=27s786ms), soft-evicting connections from pool.</code></pre>
+</p>
+<p>In plain English: the pool’s housekeeping thread measured an elapsed interval that turned out negative because the OS clock was corrected to an earlier point in time.
+</p>
+<p>---
+</p>
+<p>## 2. Why HikariCP Logs This Warning
+</p>
+<p>HikariCP (the popular JDBC connection pool) relies on <strong>wall‑clock timestamps</strong> for several internal timers:
+</p>
+<table><thead><tr><th>Timer</th><th>Purpose</th></tr></thead><tbody><tr><td><code>leakDetectionThreshold</code></td><td>Detects connections held too long.</td></tr><tr><td><code>idleTimeout</code></td><td>Evicts idle connections.</td></tr><tr><td><code>maxLifetime</code></td><td>Forces a connection to be retired after a maximum age.</td></tr><tr><td>House‑keeping scheduler</td><td>Periodically runs cleanup tasks.</td></tr></tbody></table>
+<p>When the pool computes <em>elapsed time</em> using <code>System.currentTimeMillis()</code>, a backward jump makes the elapsed time negative. Instead of silently failing, HikariCP logs the retrograde event and performs a <strong>soft eviction</strong> to keep the pool in a consistent state.
+</p>
+<p>---
+</p>
+<p>## 3. Root Causes of Backward Clock Adjustments
+</p>
+<table><thead><tr><th>Cause</th><th>Description</th><th>Typical environment</th></tr></thead><tbody><tr><td><strong>NTP step correction</strong></td><td>The NTP client (<code>systemd-timesyncd</code>, <code>ntpd</code>, <code>chronyd</code>, <code>w32time</code>, etc.) detects a large offset and <strong>steps</strong> the clock instantly.</td><td>All servers with NTP enabled; step occurs when offset > <code>panic</code> threshold (often 1000 s).</td></tr><tr><td><strong>VM suspend / resume</strong></td><td>The host’s clock advances while the guest is paused; on resume the guest may receive a corrected time that is earlier than its last reading.</td><td>Virtual machines, cloud instances, container hosts.</td></tr><tr><td><strong>Manual admin change</strong></td><td>An operator runs <code>date -s …</code> or changes BIOS clock.</td><td>On‑prem servers, edge devices.</td></tr><tr><td><strong>Daylight Saving Time (DST) mis‑configuration</strong></td><td>System timezone incorrectly applies DST, moving the clock back an hour.</td><td>Machines with local time zones instead of UTC.</td></tr><tr><td><strong>Network outage preventing NTP</strong></td><td>When NTP cannot reach its servers, the daemon may fall back to the last known good offset and later apply a correction once connectivity returns.</td><td>Isolated networks, temporary Internet loss.</td></tr></tbody></table>
+<p>---
+</p>
+<p>## 4. Ensuring Reliable Time on Servers
+</p>
+<ol>
+<li><strong>Prefer UTC</strong> – set the OS timezone to UTC to avoid DST surprises.  </li>
+<li><strong>Use a stable NTP daemon</strong> – <code>chronyd</code> is recommended for modern Linux because it <em>slews</em> by default and only steps after a configurable large offset.  </li>
+<li><strong>Configure slew‑only behavior</strong> (if you cannot avoid steps entirely):  </li>
+</ol>
+   <pre><code>   # chronyd.conf  – never step, only slew
+<p>makestep 0 0
+</p>
+   </code></pre>  
+<p>For <code>ntpd</code>, set <code>tinker panic 0</code> (disables panic stepping).
+</p>
+<ol>
+<li><strong>Run a local NTP source</strong> (router, GPS‑disciplined clock, or a protected server) so the host never depends on the public Internet.  </li>
+<li><strong>Disable duplicate time sync</strong> on VMs (e.g., VMware Tools time sync) if you already run an NTP client inside the guest.  </li>
+</ol>
+<p>---
+</p>
+<p>## 5. Using a Monotonic Clock with HikariCP
+</p>
+<p>A monotonic clock never moves backwards. Starting with <strong>HikariCP 4.0.3</strong>, you can inject a custom <code>Clock</code> implementation.
+</p>
+<p>### Minimal implementation (Java 8+)
+</p>
+<pre><code>
+<p>java import com.zaxxer.hikari.util.Clock;
+/*<em>
+MonotonicClock delegates to System.nanoTime()
+and returns milliseconds, matching HikariCP's expectations. </em>/ public final class MonotonicClock implements Clock &#123; @Override public long now() &#123; return System.nanoTime() / 1_000_000L; // ns → ms &#125; &#125;</code></pre> 
+</p>
+<p>### Wiring it in code
+</p>
+<pre><code>
+<p>java HikariConfig config = new HikariConfig(); // … normal pool configuration … config.setClock(new MonotonicClock());
+HikariDataSource ds = new HikariDataSource(config);</code></pre> 
+</p>
+<p><strong>Result:</strong> all time‑outs, leak detection, and house‑keeping now rely on a <strong>steady</strong> source, eliminating the “Retrograde clock change detected” warning even when the OS clock jumps.
+</p>
+<p>> <strong>Tip:</strong> If you are on Spring Boot, expose a <code>DataSource</code> bean with the above configuration, or set the property <code>spring.datasource.hikari.clock=your.package.MonotonicClock</code> (if you register it as a Spring bean).
+</p>
+<p>---
+</p>
+<p>## 6. Operating Without Internet Access
+</p>
+<p>When a server cannot reach external NTP servers (air‑gapped, protected environment), you still need a reliable time source.
+</p>
+<table><thead><tr><th>Strategy</th><th>How to implement</th></tr></thead><tbody><tr><td><strong>Local NTP server</strong></td><td>Deploy a simple <strong>chronyd</strong> instance on a trusted machine that has a manually calibrated clock (via GPS, atomic clock, or periodic admin sync). All hosts point to its IP (<code>server <local‑ntp‑ip></code>).</td></tr><tr><td><strong>Hardware clock discipline</strong></td><td>Use a <strong>GPS‑disciplined oscillator</strong> or a <strong>dedicated time appliance</strong> that provides NTP on the LAN.</td></tr><tr><td><strong>Offline mode with RTC</strong></td><td>Configure the OS’s NTP client to fall back to the hardware RTC (<code>FallbackNTP=rtc</code> in <code>systemd-timesyncd.conf</code>). Accept a modest drift (seconds per day) and correct it manually on a regular schedule.</td></tr><tr><td><strong>Monotonic clock for internal calculations</strong></td><td>As described above, inject a monotonic clock so Java components stay immune to the drift.</td></tr><tr><td><strong>Periodic manual sync</strong></td><td>Create a cron job that runs once a week (or month) and executes <code>chronyc -a makestep</code> <em>only if</em> the network is available. If the network is down, the job does nothing, leaving the clock unchanged.</td></tr></tbody></table>
+<p>---
+</p>
+<p>## 7. Best‑Practice Checklist
+</p>
+<table><thead><tr><th>✅ Item</th><th>Action</th></tr></thead><tbody><tr><td><strong>Set system timezone to UTC</strong></td><td><code>timedatectl set-timezone UTC</code></td></tr><tr><td><strong>Run a reliable NTP daemon</strong></td><td><code>chronyd</code> is preferred; ensure <code>makestep 0 0</code> (slew‑only).</td></tr><tr><td><strong>Configure a local NTP source</strong></td><td>Deploy a LAN‑only NTP server or use a router with NTP.</td></tr><tr><td><strong>Upgrade HikariCP ≥ 4.0.3</strong></td><td>Get the built‑in <code>Clock</code> support.</td></tr><tr><td><strong>Inject a monotonic clock</strong></td><td><code>config.setClock(new MonotonicClock());</code></td></tr><tr><td><strong>Disable VM time‑sync if using NTP inside guest</strong></td><td>Turn off “Synchronize guest time with host” in hypervisor settings.</td></tr><tr><td><strong>Monitor NTP status</strong></td><td><code>systemctl status chronyd</code> / <code>w32tm /query /status</code>.</td></tr><tr><td><strong>Alert on HikariCP retrograde warnings</strong></td><td>Add a log‑stash/ELK rule to capture “Retrograde clock change detected”.</td></tr><tr><td><strong>Plan for offline operation</strong></td><td>Keep a local NTP, or schedule periodic manual clock corrections.</td></tr><tr><td><strong>Document the time‑sync architecture</strong></td><td>Include the NTP topology, fallback policies, and the monotonic‑clock injection in your run‑books.</td></tr></tbody></table>
+<p>---
+</p>
+<p>## 8. References & Further Reading
+</p>
+<table><thead><tr><th>Source</th><th>Link</th></tr></thead><tbody><tr><td>HikariCP documentation – Clock API</td><td><https://github.com/brettwooldridge/HikariCP#clock></td></tr><tr><td>systemd‑timesyncd manual</td><td><https://www.freedesktop.org/software/systemd/man/systemd-timesyncd.service.html></td></tr><tr><td>chrony – high‑performance NTP client/server</td><td><https://chrony.tuxfamily.org/></td></tr><tr><td>NTP “step vs slew” explanation</td><td><https://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_steering></td></tr><tr><td>Java monotonic time (<code>System.nanoTime</code>)</td><td><https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#nanoTime--></td></tr><tr><td>Handling time‑skew in distributed systems</td><td><https://martinfowler.com/articles/time-skew.html></td></tr><tr><td>Docker & VM time‑sync pitfalls</td><td><https://docs.docker.com/config/containers/runmetrics/#time-synchronization></td></tr></tbody></table>
+<p>---
+</p>
+<p><em>Prepared for developers and operations teams dealing with time‑related anomalies in Java micro‑service environments.</em>
+```
+</p>
+        </article>
+    </div>
+</body>
+</html>

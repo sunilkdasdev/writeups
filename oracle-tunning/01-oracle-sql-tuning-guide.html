@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle SQL Tuning: The Definitive Guide for Manhattan Associates Developers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle SQL Tuning: The Definitive Guide for Manhattan Associates Developers</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: Why SQL Tuning Matters at Manhattan Associates</h2>
+<p>At Manhattan Associates, we process millions of inventory transactions daily. Every millisecond saved on SQL execution translates to real dollars saved. In this comprehensive guide, I'll share the tuning techniques I've used to optimize Oracle queries for high-volume supply chain applications.
+</p>
+<p><strong>The Bottom Line</strong>: A poorly written query can cripple your WMS (Warehouse Management System). A well-tuned query can reduce your CPU consumption by 90%.
+</p>
+<hr>
+<h2>Chapter 1: Understanding How Oracle Sees Your Queries</h2>
+<h3>The Oracle Optimizer: Your Free Performance Consultant</h3>
+<p>Before you can tune SQL, you must understand how Oracle thinks. The Cost-Based Optimizer (CBO) is the brain behind every SQL execution, and understanding its decision-making process is crucial.
+</p>
+<pre><code>-- A typical Manhattan Associates inventory query
+<p>SELECT
+    h.order_id,
+    h.order_date,
+    SUM(i.quantity) AS total_items,
+    SUM(i.quantity <em> i.unit_price) AS total_value
+FROM wms_order_headers h
+JOIN wms_order_lines i ON h.order_id = i.order_id
+WHERE h.order_date &gt;= TRUNC(SYSDATE - 30)
+  AND h.status = 'PICKING'
+GROUP BY h.order_id, h.order_date;
+</p>
+</code></pre>
+<h3>How Oracle Processes This Query</h3>
+<ol>
+<li><strong>Parsing</strong>: Oracle checks syntax and validates object names</li>
+<li><strong>Optimization</strong>: CBO calculates the cost of different execution paths</li>
+<li><strong>Row Source Generation</strong>: Creates the execution plan</li>
+<li><strong>Execution</strong>: Runs the plan and returns results</li>
+</ol>
+<p><strong>Donald Sez</strong>: "The optimizer doesn't care about your intentions—it only sees data access paths. Your job is to make the cheap paths visible."
+</p>
+<h3>The Key Perception: Tables Are Not Tables</h3>
+<p>In Oracle, every table is a collection of data blocks. When you write:
+</p>
+<pre><code>SELECT </em> FROM wms_inventory WHERE sku_id = 'SKU-12345';
+</code></pre>
+<p>Oracle doesn't see "one row." It sees "one block that might contain the row." Understanding block-level operations is the key to perception.
+</p>
+<hr>
+<h2>Chapter 2: The Manhattan Associates Case Study - Before and After</h2>
+<h3>The Problem: Inventory Lookup Taking 45 Seconds</h3>
+<p>At a major 3PL client running Manhattan WMS, the inventory lookup for cycle count was timing out:
+</p>
+<p><strong>Before Tuning:</strong>
+</p>
+<pre><code>SELECT 
+<p>i.inventory_id,
+    i.sku_id,
+    i.lpn,
+    i.quantity,
+    l.location_name,
+    z.zone_desc
+FROM wms_inventory i
+JOIN wms_locations l ON i.location_id = l.location_id
+JOIN wms_zones z ON l.zone_id = z.zone_id
+WHERE i.sku_id IN (
+    SELECT sku_id 
+    FROM wms_cycle_count_header 
+    WHERE cycle_count_id = :bind_var
+)
+AND i.quantity &gt; 0;
+</p>
+</code></pre>
+<p><strong>Execution Time</strong>: 45.3 seconds
+<strong>Buffer Gets</strong>: 2,847,392
+<strong>Physical Reads</strong>: 18,293
+</p>
+<h3>The Diagnosis</h3>
+<p>I ran <code>EXPLAIN PLAN</code> and found the problem immediately:
+</p>
+<pre><code>---------------------------------------------------------------
+<p>| Id  | Operation              | Name                      |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT      |                           |
+|   1 |  NESTED LOOPS          |                           |
+|   2 |   TABLE ACCESS FULL    | WMS_CYCLE_COUNT_HEADER   |
+|   3 |   TABLE ACCESS FULL    | WMS_INVENTORY             |
+|   4 |   NESTED LOOPS          |                           |
+|   5 |    INDEX UNIQUE SCAN   | WMS_LOC_PK                |
+|   6 |    TABLE ACCESS BY INDEX ROWID| WMS_LOCATIONS      |
+|   7 |   NESTED LOOPS          |                           |
+|   8 |    INDEX UNIQUE SCAN   | WMS_ZONE_PK               |
+|   9 |    TABLE ACCESS BY INDEX ROWID| WMS_ZONES          |
+</p>
+<hr>
+</code></pre>
+<p><strong>The Problem</strong>: The query was using nested loop joins with full table scans. The IN subquery was executing for every row!
+</p>
+<h3>The Solution: Rewrite with EXISTS and Add Indexes</h3>
+<pre><code>-- REWRITTEN QUERY
+<p>SELECT
+    i.inventory_id,
+    i.sku_id,
+    i.lpn,
+    i.quantity,
+    l.location_name,
+    z.zone_desc
+FROM wms_inventory i
+JOIN wms_locations l ON i.location_id = l.location_id
+JOIN wms_zones z ON l.zone_id = z.zone_id
+WHERE EXISTS (
+    SELECT 1 
+    FROM wms_cycle_count_header c
+    WHERE c.sku_id = i.sku_id
+      AND c.cycle_count_id = :bind_var
+)
+AND i.quantity &gt; 0;
+</p>
+</code></pre>
+<p><strong>New Index Required:</strong>
+</p>
+<pre><code>CREATE INDEX wms_cycle_count_sku_idx 
+<p>ON wms_cycle_count_header (cycle_count_id, sku_id);
+</p>
+</code></pre>
+<p><strong>After Tuning:</strong>
+</p>
+<ul>
+<li><strong>Execution Time</strong>: 0.8 seconds</li>
+<li><strong>Buffer Gets</strong>: 4,521</li>
+<li><strong>Physical Reads</strong>: 47</li>
+<li><strong>Improvement</strong>: 98% faster!</li>
+</ul>
+<hr>
+<h2>Chapter 3: Understanding Indexing - The Manhattan Associates Way</h2>
+<h3>The Fundamental Truth About Indexes</h3>
+<p><strong>Donald Sez</strong>: "Indexes are like the index in a book—the more you have, the faster you can find information. But too many indexes slow down DML operations."
+</p>
+<p>At Manhattan Associates, we see three common index mistakes:
+</p>
+<ol>
+<li><strong>No indexes</strong> where they're needed</li>
+<li><strong>Too many indexes</strong> on high-DML tables</li>
+<li><strong>Wrong index columns</strong> in the wrong order</li>
+</ol>
+<h3>The Rule of Thumb: Index Access Paths</h3>
+<table><thead><tr><th>Access Method</th><th>When Used</th><th>Performance</th></tr></thead><tbody><tr><td>Index Unique Scan</td><td>WHERE pk = value</td><td>Excellent</td></tr><tr><td>Index Range Scan</td><td>WHERE col BETWEEN a AND b</td><td>Good</td></tr><tr><td>Index Full Scan</td><td>No WHERE clause</td><td>Poor</td></tr><tr><td>Index Skip Scan</td><td>Leading column not in WHERE</td><td>Moderate</td></tr><tr><td>Table Access By Index RowID</td><td>Follows index access</td><td>Good</td></tr></tbody></table>
+<h3>Real Example: Fixing the Order Search</h3>
+<p><strong>Problem</strong>: Searching orders by tracking number was taking 20 seconds:
+</p>
+<pre><code>-- BEFORE: Full table scan
+<p>SELECT order_id, order_date, status, tracking_number
+FROM wms_order_headers
+WHERE tracking_number LIKE '1Z%' || :scan_input || '%';
+</p>
+</code></pre>
+<p><strong>The Fix</strong>: Add a function-based index for reverse tracking lookup:
+</p>
+<pre><code>-- For reverse search (ending with)
+<p>CREATE INDEX wms_ord_tracking_rev_idx
+ON wms_order_headers (SUBSTR(tracking_number, -12));
+</p>
+<p>-- For better LIKE performance, consider Oracle Text
+CREATE INDEX wms_ord_tracking_otx 
+ON wms_order_headers (tracking_number) 
+INDEXTYPE IS CTXSYS.CONTEXT;
+</p>
+</code></pre>
+<p><strong>Result</strong>: 20 seconds → 0.3 seconds
+</p>
+<hr>
+<h2>Chapter 4: The Art of Reading Execution Plans</h2>
+<h3>Why Execution Plans Lie (Sometimes)</h3>
+<p><strong>Critical Warning</strong>: The execution plan shown by <code>EXPLAIN PLAN</code> may not be the actual plan executed! Always use:
+</p>
+<pre><code>-- For current session
+<p>SET STATISTICS LEVEL ALL
+SELECT ... 
+-- Then check V$SQL_PLAN
+</p>
+<p>-- Or use DBMS_XPLAN
+SELECT <em> FROM table(DBMS_XPLAN.DISPLAY_CURSOR('&amp;sql_id', NULL, 'ALL'));
+</p>
+</code></pre>
+<h3>Interpreting Real vs. Estimated Rows</h3>
+<p>A common trap at Manhattan Associates:
+</p>
+<pre><code>-------------------------------------------------------------------
+<p>| Id  | Operation            | Name     | A-Rows | A-Time        |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT    |          |      1| 00:00:32.45   |
+|   1 |  TABLE ACCESS FULL  | ORDERS   |   100K| 00:00:32.42   |
+</p>
+<hr>
+</code></pre>
+<p><strong>Look at A-Rows (Actual Rows)!</strong> The optimizer estimated 1 row but got 100,000. This stats mismatch causes terrible execution plans.
+</p>
+<h3>The Fix: Gather Fresh Statistics</h3>
+<pre><code>-- Gather stats for specific table
+<p>BEGIN
+    DBMS_STATS.GATHER_TABLE_STATS(
+        ownname          =&gt; 'WMSUSER',
+        tabname          =&gt; 'WMS_ORDER_HEADERS',
+        estimate_percent =&gt; DBMS_STATS.AUTO_SAMPLE_SIZE,
+        method_opt       =&gt; 'FOR ALL INDEXED COLUMNS SIZE AUTO',
+        degree           =&gt; DBMS_STATS.AUTO_DEGREE,
+        cascade          =&gt; TRUE
+    );
+END;
+/
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 5: Common Tuning Patterns for WMS Applications</h2>
+<h3>Pattern 1: The "Too Many Rows" Problem</h3>
+<p><strong>Symptom</strong>: Queries return millions of rows when you expect thousands.
+</p>
+<pre><code>-- BROKEN: Cartesian product risk
+<p>SELECT h.</em>, l.<em>
+FROM wms_order_headers h,
+     wms_order_lines l
+WHERE h.order_id = l.order_id(+)
+  AND h.order_date &gt; SYSDATE - 7;
+</p>
+<p>-- FIXED: Explicit join
+SELECT h.</em>, l.<em>
+FROM wms_order_headers h
+LEFT JOIN wms_order_lines l ON h.order_id = l.order_id
+WHERE h.order_date &gt; SYSDATE - 7;
+</p>
+</code></pre>
+<h3>Pattern 2: The N+1 Query Problem</h3>
+<p><strong>Symptom</strong>: Query runs fast alone, slow in loop.
+</p>
+<pre><code>-- BROKEN: Implicit N+1 in PL/SQL
+<p>FOR rec IN (SELECT order_id FROM wms_order_headers
+            WHERE status = 'PENDING') LOOP
+    -- This runs a separate query for EACH order!
+    SELECT SUM(quantity) INTO v_qty 
+    FROM wms_order_lines 
+    WHERE order_id = rec.order_id;
+END LOOP;
+</p>
+<p>-- FIXED: Single query with GROUP BY
+SELECT h.order_id, SUM(l.quantity) AS total_qty
+FROM wms_order_headers h
+JOIN wms_order_lines l ON h.order_id = l.order_id
+WHERE h.status = 'PENDING'
+GROUP BY h.order_id;
+</p>
+</code></pre>
+<h3>Pattern 3: Functions in WHERE Clause</h3>
+<p><strong>Symptom</strong>: Index not used even when it exists.
+</p>
+<pre><code>-- BROKEN: Function disables index
+<p>SELECT </em> FROM wms_inventory
+WHERE UPPER(sku_id) = UPPER(:sku);
+</p>
+<p>-- FIXED: Use function-based index + no-function query
+CREATE INDEX wms_inv_sku_upper_idx 
+ON wms_inventory (UPPER(sku_id));
+</p>
+<p>SELECT <em> FROM wms_inventory
+WHERE UPPER(sku_id) = UPPER(:sku);  -- Now uses index!
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 6: Advanced Techniques - Partitioning and Parallelism</h2>
+<h3>When to Use Partitioning</h3>
+<p>At Manhattan Associates, we partition large tables by date:
+</p>
+<pre><code>-- Range partition by order date
+<p>CREATE TABLE wms_order_headers (
+    order_id      NUMBER,
+    order_date    DATE,
+    status        VARCHAR2(20),
+    -- other columns
+)
+PARTITION BY RANGE (order_date) (
+    PARTITION p2024_Q1 VALUES LESS THAN (TO_DATE('2024-04-01','YYYY-MM-DD')),
+    PARTITION p2024_Q2 VALUES LESS THAN (TO_DATE('2024-07-01','YYYY-MM-DD')),
+    PARTITION p2024_Q3 VALUES LESS THAN (TO_DATE('2024-10-01','YYYY-MM-DD')),
+    PARTITION p2024_Q4 VALUES LESS THAN (TO_DATE('2025-01-01','YYYY-MM-DD')),
+    PARTITION p_future VALUES LESS THAN (MAXVALUE)
+);
+</p>
+</code></pre>
+<p><strong>Benefit</strong>: Queries on recent data only touch recent partitions.
+</p>
+<h3>Parallel Query for Reports</h3>
+<pre><code>-- Force parallel execution for large reports
+<p>SELECT /</em>+ PARALLEL(8) */
+    region,
+    SUM(total_value) AS region_total
+FROM wms_order_headers
+WHERE order_date &gt;= TRUNC(SYSDATE, 'MM')
+GROUP BY region;
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: The Tuning Mindset</h2>
+<p><strong>Donald Sez</strong>: "SQL tuning is not about making queries run fast. It's about making Oracle understand what you want it to do."
+</p>
+<p>The Manhattan Associates approach:
+</p>
+<ol>
+<li><strong>Understand the data first</strong> - Know your table sizes, data distribution</li>
+<li><strong>Always check the execution plan</strong> - The plan never lies about what actually happened</li>
+<li><strong>Index strategically</strong> - Less is more, put equality columns first</li>
+<li><strong>Test with real data</strong> - Development data often doesn't show production problems</li>
+<li><strong>Monitor continuously</strong> - Performance degrades as data grows</li>
+</ol>
+<p>Remember: The fastest query is the one that doesn't run. Always ask: "Do I really need this data?"
+</p>
+<hr>
+<p><strong>Next in this series</strong>: "Oracle Indexing Strategies: The Complete Guide for WMS Applications" - Advanced indexing techniques including composite indexes, index-only tables, and invisible indexes.
+</p>
+        </article>
+    </div>
+</body>
+</html>

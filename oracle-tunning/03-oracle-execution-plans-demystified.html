@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Execution Plans Demystified: Read the Plan, Find the Problem</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Execution Plans Demystified: Read the Plan, Find the Problem</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: The Execution Plan Is Your Truth</h2>
+<p>After three decades of Oracle tuning, I've learned one irrefutable truth: the execution plan never lies. When a query runs slow, the execution plan shows exactly why—every unnecessary table scan, every nested loop, every hash join is captured in black and white.
+</p>
+<p>At Manhattan Associates, I've seen brilliant developers spend weeks trying to "optimize" their SQL, only to discover the problem was revealed in the first 30 seconds of execution plan analysis.
+</p>
+<p><strong>The Bottom Line</strong>: If you can't read an execution plan, you can't tune SQL. It's that simple.
+</p>
+<hr>
+<h2>Chapter 1: How to Actually See What Oracle Does</h2>
+<h3>The Dangerous Myth: EXPLAIN PLAN</h3>
+<p>Most developers run EXPLAIN PLAN and think they see the truth. They're usually wrong.
+</p>
+<pre><code>-- What most people do (INCOMPLETE!)
+<p>EXPLAIN PLAN FOR
+SELECT order_id, order_date 
+FROM wms_order_headers 
+WHERE status = 'PENDING';
+</p>
+<p>SELECT <em> FROM table(DBMS_XPLAN.DISPLAY);
+</p>
+</code></pre>
+<p>This shows what Oracle <strong>might</strong> do. But the actual execution can differ dramatically!
+</p>
+<h3>The Real Way: DBMS_XPLAN.DISPLAY_CURSOR</h3>
+<pre><code>-- First, enable statistics collection
+<p>ALTER SESSION SET STATISTICS_LEVEL = ALL;
+</p>
+<p>-- Run your query
+SELECT order_id, order_date 
+FROM wms_order_headers 
+WHERE status = 'PENDING';
+</p>
+<p>-- Now see the REAL plan with actual performance metrics
+SELECT </em> FROM table(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'ALLSTATS LAST'));
+</p>
+</code></pre>
+<p><strong>This shows:</strong>
+</p>
+<ul>
+<li><strong>A-Rows</strong>: Actual rows returned at each step</li>
+<li><strong>A-Time</strong>: Actual time spent at each step</li>
+<li><strong>Buffers</strong>: Actual memory used</li>
+<li><strong>Reads/Writes</strong>: Physical I/O performed</li>
+</ul>
+<h3>Interpreting Real vs. Estimated Rows</h3>
+<p>This is the #1 execution plan issue I fix at Manhattan Associates:
+</p>
+<pre><code>-------------------------------------------------------------------
+<p>| Id  | Operation            | Name     | E-Rows | A-Rows | A-Time |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT    |          |      1 |   100K | 00:45  |
+|   1 |  TABLE ACCESS FULL  | ORDERS   |      1 |   100K | 00:45  |
+</p>
+<hr>
+</code></pre>
+<p><strong>E-Rows (Estimated): 1 row</strong>
+<strong>A-Rows (Actual): 100,000 rows</strong>
+</p>
+<p>The optimizer thought it would get 1 row, so it chose a bad plan! This stats problem is the root cause of 80% of the slow queries I see.
+</p>
+<hr>
+<h2>Chapter 2: Understanding Join Methods</h2>
+<h3>Nested Loop Join: The Good, The Bad, The Ugly</h3>
+<p>A nested loop join works like nested DO loops in programming:
+</p>
+<pre><code>SELECT /<em>+ ORDERED </em>/ 
+<p>h.order_id, l.quantity
+FROM wms_order_headers h
+JOIN wms_order_lines l ON h.order_id = l.order_id
+WHERE h.region = 'NE';
+</p>
+</code></pre>
+<p><strong>How it works:</strong>
+</p>
+<ol>
+<li>For each row in the outer table (order_headers)</li>
+<li>Scan the inner table (order_lines) for matching rows</li>
+</ol>
+<p><strong>Good</strong>: When outer table returns few rows and inner table has index
+<strong>Bad</strong>: When outer table returns many rows
+</p>
+<p><strong>Execution Plan (Good):</strong>
+</p>
+<pre><code>-------------------------------------------------------------
+<p>| Id  | Operation                      | Name             |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT               |                  |
+|   1 |  NESTED LOOPS                  |                  |
+|   2 |   TABLE ACCESS BY INDEX ROWID | WMS_ORDER_HDR    |
+|   3 |    INDEX RANGE SCAN           | ORD_HDR_REGION   |
+|   4 |   TABLE ACCESS BY INDEX ROWID | WMS_ORDER_LINES |
+|   5 |    INDEX RANGE SCAN           | ORD_LINES_FK     |
+</p>
+<hr>
+</code></pre>
+<p><strong>Execution Plan (Bad - No Index):</strong>
+</p>
+<pre><code>-------------------------------------------------------------
+<p>| Id  | Operation            | Name              | Rows   |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT    |                   |        |
+|   1 |  NESTED LOOPS       |                   |   10M  |
+|   2 |   TABLE ACCESS FULL| WMS_ORDER_HDR     |   500K |
+|   3 |   TABLE ACCESS FULL| WMS_ORDER_LINES   |    20  |
+</p>
+<hr>
+</code></pre>
+<p>This is doing 500,000 full table scans! Every row from headers scans the entire lines table.
+</p>
+<h3>Hash Join: The Workhorse</h3>
+<p>Hash joins are efficient for large row sets:
+</p>
+<pre><code>SELECT h.order_id, l.sku_id
+<p>FROM wms_order_headers h
+JOIN wms_inventory i ON h.order_id = i.order_id
+WHERE h.order_date &gt; SYSDATE - 30;
+</p>
+</code></pre>
+<p><strong>How it works:</strong>
+</p>
+<ol>
+<li>Oracle builds a hash table from the smaller table (in memory)</li>
+<li>Scans the larger table, probing the hash table for matches</li>
+</ol>
+<pre><code>-------------------------------------------------
+<p>| Id  | Operation         | Name                |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT  |                    |
+|   1 |  HASH JOIN        |                    |
+|   2 |   TABLE ACCESS FULL| WMS_ORDER_HDR     |
+|   3 |   TABLE ACCESS FULL| WMS_INVENTORY     |
+</p>
+<hr>
+</code></pre>
+<p><strong>Good for</strong>: Large tables, no useful index, equi-join
+<strong>The catch</strong>: Needs enough memory for the hash table
+</p>
+<h3>Merge Join: The Sorted Approach</h3>
+<pre><code>SELECT /<em>+ USE_MERGE(h l) </em>/ 
+<p>h.order_id, l.sku_id
+FROM wms_order_headers h
+JOIN wms_order_lines l ON h.order_id = l.order_id
+WHERE h.status = 'COMPLETE';
+</p>
+</code></pre>
+<p><strong>How it works:</strong>
+</p>
+<ol>
+<li>Both inputs are sorted by join key</li>
+<li>Merge sorted streams together</li>
+</ol>
+<p><strong>Good for</strong>: Already-sorted data, large sets
+<strong>The catch</strong>: Sorts can be expensive
+</p>
+<hr>
+<h2>Chapter 3: Access Methods - What's Really Happening</h2>
+<h3>TABLE ACCESS FULL: The Big Red Flag</h3>
+<p>When you see this, ask yourself: "Should I be scanning every row?"
+</p>
+<pre><code>-- This might be acceptable
+<p>SELECT <em> FROM wms_inventory WHERE quantity &gt; 0;  -- 90% of rows
+</p>
+<p>-- This is usually BAD
+SELECT </em> FROM wms_inventory WHERE sku_id = 'SKU-123';
+</p>
+</code></pre>
+<p><strong>The fix</strong>: Create an index
+</p>
+<pre><code>CREATE INDEX wms_inv_sku_idx ON wms_inventory(sku_id);
+<p>-- Plan now shows:
+-- INDEX RANGE SCAN on wms_inv_sku_idx
+-- TABLE ACCESS BY INDEX ROWID
+</p>
+</code></pre>
+<h3>INDEX UNIQUE SCAN: Perfect for PK Lookups</h3>
+<pre><code>SELECT <em> FROM wms_order_headers WHERE order_id = 12345;
+</code></pre>
+<pre><code>---------------------------------------------
+<p>| Id  | Operation                   | Name |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT            |      |
+|   1 |  TABLE ACCESS BY INDEX ROWID|      |
+|   2 |   INDEX UNIQUE SCAN         | PK   |
+</p>
+<hr>
+</code></pre>
+<p>This is optimal! Single row, single I/O.
+</p>
+<h3>INDEX RANGE SCAN: The Sweet Spot</h3>
+<pre><code>SELECT </em> FROM wms_orders WHERE order_date BETWEEN '01-JAN-24' AND '31-MAR-24';
+</code></pre>
+<pre><code>-----------------------------------------------
+<p>| Id  | Operation               | Name         |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT        |              |
+|   1 |  INDEX RANGE SCAN       | ORD_DATE_IDX |
+</p>
+<hr>
+</code></pre>
+<p>This scans only the relevant index leaf blocks—not the whole index.
+</p>
+<h3>INDEX FULL SCAN: When It's Actually Good</h3>
+<pre><code>-- No WHERE clause, but need order
+<p>SELECT status, COUNT(<em>) FROM wms_orders GROUP BY status;
+</p>
+</code></pre>
+<pre><code>-------------------------------------------------
+<p>| Id  | Operation           | Name              |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT    |                   |
+|   1 |  SORT GROUP BY     |                   |
+|   2 |   INDEX FULL SCAN  | ORD_STATUS_IDX    |
+</p>
+<hr>
+</code></pre>
+<p>This reads the entire index (which is smaller than the table) in sorted order!
+</p>
+<hr>
+<h2>Chapter 4: Real-World Case Study - The 30-Second Inventory Report</h2>
+<h3>The Problem</h3>
+<p>At a major retail client, their inventory valuation report took 30+ minutes:
+</p>
+<pre><code>SELECT 
+<p>i.sku_id,
+    s.sku_desc,
+    i.location_id,
+    l.location_name,
+    SUM(i.quantity) AS total_qty,
+    SUM(i.quantity </em> i.unit_cost) AS total_value
+FROM wms_inventory i
+JOIN wms_sku s ON i.sku_id = s.sku_id
+JOIN wms_locations l ON i.location_id = l.location_id
+WHERE i.quantity &gt; 0
+  AND l.location_type IN ('PICK', 'BULK', 'STAGE')
+GROUP BY 
+    i.sku_id, s.sku_desc, i.location_id, l.location_name;
+</p>
+</code></pre>
+<h3>The Execution Plan (Before)</h3>
+<pre><code>----------------------------------------------------------------------------
+<p>| Id  | Operation                 | Name           | A-Time   | Buffers |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT          |                | 31:45.23 |  4.2M   |
+|   1 |  HASH GROUP BY            |                | 31:45.21 |  4.2M   |
+|   2 |   HASH JOIN               |                | 02:12.45 |  4.2M   |
+|   3 |    TABLE ACCESS FULL      | WMS_INVENTORY  | 00:32.12 |  1.8M   |
+|   4 |    HASH JOIN              |                | 01:15.33 |  2.4M   |
+|   5 |     TABLE ACCESS FULL     | WMS_SKU        | 00:05.21 |   450   |
+|   6 |     TABLE ACCESS FULL     | WMS_LOCATIONS  | 00:02.11 |   289   |
+</p>
+<hr>
+</code></pre>
+<p><strong>Problems identified:</strong>
+</p>
+<ol>
+<li>Full table scan on wms_inventory (12 million rows)</li>
+<li>No indexes on join predicates</li>
+<li>Hash join forcing full table scans</li>
+</ol>
+<h3>The Fix</h3>
+<p><strong>Step 1: Add proper indexes</strong>
+</p>
+<pre><code>CREATE INDEX wms_inv_loc_qty_idx 
+<p>ON wms_inventory(location_id, quantity, sku_id, unit_cost);
+</p>
+<p>CREATE INDEX wms_loc_type_idx
+ON wms_locations(location_type, location_id);
+</p>
+</code></pre>
+<p><strong>Step 2: Rewrite to use index access</strong>
+</p>
+<pre><code>SELECT 
+<p>i.sku_id,
+    s.sku_desc,
+    i.location_id,
+    l.location_name,
+    SUM(i.quantity) AS total_qty,
+    SUM(i.quantity <em> i.unit_cost) AS total_value
+FROM wms_inventory i
+JOIN wms_locations l ON i.location_id = l.location_id
+JOIN wms_sku s ON i.sku_id = s.sku_id
+WHERE i.quantity &gt; 0
+  AND l.location_type IN ('PICK', 'BULK', 'STAGE')
+GROUP BY 
+    i.sku_id, s.sku_desc, i.location_id, l.location_name;
+</p>
+</code></pre>
+<h3>The Execution Plan (After)</h3>
+<pre><code>---------------------------------------------------------------------------
+<p>| Id  | Operation                       | Name              | A-Time | Buf |
+</p>
+<hr>
+<p>|   0 | SELECT STATEMENT                |                   | 00:02.34|  45K |
+|   1 |  HASH GROUP BY                  |                   | 00:02.34|  45K |
+|   2 |   HASH JOIN                     |                   | 00:01.89|  45K |
+|   3 |    INDEX FAST FULL SCAN         | WMS_INV_LOC_QTY   | 00:00.45|  32K |
+|   4 |    HASH JOIN                    |                   | 00:01.12|  13K |
+|   5 |     TABLE ACCESS BY INDEX ROWID | WMS_LOCATIONS    | 00:00.02|   12 |
+|   6 |      INDEX RANGE SCAN           | WMS_LOC_TYPE     | 00:00.01|    4 |
+|   7 |     TABLE ACCESS FULL           | WMS_SKU          | 00:00.89|  450 |
+</p>
+<hr>
+</code></pre>
+<p><strong>Result</strong>: 31 minutes → 2.3 seconds! <strong>99.9% improvement</strong>
+</p>
+<hr>
+<h2>Chapter 5: Common Plan Problems and Fixes</h2>
+<h3>Problem 1: Cartesian Product</h3>
+<p><strong>Symptom</strong>: Unexplained high row counts
+</p>
+<pre><code>|   3 |        MERGE JOIN CARTESIAN     |                 |
+</code></pre>
+<p><strong>Cause</strong>: Forgot to join two tables
+</p>
+<pre><code>-- BROKEN: Cartesian!
+<p>SELECT h.</em>, l.<em>
+FROM wms_order_headers h, wms_order_lines l
+WHERE h.status = 'PENDING';  -- No join to l!
+</p>
+<p>-- FIXED: Proper join
+SELECT h.</em>, l.<em> 
+FROM wms_order_headers h
+JOIN wms_order_lines l ON h.order_id = l.order_id
+WHERE h.status = 'PENDING';
+</p>
+</code></pre>
+<h3>Problem 2: Filter Predicates in Wrong Order</h3>
+<p><strong>Symptom</strong>: Too many rows processed early
+</p>
+<pre><code>|   2 |   TABLE ACCESS FULL            | WMS_ORDERS      |
+<p>|   3 |    TABLE ACCESS BY INDEX ROWID | WMS_ORDER_LINES |
+|   4 |     INDEX RANGE SCAN           | ORD_LINES_FK    |
+</p>
+</code></pre>
+<p>The line table is accessed BEFORE filtering the header!
+</p>
+<p><strong>Fix</strong>: Put filter on header table first in WHERE
+</p>
+<h3>Problem 3: Remote Queries</h3>
+<p><strong>Symptom</strong>: Query goes across database link
+</p>
+<pre><code>|   2 |   REMOTE | WMS_ORDERS@LINK |  |  | 
+</code></pre>
+<p><strong>Fix</strong>: Consider materialized view or copying data locally
+</p>
+<h3>Problem 4: Excessive Sorts</h3>
+<p><strong>Symptom</strong>: Sort operations dominate time
+</p>
+<pre><code>|   2 |  SORT ORDER BY                 |                |
+<p>|   4 |   SORT JOIN                   |                |
+</p>
+</code></pre>
+<p><strong>Fix</strong>: Create index on ORDER BY columns
+</p>
+<hr>
+<h2>Chapter 6: Using Hints to Fix Plans</h2>
+<h3>When Hints Are Appropriate</h3>
+<p><strong>Donald Sez</strong>: "Hints are like medicine—when used correctly, they cure the patient. When overused, they create dependencies that haunt you forever."
+</p>
+<p>Use hints only when:
+</p>
+<ol>
+<li>Statistics are accurate but optimizer still chooses wrong</li>
+<li>Application has fixed SQL that cannot be changed</li>
+<li>You've proven the hint improves performance</li>
+</ol>
+<h3>Common Hints</h3>
+<pre><code>/</em>+ FULL(table) <em>/              -- Force full table scan
+<p>/</em>+ INDEX(table index) <em>/       -- Force index use
+/</em>+ USE_NL(table1 table2) <em>/    -- Force nested loop
+/</em>+ USE_HASH(table1 table2) <em>/  -- Force hash join
+/</em>+ ORDERED <em>/                  -- Force join order as written
+/</em>+ PARALLEL(8) <em>/             -- Force parallelism
+/</em>+ LEADING(t1 t2) <em>/          -- Set first table in join
+</p>
+</code></pre>
+<h3>The Safe Hint Approach</h3>
+<pre><code>-- Start with a hint to fix the immediate problem
+<p>SELECT /</em>+ FULL(wms_inventory) <em>/ </em>
+FROM wms_inventory
+WHERE quantity &gt; 1000;
+</p>
+<p>-- Then work on the real fix: add proper index
+CREATE INDEX wms_inv_qty_idx ON wms_inventory(quantity);
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: Plan Reading Is a Skill</h2>
+<p><strong>Donald Sez</strong>: "The execution plan is a map of what Oracle does. Learn to read it like a GPS—it tells you exactly where the performance went."
+</p>
+<p>At Manhattan Associates, we follow this process:
+</p>
+<ol>
+<li>Run query with ALLSTATS to get actual performance</li>
+<li>Identify operations with high A-Time or Buffers</li>
+<li>Ask "Why?" at each step</li>
+<li>Fix root cause (stats, indexes, rewrite) not symptoms</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "Oracle Statistics: The Hidden Performance Driver" - Why outdated statistics cause 90% of performance problems and how to fix them.
+</p>
+        </article>
+    </div>
+</body>
+</html>

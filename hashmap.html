@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<p>HashMap uses hashCode(), == and equals() for entry lookup. The lookup sequence for a given key k is as follows:
+</p>
+<p>Use k.hashCode() to determine which bucket the entry is stored, if any
+If found, for each entry's key k1 in that bucket, if k == k1 || k.equals(k1), then return k1's entry
+Any other outcomes, no corresponding entry
+To demonstrate using an example, assume that we want to create a HashMap where keys are something which is 'logically equivalent' if they have same integer value, represented by AmbiguousInteger class. We then construct a HashMap, put in one entry, then attempt to override its value and retrieve value by key.
+</p>
+<p>class AmbiguousInteger &#123;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+&#125;
+</p>
+<p>HashMap<AmbiguousInteger, Integer> map = new HashMap<>();
+// logically equivalent keys
+AmbiguousInteger key1 = new AmbiguousInteger(1),
+                 key2 = new AmbiguousInteger(1),
+                 key3 = new AmbiguousInteger(1);
+map.put(key1, 1); // put in value for entry '1'
+map.put(key2, 2); // attempt to override value for entry '1'
+System.out.println(map.get(key1));
+System.out.println(map.get(key2));
+System.out.println(map.get(key3));
+</p>
+<p>Expected: 2, 2, 2
+Don't override hashCode() and equals(): by default Java generates different hashCode() values for different objects, so HashMap uses these values to map key1 and key2 into different buckets. key3 has no corresponding bucket so it has no value.
+</p>
+<p>class AmbiguousInteger &#123;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+&#125;
+</p>
+<p>map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 2, set as entry 2[1]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 2, get as entry 2[1]
+map.get(key3); // map to no bucket
+Expected: 2, 2, 2
+Output:   1, 2, null
+Override hashCode() only: HashMap maps key1 and key2 into the same bucket, but they remain different entries due to both key1 == key2 and key1.equals(key2) checks fail, as by default equals() uses == check, and they refer to different instances. key3 fails both == and equals() checks against key1 and key2 and thus has no corresponding value.
+</p>
+<p>class AmbiguousInteger &#123;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+</p>
+<p>@Override
+    public int hashCode() &#123;
+        return value;
+    &#125;
+&#125;
+</p>
+<p>map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[2]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[2]
+map.get(key3); // map to bucket 1, no corresponding entry
+Expected: 2, 2, 2
+Output:   1, 2, null
+Override equals() only: HashMap maps all keys into different buckets because of default different hashCode(). == or equals() check is irrelevant here as HashMap never reaches the point where it needs to use them.
+</p>
+<p>class AmbiguousInteger &#123;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+</p>
+<p>@Override
+    public boolean equals(Object obj) &#123;
+        return obj instanceof AmbiguousInteger && value == ((AmbiguousInteger) obj).value;
+    &#125;
+&#125;
+</p>
+<p>map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 2, set as entry 2[1]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 2, get as entry 2[1]
+map.get(key3); // map to no bucket
+Expected: 2, 2, 2
+Actual:   1, 2, null
+Override both hashCode() and equals(): HashMap maps key1, key2 and key3 into the same bucket. == checks fail when comparing different instances, but equals() checks pass as they all have the same value, and deemed 'logically equivalent' by our logic.
+</p>
+<p>class AmbiguousInteger &#123;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+</p>
+<p>@Override
+    public int hashCode() &#123;
+        return value;
+    &#125;
+</p>
+<p>@Override
+    public boolean equals(Object obj) &#123;
+        return obj instanceof AmbiguousInteger && value == ((AmbiguousInteger) obj).value;
+    &#125;
+&#125;
+</p>
+<p>map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[1], override value
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[1]
+map.get(key3); // map to bucket 1, get as entry 1[1]
+Expected: 2, 2, 2
+Actual:   2, 2, 2
+What if hashCode() is random?: HashMap will assign a different bucket for each operation, and thus you never find the same entry that you put in earlier.
+</p>
+<p>class AmbiguousInteger &#123;
+    private static int staticInt;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+</p>
+<p>@Override
+    public int hashCode() &#123;
+        return ++staticInt; // every subsequent call gets different value
+    &#125;
+</p>
+<p>@Override
+    public boolean equals(Object obj) &#123;
+        return obj instanceof AmbiguousInteger && value == ((AmbiguousInteger) obj).value;
+    &#125;
+&#125;
+</p>
+<p>map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 2, set as entry 2[1]
+map.get(key1); // map to no bucket, no corresponding value
+map.get(key2); // map to no bucket, no corresponding value
+map.get(key3); // map to no bucket, no corresponding value
+Expected: 2, 2, 2
+Actual:   null, null, null
+What if hashCode() is always the same?: HashMap maps all keys into one big bucket. In this case, your code is functionally correct, but the use of HashMap is practically redundant, as any retrieval would need to iterate through all entries in that single bucket in O(N) time (or O(logN) for Java 8), equivalent to the use of a List.
+</p>
+<p>class AmbiguousInteger &#123;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+</p>
+<p>@Override
+    public int hashCode() &#123;
+        return 0;
+    &#125;
+</p>
+<p>@Override
+    public boolean equals(Object obj) &#123;
+        return obj instanceof AmbiguousInteger && value == ((AmbiguousInteger) obj).value;
+    &#125;
+&#125;
+</p>
+<p>map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[1]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[1]
+map.get(key3); // map to bucket 1, get as entry 1[1]
+Expected: 2, 2, 2
+Actual:   2, 2, 2
+And what if equals is always false?: == check passes when we compare the same instance with itself, but fails otherwise, equals checks always fails so key1, key2 and key3 are deemed to be 'logically different', and maps to different entries, though they are still in the same bucket due to same hashCode().
+</p>
+<p>class AmbiguousInteger &#123;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+</p>
+<p>@Override
+    public int hashCode() &#123;
+        return 0;
+    &#125;
+</p>
+<p>@Override
+    public boolean equals(Object obj) &#123;
+        return false;
+    &#125;
+&#125;
+</p>
+<p>map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[2]
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[2]
+map.get(key3); // map to bucket 1, no corresponding entry
+Expected: 2, 2, 2
+Actual:   1, 2, null
+Okay what if equals is always true now?: you're basically saying that all objects are deemed 'logically equivalent' to another, so they all map to the same bucket (due to same hashCode()), same entry.
+</p>
+<p>class AmbiguousInteger &#123;
+    private final int value;
+</p>
+<p>AmbiguousInteger(int value) &#123;
+        this.value = value;
+    &#125;
+</p>
+<p>@Override
+    public int hashCode() &#123;
+        return 0;
+    &#125;
+</p>
+<p>@Override
+    public boolean equals(Object obj) &#123;
+        return true;
+    &#125;
+&#125;
+</p>
+<p>map.put(key1, 1); // map to bucket 1, set as entry 1[1]
+map.put(key2, 2); // map to bucket 1, set as entry 1[1], override value
+map.put(new AmbiguousInteger(100), 100); // map to bucket 1, set as entry1[1], override value
+map.get(key1); // map to bucket 1, get as entry 1[1]
+map.get(key2); // map to bucket 1, get as entry 1[1]
+map.get(key3); // map to bucket 1, get as entry 1[1]
+Expected: 2, 2, 2
+Actual:   100, 100, 100
+</p>
+        </article>
+    </div>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Query Rewrite Techniques: Making Bad SQL Good</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Query Rewrite Techniques: Making Bad SQL Good</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: The Art of Rewriting</h2>
+<p>After 30+ years of Oracle consulting, I've learned this fundamental truth: most SQL performance problems can be solved by rewriting the query, not by adding hardware or indexes.
+</p>
+<p>At Manhattan Associates, I've seen queries that took 30 minutes rewritten to run in 3 seconds—simply by changing the approach. In this guide, I'll show you the exact techniques that have saved our clients millions of dollars in hardware costs.
+</p>
+<p><strong>The Mindset</strong>: Don't blame the optimizer. Rewrite your code to give the optimizer better options.
+</p>
+<hr>
+<h2>Chapter 1: Subquery Conversion Techniques</h2>
+<h3>The IN vs. EXISTS Trap</h3>
+<p>Here's a mistake I see constantly:
+</p>
+<pre><code>-- INEFFICIENT: IN with subquery
+<p>SELECT <em> FROM wms_inventory i
+WHERE i.sku_id IN (
+    SELECT sku_id 
+    FROM wms_cycle_count 
+    WHERE cycle_count_id = :cc_id
+);
+</p>
+</code></pre>
+<p><strong>The Problem</strong>: The subquery runs for EVERY row in inventory!
+</p>
+<p><strong>The Fix: EXISTS</strong>
+</p>
+<pre><code>-- EFFICIENT: EXISTS
+<p>SELECT </em> FROM wms_inventory i
+WHERE EXISTS (
+    SELECT 1 
+    FROM wms_cycle_count c
+    WHERE c.sku_id = i.sku_id
+      AND c.cycle_count_id = :cc_id
+);
+</p>
+</code></pre>
+<p><strong>Why it's faster</strong>: EXISTS stops as soon as it finds ONE match. IN must complete the entire subquery.
+</p>
+<p><strong>Even better: JOIN</strong>
+</p>
+<pre><code>-- MOST EFFICIENT: Explicit JOIN
+<p>SELECT i.<em>
+FROM wms_inventory i
+JOIN wms_cycle_count c ON i.sku_id = c.sku_id
+WHERE c.cycle_count_id = :cc_id;
+</p>
+</code></pre>
+<h3>The NOT IN vs. NOT EXISTS Disaster</h3>
+<pre><code>-- DANGEROUS: NOT IN with nulls
+<p>SELECT </em> FROM wms_orders o
+WHERE o.order_id NOT IN (
+    SELECT order_id 
+    FROM wms_picked_orders
+);
+</p>
+</code></pre>
+<p><strong>Problem</strong>: If ANY picked_order.order_id is NULL, the entire query returns ZERO rows!
+</p>
+<p><strong>The Fix: NOT EXISTS</strong>
+</p>
+<pre><code>-- SAFE: NOT EXISTS
+<p>SELECT <em> FROM wms_orders o
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM wms_picked_orders p
+    WHERE p.order_id = o.order_id
+);
+</p>
+</code></pre>
+<p><strong>Or: LEFT JOIN with NULL check</strong>
+</p>
+<pre><code>-- ALSO SAFE: LEFT JOIN
+<p>SELECT o.</em>
+FROM wms_orders o
+LEFT JOIN wms_picked_orders p ON o.order_id = p.order_id
+WHERE p.order_id IS NULL;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 2: The DECODE and CASE Revolution</h2>
+<h3>Replacing OR with DECODE</h3>
+<pre><code>-- SLOW: Multiple OR conditions
+<p>SELECT <em> FROM wms_orders
+WHERE status = 'PENDING'
+   OR status = 'PROCESSING'
+   OR status = 'PICKING';
+</p>
+</code></pre>
+<p><strong>The Problem</strong>: This becomes a full table scan—Oracle can't use an index effectively with OR.
+</p>
+<p><strong>The Fix: IN or DECODE</strong>
+</p>
+<pre><code>-- FAST: IN operator
+<p>SELECT </em> FROM wms_orders
+WHERE status IN ('PENDING', 'PROCESSING', 'PICKING');
+</p>
+<p>-- Or use DECODE for transformations
+SELECT 
+    order_id,
+    DECODE(status, 
+        'PENDING', 'Active',
+        'PROCESSING', 'Active', 
+        'SHIPPED', 'Completed',
+        'Unknown') AS status_desc
+FROM wms_orders;
+</p>
+</code></pre>
+<h3>CASE for Complex Logic</h3>
+<pre><code>-- Complex conditional with CASE
+<p>SELECT
+    order_id,
+    quantity,
+    CASE 
+        WHEN quantity &gt; 100 THEN 'Bulk Order'
+        WHEN quantity &gt; 10 THEN 'Standard Order'
+        ELSE 'Small Order'
+    END AS order_type
+FROM wms_order_lines;
+</p>
+</code></pre>
+<p><strong>Advanced: CASE in WHERE</strong>
+</p>
+<pre><code>-- Conditional WHERE (avoid!)
+<p>-- BAD: Different WHERE for different conditions
+SELECT <em> FROM wms_inventory 
+WHERE (amount &gt; 100 AND region = 'NE')
+   OR (amount &lt;= 100 AND region = 'SW');
+</p>
+<p>-- BETTER: Always True condition
+SELECT </em> FROM wms_inventory 
+WHERE CASE 
+    WHEN region = 'NE' THEN amount 
+    ELSE 0 
+END &gt; 100;
+</p>
+</code></pre>
+<p><strong>Actually, BEST: Separate queries or UNION</strong>
+</p>
+<pre><code>-- BEST: UNION ALL with separate WHERE
+<p>SELECT <em> FROM wms_inventory WHERE amount &gt; 100 AND region = 'NE'
+UNION ALL
+SELECT </em> FROM wms_inventory WHERE amount &lt;= 100 AND region = 'SW';
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 3: Eliminating Functions on Indexed Columns</h2>
+<h3>The Date Function Trap</h3>
+<pre><code>-- BROKEN: Function prevents index usage
+<p>SELECT <em> FROM wms_order_headers
+WHERE TRUNC(order_date) = TRUNC(SYSDATE);
+</p>
+<p>-- Index on order_date = USELESS here!
+</p>
+</code></pre>
+<p><strong>Why</strong>: TRUNC(order_date) applies a function to every row—full table scan required.
+</p>
+<p><strong>The Fix: Range Scan</strong>
+</p>
+<pre><code>-- FIXED: Use date range
+<p>SELECT </em> FROM wms_order_headers
+WHERE order_date &gt;= TRUNC(SYSDATE)
+  AND order_date &lt; TRUNC(SYSDATE) + 1;
+</p>
+<p>-- Plan now shows INDEX RANGE SCAN!
+</p>
+</code></pre>
+<h3>The String Function Trap</h3>
+<pre><code>-- BROKEN: UPPER prevents index
+<p>SELECT <em> FROM wms_sku
+WHERE UPPER(sku_desc) = 'ELECTRONICS';
+</p>
+<p>-- BROKEN: SUBSTR prevents index
+SELECT </em> FROM wms_orders 
+WHERE SUBSTR(tracking_number, 1, 3) = '1Z9';
+</p>
+<p>-- Fix 1: Function-based index
+CREATE INDEX wms_sku_upper_desc_idx ON wms_sku(UPPER(sku_desc));
+</p>
+<p>-- Fix 2: Don't use function
+SELECT <em> FROM wms_orders 
+WHERE tracking_number LIKE '1Z9%';
+</p>
+</code></pre>
+<h3>The Mathematical Trap</h3>
+<pre><code>-- BROKEN: Math on column
+<p>SELECT </em> FROM wms_inventory
+WHERE quantity <em> unit_price &gt; 1000;
+</p>
+<p>-- FIXED: Rearrange the math
+SELECT </em> FROM wms_inventory 
+WHERE quantity &gt; 1000 / unit_price;
+</p>
+<p>-- Or: Create virtual column
+ALTER TABLE wms_inventory 
+ADD (total_value NUMBER GENERATED ALWAYS AS (quantity <em> unit_price));
+</p>
+<p>CREATE INDEX wms_inv_total_val_idx ON wms_inventory(total_value);
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 4: The DISTINCT and UNION Trap</h2>
+<h3>When DISTINCT is Unnecessary</h3>
+<pre><code>-- UNNECESSARY: DISTINCT on unique join
+<p>SELECT DISTINCT h.order_id, h.order_date
+FROM wms_order_headers h
+JOIN wms_order_lines l ON h.order_id = l.order_id
+WHERE h.status = 'PENDING';
+</p>
+</code></pre>
+<p><strong>The Problem</strong>: If order_id is unique in headers, DISTINCT adds sorting overhead.
+</p>
+<p><strong>The Fix</strong>: Remove DISTINCT if not needed.
+</p>
+<h3>UNION vs. UNION ALL</h3>
+<pre><code>-- SLOW: UNION (implicit DISTINCT + SORT)
+<p>SELECT order_id, sku_id FROM wms_orders WHERE status = 'PENDING'
+UNION
+SELECT order_id, sku_id FROM wms_orders WHERE status = 'PROCESSING';
+</p>
+<p>-- FAST: UNION ALL (no dedup)
+SELECT order_id, sku_id FROM wms_orders WHERE status = 'PENDING'
+UNION ALL
+SELECT order_id, sku_id FROM wms_orders WHERE status = 'PROCESSING';
+</p>
+</code></pre>
+<p><strong>When to use UNION</strong>: When you NEED to eliminate duplicates
+<strong>When to use UNION ALL</strong>: When you know there's no overlap, or you don't care
+</p>
+<h3>The Case for MINUS</h3>
+<pre><code>-- Harder: Find orders NOT in picking
+<p>SELECT order_id FROM wms_order_headers
+MINUS
+SELECT order_id FROM wms_pick_tasks;
+</p>
+<p>-- Equivalent but sometimes faster:
+SELECT h.order_id 
+FROM wms_order_headers h
+WHERE NOT EXISTS (
+    SELECT 1 FROM wms_pick_tasks p 
+    WHERE p.order_id = h.order_id
+);
+</p>
+</code></pre>
+<p><strong>Test both!</strong> MINUS can be faster with good indexes.
+</p>
+<hr>
+<h2>Chapter 5: Hints and Query Transformation</h2>
+<h3>Automatic Query Transformations</h3>
+<p>Oracle automatically rewrites some queries:
+</p>
+<pre><code>-- Oracle automatically converts this:
+<p>SELECT </em> FROM wms_orders o1
+WHERE EXISTS (
+    SELECT 1 FROM wms_order_lines l
+    WHERE l.order_id = o1.order_id
+      AND l.quantity &gt; 10
+);
+</p>
+<p>-- Into a SEMI-JOIN!
+</p>
+</code></pre>
+<p><strong>You can see this in the execution plan:</strong>
+</p>
+<pre><code>|   1 |   NESTED LOOPS SEMI        |                |
+</code></pre>
+<h3>Forcing Transformation with Hints</h3>
+<pre><code>-- Force subquery unnesting
+<p>SELECT /<em>+ UNNEST </em>/ <em> FROM wms_orders o
+WHERE EXISTS (
+    SELECT 1 FROM wms_order_lines l 
+    WHERE l.order_id = o.order_id
+);
+</p>
+<p>-- Prevent transformation
+SELECT /</em>+ NO_UNNEST <em>/ </em> FROM wms_orders o
+WHERE EXISTS (
+    SELECT 1 FROM wms_order_lines l 
+    WHERE l.order_id = o.order_id
+);
+</p>
+</code></pre>
+<h3>The PUSH_PRED Hint</h3>
+<pre><code>-- Push WHERE into view
+<p>SELECT /<em>+ PUSH_PRED(v) </em>/ <em>
+FROM (
+    SELECT o.order_id, o.status, l.sku_id
+    FROM wms_orders o
+    JOIN wms_order_lines l ON o.order_id = l.order_id
+) v
+WHERE v.status = 'PENDING';
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 6: Real-World Rewrites for WMS</h2>
+<h3>Case Study: The Slow Inventory Report</h3>
+<p><strong>Before Rewrite (45 seconds):</strong>
+</p>
+<pre><code>SELECT 
+<p>(SELECT SUM(quantity) FROM wms_inventory i
+     WHERE i.sku_id = s.sku_id) AS total_qty,
+    (SELECT SUM(quantity </em> unit_cost) FROM wms_inventory i 
+     WHERE i.sku_id = s.sku_id) AS total_value,
+    s.sku_id, s.sku_desc
+FROM wms_sku s
+WHERE s.active = 'Y';
+</p>
+</code></pre>
+<p><strong>Problem</strong>: Correlated subqueries run 50,000 times!
+</p>
+<p><strong>After Rewrite (3 seconds):</strong>
+</p>
+<pre><code>SELECT 
+<p>SUM(i.quantity) AS total_qty,
+    SUM(i.quantity * i.unit_cost) AS total_value,
+    s.sku_id, s.sku_desc
+FROM wms_sku s
+LEFT JOIN wms_inventory i ON s.sku_id = i.sku_id
+WHERE s.active = 'Y'
+GROUP BY s.sku_id, s.sku_desc;
+</p>
+</code></pre>
+<p><strong>Why it's faster</strong>: Single scan of inventory, one GROUP BY.
+</p>
+<h3>Case Study: The Complex Status Query</h3>
+<p><strong>Before (8 seconds):</strong>
+</p>
+<pre><code>SELECT order_id, status, order_date
+<p>FROM wms_orders
+WHERE status IN ('PENDING', 'PROCESSING', 'PICKING')
+  AND order_date &gt; SYSDATE - 30
+MINUS
+SELECT order_id, status, order_date
+FROM wms_orders
+WHERE status = 'CANCELLED'
+  AND cancel_date &gt; SYSDATE - 30;
+</p>
+</code></pre>
+<p><strong>After (0.5 seconds):</strong>
+</p>
+<pre><code>SELECT order_id, status, order_date
+<p>FROM wms_orders
+WHERE status IN ('PENDING', 'PROCESSING', 'PICKING')
+  AND order_date &gt; SYSDATE - 30
+  AND NOT EXISTS (
+      SELECT 1 FROM wms_orders o2
+      WHERE o2.order_id = wms_orders.order_id
+        AND o2.status = 'CANCELLED'
+        AND o2.cancel_date &gt; SYSDATE - 30
+  );
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: Rewrite First, Tune Second</h2>
+<p><strong>Donald Sez</strong>: "Before you blame Oracle, rewrite your query to give it a fair chance."
+</p>
+<p>The Manhattan Associates rewrite checklist:
+</p>
+<ol>
+<li><strong>Avoid functions on columns</strong> - Use range scans instead</li>
+<li><strong>Use EXISTS not IN</strong> - For correlated subqueries</li>
+<li><strong>Use JOINs over subqueries</strong> - When possible</li>
+<li><strong>Use UNION ALL not UNION</strong> - Unless you need dedup</li>
+<li><strong>Test alternate approaches</strong> - The first version isn't always best</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "Oracle Performance Tuning: The Complete Toolkit" - Advanced tools and techniques for solving the toughest Oracle performance problems.
+</p>
+        </article>
+    </div>
+</body>
+</html>

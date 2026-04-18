@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Automatic Workload Repository: Performance Baselining and Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Automatic Workload Repository: Performance Baselining and Analysis</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: The Power of Historical Analysis</h2>
+<p>One of Oracle's most powerful features is also one of the most underutilized: the Automatic Workload Repository (AWR). Most DBAs capture AWR snapshots but never analyze them. Big mistake.
+</p>
+<p>At Manhattan Associates, I use AWR to solve problems that happened yesterday, last week, or even last month. AWR is your time machine for performance analysis.
+</p>
+<p><strong>The Bottom Line</strong>: If you're not using AWR, you're flying blind when performance problems occur.
+</p>
+<hr>
+<h2>Chapter 1: Understanding AWR Basics</h2>
+<h3>How AWR Works</h3>
+<pre><code>-- Check AWR settings
+<p>SELECT
+    snap_interval,
+    retention,
+    top_sql_count,
+    most_recent_snap_id,
+    last_snap_time
+FROM dba_hist_wr_control;
+</p>
+</code></pre>
+<p><strong>Default</strong>: Snapshots every 60 minutes, retained for 8 days.
+</p>
+<h3>Taking Manual Snapshots</h3>
+<pre><code>-- Take a manual snapshot
+<p>BEGIN
+    DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT();
+END;
+/
+</p>
+<p>-- View snapshot range
+SELECT 
+    snap_id,
+    begin_interval_time,
+    end_interval_time
+FROM dba_hist_snapshot
+WHERE snap_id BETWEEN 100 AND 200
+ORDER BY snap_id;
+</p>
+</code></pre>
+<h3>Generating AWR Reports</h3>
+<pre><code>-- Generate text AWR report
+<p>@?/rdbms/admin/awrgrpt.sql
+</p>
+<p>-- Or use SQL to get key metrics
+SELECT 
+    snap_id,
+    begin_interval_time,
+    end_interval_time,
+    snap_level
+FROM dba_hist_snapshot
+ORDER BY snap_id DESC;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 2: Key AWR Views and Metrics</h2>
+<h3>The Essential Views</h3>
+<pre><code>-- Top SQL by elapsed time
+<p>SELECT <em> FROM table(DBMS_WORKLOAD_REPOSITORY.AWR_SQL_REPORT_HTML(
+    DBID =&gt; (SELECT DBID FROM V$DATABASE),
+    SNAP_ID =&gt; 150,
+    SNAP_ID_END =&gt; 151,
+    OPTIONS =&gt; 0
+));
+</p>
+</code></pre>
+<h3>Core Performance Metrics</h3>
+<pre><code>-- Get wait event summary for a period
+<p>SELECT
+    event,
+    wait_class,
+    total_waits,
+    time_waited_micro / 1000000 AS time_waited_sec
+FROM dba_hist_system_event
+WHERE snap_id BETWEEN 150 AND 151
+  AND wait_class != 'Idle'
+ORDER BY time_waited_micro DESC;
+</p>
+</code></pre>
+<h3>Load Profile Metrics</h3>
+<pre><code>-- Load profile over time
+<p>SELECT
+    snap_id,
+    to_char(begin_interval_time, 'MM/DD HH24:MI') AS time,
+    round(elapsed_time_total / 60, 2) AS elapsed_min,
+    round(parse_calls_total / nullif(executions_total, 0), 2) AS parses_per_exec,
+    round(user_calls_total / nullif(executions_total, 0), 2) AS calls_per_exec,
+    round(disk_reads_total / nullif(executions_total, 0), 2) AS reads_per_exec
+FROM dba_hist_sysmetric_summary
+WHERE metric_name = 'SQL Service Response Time'
+ORDER BY snap_id;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 3: Creating Performance Baselines</h2>
+<h3>The Baseline Concept</h3>
+<p>A baseline captures "good" performance to compare against "bad" performance:
+</p>
+<pre><code>-- Create a baseline for a good period
+<p>BEGIN
+    DBMS_WORKLOAD_REPOSITORY.CREATE_BASELINE(
+        start_snap_id =&gt; 100,
+        end_snap_id   =&gt; 110,
+        baseline_name =&gt; 'WMS_NORMAL_LOAD'
+    );
+END;
+/
+</p>
+</code></pre>
+<h3>Using Baselines for Comparison</h3>
+<pre><code>-- Compare current performance to baseline
+<p>SELECT
+    b1.snap_id AS baseline_snap,
+    b2.snap_id AS compare_snap,
+    b1.value - b2.value AS change
+FROM (
+    SELECT snap_id, value 
+    FROM dba_hist_sysmetric_history
+    WHERE metric_name = 'Database Time'
+      AND snap_id = 110
+) b1
+CROSS JOIN (
+    SELECT snap_id, value 
+    FROM dba_hist_sysmetric_history
+    WHERE metric_name = 'Database Time'
+      AND snap_id = 160
+) b2;
+</p>
+</code></pre>
+<h3>Automatic Baseline Types</h3>
+<pre><code>-- Create moving window baseline
+<p>BEGIN
+    DBMS_WORKLOAD_REPOSITORY.MODIFY_BASELINE_WINDOW_SIZE(
+        window_size =&gt; 7
+    );
+END;
+/
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 4: AWR Analysis in Practice</h2>
+<h3>Case Study: The Morning Slowdown</h3>
+<p>At a 3PL client, every morning between 8-9 AM, the system was slow. Here's how AWR revealed the problem:
+</p>
+<p><strong>Step 1: Get snapshots around the problem time</strong>
+</p>
+<pre><code>SELECT snap_id, begin_interval_time
+<p>FROM dba_hist_snapshot
+WHERE begin_interval_time 
+    BETWEEN TO_DATE('2024-03-15 07:30', 'YYYY-MM-DD HH24:MI') 
+    AND TO_DATE('2024-03-15 09:30', 'YYYY-MM-DD HH24:MI')
+ORDER BY snap_id;
+</p>
+</code></pre>
+<p><strong>Step 2: Generate AWR report for that hour</strong>
+</p>
+<pre><code>-- AWR showed:
+<p>-- Wait Event Summary:
+-- db file sequential read: 45% of time  &lt;-- INDEX problem!
+-- log file sync: 25% of time             &lt;-- Too many commits
+-- enq: TX - row lock: 20% of time        &lt;-- Concurrent updates
+</p>
+</code></pre>
+<p><strong>Step 3: Find the problematic SQL</strong>
+</p>
+<pre><code>SELECT 
+<p>sql_id,
+    substr(sql_text, 1, 100) AS sql_text,
+    executions,
+    elapsed_time_sec,
+    ROUND(elapsed_time_sec / NULLIF(executions, 0), 3) AS secs_per_exec
+FROM dba_hist_sqlstat
+WHERE snap_id BETWEEN 115 AND 120
+  AND elapsed_time_sec &gt; 10
+ORDER BY elapsed_time_sec DESC;
+</p>
+</code></pre>
+<p><strong>Solution Found</strong>: A missing index on (status, order_date) causing full table scans during the morning batch!
+</p>
+<hr>
+<h2>Chapter 5: Advanced AWR Techniques</h2>
+<h3>SQL Tuning with AWR</h3>
+<pre><code>-- Find SQL that regressed
+<p>SELECT
+    s.sql_id,
+    s.parsing_schema_name,
+    s.sql_text,
+    b.value AS before_sec,
+    a.value AS after_sec,
+    ROUND((a.value - b.value) / NULLIF(b.value, 0) </em> 100, 2) AS pct_change
+FROM dba_hist_sqlstat b
+JOIN dba_hist_sqlstat a ON s.sql_id = b.sql_id
+WHERE b.snap_id = 100
+  AND a.snap_id = 150
+  AND a.value &gt; b.value <em> 1.5
+ORDER BY pct_change DESC;
+</p>
+</code></pre>
+<h3>Instance Efficiency Metrics</h3>
+<pre><code>-- Key instance metrics from AWR
+<p>SELECT
+    metric_name,
+    value,
+    unit
+FROM dba_hist_sysmetric_summary
+WHERE metric_name IN (
+    'Buffer Cache Hit Ratio',
+    'Library Cache Hit Ratio',
+    'Redo Logspace Wait Ratio',
+    'Executions per Sec',
+    'User Calls per Sec'
+)
+ORDER BY metric_name;
+</p>
+</code></pre>
+<h3>Segment-Level Analysis</h3>
+<pre><code>-- Top segments by I/O
+<p>SELECT
+    owner,
+    segment_name,
+    segment_type,
+    logical_reads,
+    physical_reads,
+    buffer_gets,
+    ROUND(physical_reads / NULLIF(logical_reads, 0) </em> 100, 2) AS pct_physical
+FROM dba_hist_seg_stat
+WHERE snap_id BETWEEN 150 AND 160
+ORDER BY physical_reads DESC
+FETCH FIRST 20 ROWS ONLY;
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: Make AWR Your Friend</h2>
+<p><strong>Donald Sez</strong>: "AWR is the most valuable performance tool Oracle gives you. Use it to understand history, create baselines, and solve problems you can't reproduce in the moment."
+</p>
+<p>At Manhattan Associates:
+</p>
+<ol>
+<li><strong>Take frequent snapshots</strong> - Hourly minimum</li>
+<li><strong>Create baselines</strong> - For normal operation</li>
+<li><strong>Review daily</strong> - Key metrics</li>
+<li><strong>Archive important periods</strong> - Before snapshots expire</li>
+<li><strong>Use for post-mortem</strong> - Every performance issue should start with AWR</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "OracleHints: The Complete Guide to Query Optimization Hints" - When and how to use hints for performance tuning.
+</p>
+        </article>
+    </div>
+</body>
+</html>

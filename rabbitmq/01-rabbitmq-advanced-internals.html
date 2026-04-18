@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RabbitMQ Advanced Internals and Production Deep Dive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>RabbitMQ Advanced Internals and Production Deep Dive</h1>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#1-message-persistence-architecture">Message Persistence Architecture</a></li>
+<li><a href="#2-queue-internals-and-message-flow">Queue Internals and Message Flow</a></li>
+<li><a href="#3-exchange-types-deep-analysis">Exchange Types Deep Analysis</a></li>
+<li><a href="#4-cluster-architecture-and-failure-scenarios">Cluster Architecture and Failure Scenarios</a></li>
+<li><a href="#5-high-availability-queue-patterns">High Availability Queue Patterns</a></li>
+<li><a href="#6-memory-management-and-flow-control">Memory Management and Flow Control</a></li>
+<li><a href="#7-network-protocol-internals">Network Protocol Internals</a></li>
+<li><a href="#8-consumer-prefetch-and-flow-control">Consumer Prefetch and Flow Control</a></li>
+<li><a href="#9-authentication-authorization-and-security">Authentication, Authorization and Security</a></li>
+<li><a href="#10-performance-optimization-patterns">Performance Optimization Patterns</a></li>
+<li><a href="#11-troubleshooting-production-issues">Troubleshooting Production Issues</a></li>
+</ol>
+<hr>
+<h2>1. Message Persistence Architecture</h2>
+<h3>1.1 How Persistence Actually Works</h3>
+<p>When you declare a durable queue and publish with delivery mode 2 (persistent), RabbitMQ performs a multi-step process that involves several internal components:
+</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                         MESSAGE PERSISTENCE FLOW                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Publisher                                                                      │
+│      │                                                                   │
+│      ▼                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                      RabbitMQ Broker Process                            │ │
+│  ├─────────────────────────────────────────────────────────────────────────┤ │
+│  │  1. Content Check (msg_format) - Determine if can be stored           │ │
+│  │  2. Queue Router - Determine destination queues                        │ │
+│  │  3. Message Store - Write to disk (async or sync based on config)      │ │
+│  │     ├─&gt; Index File (.idx) - Maps message ID to file position         │ │
+│  │     └─&gt; Journal File (.journal) - Append-only log                     │ │
+│  │  4. Queue Consumer - Messages queued for delivery                      │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>1.2 The Message Store Implementation</h3>
+<p>RabbitMQ uses two different storage backends:
+</p>
+<p><strong>Mnesia-based (Classic DB):</strong>
+</p>
+<ul>
+<li>Default for older versions</li>
+<li>Uses Mnesia transactions</li>
+<li>Good for small message volumes</li>
+</ul>
+<p><strong>New Disk Queue (RabbitMQ 3.7+):</strong>
+</p>
+<ul>
+<li>Native Erlang implementation</li>
+<li>Better performance for large queues</li>
+<li>Separate journal and index files</li>
+</ul>
+<pre><code>% Internal queue publication flow (simplified)
+<p>queue_store_message(PersistentMessage, QueueRef) -&gt;
+    % Get message ID from INTERNAL sequence
+    MsgId = queue_next_id(QueueRef),
+</p>
+<p>% Write to journal (append-only)
+    JournalRef = queue_journal(QueueRef),
+    journal:append(JournalRef, PersistentMessage, MsgId),
+</p>
+<p>% Update index (random access)
+    IndexRef = queue_index(QueueRef),
+    index:insert(IndexRef, MsgId, &#123;file_position, offset, size&#125;),
+</p>
+<p>% Add to in-memory queue state
+    queue:add_message(MsgId, QueueRef).
+</p>
+</code></pre>
+<h3>1.3 Persistence Configuration Deep Dive</h3>
+<pre><code>%% rabbitmq.conf advanced persistence settings
+<p>%% These are the actual configuration keys
+</p>
+<p>%% Queue index settings
+queue_index.max_journal_entries = 16384
+</p>
+<p>%% Message store settings
+disk_alarm.absolute_free_limit = 50mb
+disk_alarm.relative_free_limit = 0.40
+</p>
+<p>%% Async message writing
+queue_master_locator = &lt;&lt;&quot;min-masters&quot;&gt;&gt;
+mnesia_table_loading_retry_limit = 10
+mnesia_table_loading_retry_timeout = 30000
+</p>
+</code></pre>
+<h3>1.4 Durability vs Performance Trade-offs</h3>
+<pre><code>// Java client persistence options
+<p>import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.MessageProperties;
+</p>
+<p>// Option 1: Persistent (guaranteed, slower)
+// Every message written to disk before acknowledgment
+channel.basicPublish(
+    &quot;exchange&quot;,           // exchange
+    &quot;routing.key&quot;,        // routing key
+    MessageProperties.PERSISTENT_TEXT_PLAIN,  // makes message persistent
+    messageBodyBytes
+);
+</p>
+<p>// Option 2: Transient (fast, can be lost)
+// Messages in memory only - lost on broker restart
+channel.basicPublish(
+    &quot;exchange&quot;,
+    &quot;routing.key&quot;, 
+    MessageProperties.TEXT_PLAIN,  // transient
+    messageBodyBytes
+);
+</p>
+<p>// Option 3: Lazy (store to disk immediately)
+// Reduces memory pressure, increases latency
+Map&lt;String, Object&gt; args = new HashMap&lt;&gt;();
+args.put(&quot;x-queue-mode&quot;, &quot;lazy&quot;);
+channel.queueDeclare(&quot;my-queue&quot;, true, false, false, args);
+</p>
+</code></pre>
+<hr>
+<h2>2. Queue Internals and Message Flow</h2>
+<h3>2.1 Queue Data Structures</h3>
+<p>RabbitMQ queues are implemented using multiple data structures that work together:
+</p>
+<pre><code>%% Simplified queue state representation
+<p>-record(queue_state, &#123;
+    name                    :: queue_name(),
+    durable                 :: boolean(),
+    auto_delete             :: boolean(),
+    exclusive               :: boolean(),
+</p>
+<p>% Messages in RAM vs on disk
+    messages_ram            :: integer(),
+    messages_disk           :: integer(),
+    messages_persistent     :: boolean(),
+</p>
+<p>% Message IDs (sorted, could be millions)
+    message_ids             :: ptree(),  % Persistent tree
+</p>
+<p>% Consumer tracking
+    consumers               :: [consumer()],
+</p>
+<p>% Delivery state
+    unacked_message_ids    :: [msg_id()],
+    pending deliveries      :: [delivery()],
+</p>
+<p>% Priority queue support
+    priority_range         :: &#123;integer(), integer() | infinity&#125;
+&#125;).
+</p>
+</code></pre>
+<h3>2.2 Message Flow Through the Broker</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                         COMPLETE MESSAGE FLOW                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  PUBLISHER                                                                  │
+│      │                                                                       │
+│      │  1. AMQP 0-9-1 Frame (method + properties + payload)                │
+│      ▼                                                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                      CHANNEL PROCESS                                     │ │
+│  │  - Validate frame structure                                            │ │
+│  │  - Check channel permissions                                           │ │
+│  │  - Apply mandatory/immediate flags                                     │ │
+│  │  - Route message through exchanges                                     │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│      │                                                                       │
+│      │  2. Route to queue(s) - could be multiple queues                    │
+│      ▼                                                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                      QUEUE PROCESS                                       │ │
+│  │  - Verify queue exists and has permission                              │ │
+│  │  - Check message size limits                                            │ │
+│  │  - Apply queue arguments (TTL, max-length, etc.)                       │ │
+│  │  - Add to in-memory queue or disk (based on mode)                      │ │
+│  │  - Update statistics                                                     │ │
+│  │  - If lazy: write directly to disk                                      │ │
+│  │  - If classic: write to journal                                        │ │
+│  │  - Publish confirm to channel                                          │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│      │                                                                       │
+│      │  3. Message stored, now ready for delivery                          │
+│      ▼                                                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                    CONSUMER DELIVERY                                    │ │
+│  │  - Check for matching consumers (fair dispatch)                        │ │
+│  │  - Create delivery (message + meta)                                     │ │
+│  │  - Mark as unacked in queue state                                       │ │
+│  │  - Send via TCP connection (network buffer)                            │ │
+│  │  - Wait for acknowledgment                                              │ │
+│  │  - On ACK: remove from unacked, deliver next                           │ │
+│  │  - On NACK (requeue=true): return to queue                             │ │
+│  │  - On NACK (requeue=false): send to DLX or discard                     │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>2.3 Lazy Queues Deep Dive</h3>
+<p>Lazy queues dramatically change the message flow to reduce memory pressure:
+</p>
+<pre><code>// Implementation of lazy queue concept
+<p>public class LazyQueueDemo &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Lazy queue behavior:</li>
+<li>- All messages written directly to disk on arrival</li>
+<li>- On consumer request, message read from disk</li>
+<li>- Significantly higher disk I/O but lower RAM usage</li>
+</ul>
+     </em> 
+<ul>
+<li>Use cases:</li>
+<li>- Very large message queues</li>
+<li>- Memory-constrained brokers</li>
+<li>- Message retention policies</li>
+<li>- Batch applications with large messages</li>
+</ul>
+<p><em>/
+</p>
+<p>public static void declareLazyQueue(Channel channel) throws IOException &#123;
+        Map&lt;String, Object&gt; args = new HashMap&lt;&gt;();
+        args.put(&quot;x-queue-mode&quot;, &quot;lazy&quot;);  // This is the magic setting
+</p>
+<p>// Additional related arguments
+        args.put(&quot;x-queue-master-locator&quot;, &quot;min-masters&quot;);  // Queue placement
+</p>
+<p>channel.queueDeclare(
+            &quot;warehouse.orders.lazy&quot;,
+            true,   // durable
+            false,  // exclusive  
+            false,  // auto-delete
+            args
+        );
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Memory comparison:</li>
+</ul>
+     </em> 
+<ul>
+<li>Classic Queue (100k messages, 1KB each):</li>
+<li>- RAM: ~50-100MB (metadata + indices)</li>
+<li>- Disk: ~100MB</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Lazy Queue (100k messages, 1KB each):</li>
+<li>- RAM: ~5-10MB (minimal metadata)</li>
+<li>- Disk: ~100MB</li>
+</ul>
+     </em> 
+<ul>
+<li>Trade-off:</li>
+<li>- Lazy: higher disk I/O, lower memory</li>
+<li>- Classic: lower disk I/O, higher memory</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>3. Exchange Types Deep Analysis</h2>
+<h3>3.1 Direct Exchange Implementation</h3>
+<pre><code>%% Direct exchange routing algorithm
+<p>route_direct(Message, ExchangeName, RoutingKey) -&gt;
+    % Get all bindings for this exchange
+    Bindings = exchange:bindings(ExchangeName),
+</p>
+<p>% Filter bindings where routing key matches
+    MatchingBindings = lists:filter(
+        fun(Binding) -&gt;
+            Binding#binding.key =:= RoutingKey
+        end,
+        Bindings
+    ),
+</p>
+<p>% Extract queue names
+    [Binding#binding.queue || Binding &lt;- MatchingBindings].
+</p>
+</code></pre>
+<pre><code>// Java implementation of direct exchange producer
+<p>public class DirectExchangeDemo &#123;
+</p>
+<p>public static void demonstrateDirectExchange(Channel channel)
+            throws IOException &#123;
+</p>
+<p>// Declare direct exchange
+        channel.exchangeDeclare(
+            &quot;warehouse.direct&quot;,    // exchange name
+            &quot;direct&quot;,              // exchange type
+            true,                  // durable
+            false,                 // auto-delete
+            null                   // arguments
+        );
+</p>
+<p>// Declare multiple queues
+        channel.queueDeclare(&quot;orders.priority&quot;, true, false, false, null);
+        channel.queueDeclare(&quot;orders.standard&quot;, true, false, false, null);
+        channel.queueDeclare(&quot;orders.bulk&quot;, true, false, false, null);
+</p>
+<p>// Bind with exact routing keys
+        channel.queueBind(&quot;orders.priority&quot;, &quot;warehouse.direct&quot;, &quot;priority&quot;);
+        channel.queueBind(&quot;orders.standard&quot;, &quot;warehouse.direct&quot;, &quot;standard&quot;);
+        channel.queueBind(&quot;orders.bulk&quot;, &quot;warehouse.direct&quot;, &quot;bulk&quot;);
+</p>
+<p>// Publish with specific routing keys
+        byte[] priorityOrder = createOrder(&quot;order-1&quot;, &quot;HIGH&quot;);
+        channel.basicPublish(
+            &quot;warehouse.direct&quot;,  // exchange
+            &quot;priority&quot;,           // routing key - goes to orders.priority
+            MessageProperties.PERSISTENT,
+            priorityOrder
+        );
+</p>
+<p>byte[] standardOrder = createOrder(&quot;order-2&quot;, &quot;NORMAL&quot;);
+        channel.basicPublish(
+            &quot;warehouse.direct&quot;,
+            &quot;standard&quot;,           // goes to orders.standard
+            MessageProperties.PERSISTENT,
+            standardOrder
+        );
+</p>
+<p>byte[] bulkOrder = createOrder(&quot;order-3&quot;, &quot;BULK&quot;);
+        channel.basicPublish(
+            &quot;warehouse.direct&quot;,
+            &quot;bulk&quot;,              // goes to orders.bulk
+            MessageProperties.PERSISTENT,
+            bulkOrder
+        );
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Direct exchange characteristics:</li>
+</ul>
+     </em> 
+<ul>
+<li>Performance: O(1) - single hash lookup per binding</li>
+<li>Use case: Exact routing, single queue per key</li>
+<li>Scaling: Add more bindings for more queues</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>When to use:</li>
+<li>- Type A/B/C classification</li>
+<li>- Priority queues</li>
+<li>- Environment-specific routing (dev/staging/prod)</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<h3>3.2 Topic Exchange Implementation</h3>
+<pre><code>%% Topic exchange matching algorithm
+<p>match_topic(Pattern, Key) -&gt;
+    % Convert pattern to regex-like matching
+    % <em> matches exactly one word
+     % # matches zero or more words
+</p>
+<p>PatternParts = string:tokens(Pattern, &quot;.&quot;),
+    KeyParts = string:tokens(Key, &quot;.&quot;),
+</p>
+<p>match_parts(PatternParts, KeyParts).
+</p>
+<p>match_parts([], []) -&gt; true;
+match_parts([&lt;&lt;&quot;</em>&quot;&gt;&gt;|RestP], [_|RestK]) -&gt; 
+    match_parts(RestP, RestK);
+match_parts([&lt;&lt;&quot;#&quot;&gt;&gt;|_], _) -&gt; 
+    true;  % # matches everything remaining
+match_parts([Part|RestP], [Part|RestK]) -&gt; 
+    match_parts(RestP, RestK);
+match_parts(_, _) -&gt; 
+    false.
+</p>
+</code></pre>
+<pre><code>// Complex topic exchange patterns
+<p>public class TopicExchangeAdvanced &#123;
+</p>
+<p>public static void demonstrate(Channel channel) throws IOException &#123;
+</p>
+<p>channel.exchangeDeclare(&quot;notifications&quot;, &quot;topic&quot;, true);
+</p>
+<p>// Queue 1: All shipping notifications
+        channel.queueDeclare(&quot;shipping.all&quot;, false, false, false, null);
+        channel.queueBind(&quot;shipping.all&quot;, &quot;notifications&quot;, &quot;shipment.#&quot;);
+</p>
+<p>// Queue 2: Shipping errors only
+        channel.queueDeclare(&quot;shipping.errors&quot;, false, false, false, null);
+        channel.queueBind(&quot;shipping.errors&quot;, &quot;notifications&quot;, &quot;shipment.<em>.error&quot;);
+</p>
+<p>// Queue 3: All orders (any status change)
+        channel.queueDeclare(&quot;orders.all&quot;, false, false, false, null);
+        channel.queueBind(&quot;orders.all&quot;, &quot;notifications&quot;, &quot;order.</em>&quot;);
+</p>
+<p>// Queue 4: Order lifecycle (created, updated, cancelled, completed)
+        channel.queueDeclare(&quot;orders.lifecycle&quot;, false, false, false, null);
+        channel.queueBind(&quot;orders.lifecycle&quot;, &quot;notifications&quot;, 
+            &quot;order.created.#,order.updated.#,order.cancelled.#,order.completed.#&quot;);
+</p>
+<p>// Queue 5: Everything (monitoring/audit)
+        channel.queueDeclare(&quot;audit.all&quot;, false, false, false, null);
+        channel.queueBind(&quot;audit.all&quot;, &quot;notifications&quot;, &quot;#&quot;);
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Routing examples:</li>
+</ul>
+         </em> 
+<ul>
+<li>Key: &quot;shipment.created.us-east&quot;</li>
+<li>→ matches: shipping.all (shipment.#)</li>
+<li>→ does not match: shipping.errors (shipment.<em>.error - needs error suffix)</li>
+</ul>
+         </em> 
+<ul>
+<li>Key: &quot;shipment.delivery.error&quot;</li>
+<li>→ matches: shipping.all (shipment.#)</li>
+<li>→ matches: shipping.errors (shipment.<em>.error)</li>
+</ul>
+         </em> 
+<ul>
+<li>Key: &quot;order.created.us-west.12345&quot;</li>
+<li>→ matches: orders.all (order.<em>)</li>
+<li>→ matches: orders.lifecycle (order.created.#)</li>
+</ul>
+         </em> 
+<ul>
+<li>Key: &quot;inventory.low.warehouse-a&quot;</li>
+<li>→ matches: audit.all (#)</li>
+<li>→ does not match: any of above</li>
+</ul>
+<p><em>/
+    &#125;
+&#125;
+</p>
+</code></pre>
+<h3>3.3 Headers Exchange Deep Dive</h3>
+<pre><code>// Advanced headers exchange with x-match
+<p>public class HeadersExchangeDemo &#123;
+</p>
+<p>public static void demonstrate(Channel channel) throws IOException &#123;
+</p>
+<p>channel.exchangeDeclare(&quot;inventory.headers&quot;, &quot;headers&quot;, true);
+</p>
+<p>// Match all (AND logic) - requires ALL headers to match
+        Map&lt;String, Object&gt; allMatchArgs = new HashMap&lt;&gt;();
+        allMatchArgs.put(&quot;x-match&quot;, &quot;all&quot;);
+        allMatchArgs.put(&quot;warehouse&quot;, &quot;WH-001&quot;);
+        allMatchArgs.put(&quot;status&quot;, &quot;AVAILABLE&quot;);
+</p>
+<p>channel.queueDeclare(&quot;inventory.wh001.available&quot;, false, false, false, null);
+        channel.queueBind(
+            &quot;inventory.wh001.available&quot;, 
+            &quot;inventory.headers&quot;, 
+            &quot;&quot;,  // routing key ignored for headers
+            allMatchArgs
+        );
+</p>
+<p>// Match any (OR logic) - requires ANY header to match
+        Map&lt;String, Object&gt; anyMatchArgs = new HashMap&lt;&gt;();
+        anyMatchArgs.put(&quot;x-match&quot;, &quot;any&quot;);
+        anyMatchArgs.put(&quot;priority&quot;, &quot;HIGH&quot;);
+        anyMatchArgs.put(&quot;backorder&quot;, &quot;true&quot;);
+</p>
+<p>channel.queueDeclare(&quot;urgent.orders&quot;, false, false, false, null);
+        channel.queueBind(
+            &quot;urgent.orders&quot;,
+            &quot;inventory.headers&quot;,
+            &quot;&quot;,
+            anyMatchArgs
+        );
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Publishing with headers:</li>
+</ul>
+         </em>/
+<p>// This goes to inventory.wh001.available (matches both headers)
+        Map&lt;String, Object&gt; message1Headers = new HashMap&lt;&gt;();
+        message1Headers.put(&quot;warehouse&quot;, &quot;WH-001&quot;);
+        message1Headers.put(&quot;status&quot;, &quot;AVAILABLE&quot;);
+        channel.basicPublish(
+            &quot;inventory.headers&quot;, 
+            &quot;&quot;,  // ignored for headers exchange
+            new AMQP.BasicProperties.Builder()
+                .headers(message1Headers)
+                .build(),
+            messageBody1
+        );
+</p>
+<p>// This goes to urgent.orders (matches priority=HIGH)
+        Map&lt;String, Object&gt; message2Headers = new HashMap&lt;&gt;();
+        message2Headers.put(&quot;priority&quot;, &quot;HIGH&quot;);
+        message2Headers.put(&quot;warehouse&quot;, &quot;WH-002&quot;);  // different warehouse
+        channel.basicPublish(
+            &quot;inventory.headers&quot;,
+            &quot;&quot;,
+            new AMQP.BasicProperties.Builder()
+                .headers(message2Headers)
+                .build(),
+            messageBody2
+        );
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Headers exchange vs Topic exchange:</li>
+</ul>
+     </em> 
+<ul>
+<li>Headers:</li>
+<li>- Matching on arbitrary attributes</li>
+<li>- Can use numeric comparisons</li>
+<li>- x-match: all (AND) or any (OR)</li>
+<li>- Slower than topic (more comparisons)</li>
+<li>- Good for: multi-criteria filtering, business attributes</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Topic:</li>
+<li>- Matching on routing key (dot-separated)</li>
+<li>- Wildcard matching (</em> and #)</li>
+<li>- Faster (string comparison)</li>
+<li>- Good for: hierarchical routing, patterns</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>4. Cluster Architecture and Failure Scenarios</h2>
+<h3>4.1 Clustering Internals</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                       RABBITMQ CLUSTER ARCHITECTURE                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                   │
+│   │   Node A    │    │   Node B    │    │   Node C    │                   │
+│   │  (Master)   │◄──►│  (Slave 1)  │◄──►│  (Slave 2)  │                   │
+│   │             │    │             │    │             │                   │
+│   │  RabbitMQ   │    │  RabbitMQ   │    │  RabbitMQ   │                   │
+│   │  Erlang VM  │    │  Erlang VM  │    │  Erlang VM  │                   │
+│   │             │    │             │    │             │                   │
+│   │  Port 5672  │    │  Port 5672  │    │  Port 5672  │                   │
+│   │  Port 15672│    │  Port 15672 │    │  Port 15672 │                   │
+│   └──────┬──────┘    └──────┬──────┘    └──────┬──────┘                   │
+│          │                  │                  │                            │
+│          └──────────────────┼──────────────────┘                            │
+│                             │                                                │
+│                      ┌──────▼──────┐                                        │
+│                      │   Erlang    │                                        │
+│                      │  Distributed│                                        │
+│                      │    (EPMD)   │                                        │
+│                      │  Port 25672 │                                        │
+│                      └─────────────┘                                        │
+│                                                                              │
+│   SHARED METADATA:                                                          │
+│   - Virtual hosts, exchanges, bindings, users                              │
+│   - Queue definitions (not messages)                                        │
+│   - Permissions                                                              │
+│                                                                              │
+│   DISTRIBUTED STATE:                                                        │
+│   - Messages (on queue master node)                                         │
+│   - Queue content (on declaring node)                                       │
+│   - Consumer states (per connection)                                         │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>4.2 Node Failure Scenarios and Recovery</h3>
+<pre><code>// Comprehensive failure scenario handling
+<p>public class ClusterFailureScenarios &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>SCENARIO 1: Non-mirrored queue, master node fails</li>
+</ul>
+     </em> 
+<ul>
+<li>State: Queue &quot;orders&quot; on Node A (master), no mirrors</li>
+<li>Failure: Node A crashes</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>What happens:</li>
+<li>- Queue becomes unavailable (no master)</li>
+<li>- Messages on Node A are LOST (non-durable or not yet synced)</li>
+<li>- Consumers get disconnected</li>
+<li>- Producers publishing to queue get channel/connection error</li>
+</ul>
+     </em> 
+<ul>
+<li>Recovery:</li>
+<li>- When Node A restarts, queue reappears (if durable)</li>
+<li>- BUT messages are gone</li>
+<li>- Applications must re-publish or have alternate path</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Prevention:</li>
+<li>- Use quorum queues (recommended for RabbitMQ 3.8+)</li>
+<li>- Or use classic mirrored queues</li>
+</ul>
+     </em>/
+<p>public void scenario1UnmirroredQueueFailure() &#123;
+        // This is what happens in the broker:
+        // 1. Queue process on Node A dies
+        // 2. Queue master locator checks for alternative
+        // 3. No master found - queue goes &quot;down&quot;
+        // 4. On node restart, queue process restarts
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>SCENARIO 2: Mirrored queue, master fails</li>
+</ul>
+     </em> 
+<ul>
+<li>State: Queue &quot;orders&quot; on Node A (master), mirrors on Node B, C</li>
+<li>Failure: Node A crashes</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>What happens:</li>
+<li>- 1. One of the slaves promoted to master (best candidate)</li>
+<li>- 2. New master has all messages (if synchronous)</li>
+<li>- 3. Consumers reconnect to new master</li>
+<li>- 4. Producers continue publishing</li>
+<li>- 5. Failed node can rejoin as slave when it recovers</li>
+</ul>
+     </em> 
+<ul>
+<li>Recovery timeline (typical):</li>
+<li>- Detection: ~30 seconds (heartbeat timeout)</li>
+<li>- Promotion: ~5 seconds</li>
+<li>- Reconnection: ~10 seconds</li>
+<li>- Total: ~45 seconds</li>
+</ul>
+<p><em>/
+    public void scenario2MirroredQueueFailure() throws IOException &#123;
+        // Set up policy for automatic mirroring
+        // This creates queue replicas on multiple nodes
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>SCENARIO 3: Network partition (split brain)</li>
+</ul>
+     </em> 
+<ul>
+<li>State: 3-node cluster, network splits</li>
+<li>Failure: Node A cannot reach Node B and C</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>What happens:</li>
+<li>- Two partitions form: &#123;A&#125; and &#123;B, C&#125;</li>
+<li>- Each thinks the other is down</li>
+<li>- Both accept writes to their queues</li>
+<li>- Messages may be duplicated or lost</li>
+</ul>
+     </em> 
+<ul>
+<li>Partition handling strategies:</li>
+<li>1. pause_minority (default in 3.8+): Minority partition pauses</li>
+<li>2. autoheal: Majority continues, minority reboots</li>
+<li>3. ignore: Manual intervention required</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Detection:</li>
+<li>rabbitmqctl cluster_status</li>
+<li>Shows &quot;running&quot; on both sides but different clusters!</li>
+</ul>
+     </em>/
+<p>public void scenario3NetworkPartition() &#123;
+        // Partition detected when:
+        // 1. Mnesia fails to contact other nodes
+        // 2. Network partition detected
+        // 3. Nodes split into isolated groups
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>SCENARIO 4: Disc node failure (with RAM nodes)</li>
+</ul>
+     </em> 
+<ul>
+<li>If using RAM nodes (not recommended):</li>
+<li>- Messages lost on RAM node failure</li>
+<li>- No persistence benefit from RAM node</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Best practice: Use disc nodes only</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<h3>4.3 Quorum Queues Deep Dive</h3>
+<p>Quorum queues use Raft consensus algorithm for strong consistency:
+</p>
+<pre><code>// Quorum queue implementation concepts
+<p>public class QuorumQueueDemo &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>How Quorum Queues Work:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Each queue has N replicas (quorum size)</li>
+<li>2. Each replica stores complete queue data</li>
+<li>3. Write operations require majority acknowledgment</li>
+<li>- If 3 replicas, need 2 acks</li>
+<li>- If 5 replicas, need 3 acks</li>
+<li>4. Leader handles all client operations</li>
+<li>5. Followers replicate via Raft log</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Advantages over classic mirroring:</li>
+<li>- Data safety: no message loss (unlike async mirroring)</li>
+<li>- Simpler: no special policies needed</li>
+<li>- Self-healing: automatic leader election</li>
+<li>- Deterministic: known replica placement</li>
+</ul>
+     </em>/
+<p>public static void createQuorumQueue(Channel channel) throws IOException &#123;
+        // Define quorum queue arguments
+        Map&lt;String, Object&gt; args = new HashMap&lt;&gt;();
+</p>
+<p>// Queue type - THIS MAKES IT A QUORUM QUEUE
+        args.put(&quot;x-queue-type&quot;, &quot;quorum&quot;);
+</p>
+<p>// Initial cluster size (can be different from policy)
+        args.put(&quot;x-quorum-initial-group-size&quot;, 3);
+</p>
+<p>// Optional: limit quorum size
+        // args.put(&quot;x-quorum-maximum-group-size&quot;, 7);
+</p>
+<p>// Declare queue
+        channel.queueDeclare(
+            &quot;orders.quorum&quot;,      // name
+            true,                 // durable
+            false,                // exclusive
+            false,                // auto-delete
+            args                  // quorum arguments
+        );
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Settings comparison:</li>
+</ul>
+         </em> 
+<ul>
+<li>Classic Mirroring:</li>
+<li>- ha-mode: exactly</li>
+<li>- ha-params: 2</li>
+<li>- ha-sync-mode: automatic</li>
+<li>- Requires policy to enable</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Quorum Queue:</li>
+<li>- x-queue-type: quorum</li>
+<li>- x-quorum-initial-group-size: 3</li>
+<li>- Enabled via queue declaration</li>
+<li>- No policy needed</li>
+</ul>
+         </em>/
+<p>&#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Performance characteristics:</li>
+</ul>
+     </em> 
+<ul>
+<li>Writes:</li>
+<li>- Latency: ~1-3ms additional (majority write)</li>
+<li>- Throughput: Lower than classic due to sync writes</li>
+<li>- Guarantees: At-least-once delivery (with manual ack)</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Reads:</li>
+<li>- From leader: Same as classic</li>
+<li>- From follower: Possible in RabbitMQ 3.13+ (feature)</li>
+</ul>
+         </em> 
+<ul>
+<li>Storage:</li>
+<li>- Each replica is complete copy</li>
+<li>- More disk space than classic mirroring</li>
+<li>- Better for data safety than performance</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>5. High Availability Queue Patterns</h2>
+<h3>5.1 Classic Mirroring vs Quorum</h3>
+<pre><code>// Comprehensive comparison table for queue types
+<p>public class QueueTypeComparison &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>┌──────────────────────┬────────────────┬────────────────────┐</li>
+</ul>
+<p>│       Feature         │ Classic Mirror │    Quorum Queue    │
+     ├──────────────────────┼────────────────┼────────────────────┤
+     │ Replication          │ Async (default)│ Sync (Raft)        │
+     │ Data safety          │ Configurable   │ Guaranteed         │
+     │ Failover time        │ ~30 seconds    │ ~10 seconds        │
+     │ Partition handling   │ Manual         │ Automatic          │
+     │ Memory usage         │ Lower          │ Higher             │
+     │ Disk usage           │ Lower          │ Higher (N copies)  │
+     │ Max queue size       │ Unlimited      │ Limited by disk    │
+     │ Version required     │ Any            │ RabbitMQ 3.8+      │
+     │ Mixed queue types    │ Supported      │ Separate queue type│
+     │ Migration path       │ N/A            │ From classic      │
+     └──────────────────────┴────────────────┴────────────────────┘
+</p>
+     </em>/
+<p>public void classicMirrorPolicy() throws IOException &#123;
+        // Classic mirrored queue policy
+        Map&lt;String, Object&gt; args = new HashMap&lt;&gt;();
+</p>
+<p>// Create simple queue
+        channel.queueDeclare(&quot;orders.classic&quot;, true, false, false, null);
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Apply mirroring policy via rabbitmqctl:</li>
+</ul>
+         </em> 
+<ul>
+<li>rabbitmqctl set_policy ha-all &quot;^orders\\.&quot; \</li>
+<li>'&#123;&quot;ha-mode&quot;:&quot;all&quot;,&quot;ha-sync-mode&quot;:&quot;automatic&quot;&#125;' \</li>
+<li>--apply-to queues</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Options:</li>
+<li>- ha-mode: all, exactly, nodes</li>
+<li>- ha-sync-mode: manual, automatic</li>
+<li>- ha-promote-on-shutdown: when-slave, always, never</li>
+</ul>
+         </em>/
+<p>&#125;
+&#125;
+</p>
+</code></pre>
+<h3>5.2 Multi-Region Federation Setup</h3>
+<pre><code>// Production federation for disaster recovery
+<p>public class FederationSetup &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Federation Architecture:</li>
+</ul>
+     </em> 
+<ul>
+<li>┌─────────────────────┐           ┌─────────────────────┐</li>
+</ul>
+<p>│   DC1 (Primary)     │  ◄──────►  │   DC2 (Secondary)  │
+     │                     │  Federation │                    │
+     │  ┌───────────────┐  │  Link     │  ┌───────────────┐  │
+     │  │ Upstream      │──┼───────────│──│ Upstream      │  │
+     │  │ definition    │  │           │  │ definition    │  │
+     │  └───────────────┘  │           │  └───────────────┘  │
+     │                     │           │                    │
+     │  exchanges: orders  │           │  exchanges: orders │
+     └─────────────────────┘           └─────────────────────┘
+     <em> 
+</p>
+<ul>
+<li>Federation vs Shovel:</li>
+<li>- Federation: Bidirectional, for active/active</li>
+<li>- Shovel: One-way, for migration/disaster recovery</li>
+</ul>
+     </em>/
+<p>public static void configureFederation() throws IOException &#123;
+        /*<em>
+</p>
+<ul>
+<li>Step 1: Define upstream on DC2 (connecting to DC1)</li>
+</ul>
+         </em> 
+<ul>
+<li>rabbitmqctl set_parameter federation-upstream dc1 \</li>
+<li>'&#123;&quot;uri&quot;:&quot;amqp://user:pass@dc1.rabbitmq.internal:5672&quot;,&quot;expires&quot;:3600000&#125;'</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Step 2: Create policy to federate</li>
+</ul>
+         </em> 
+<ul>
+<li>rabbitmqctl set_policy fed-orders &quot;^orders\\.&quot; \</li>
+<li>'&#123;&quot;federation-upstream-set&quot;:&quot;dc1&quot;&#125;' \</li>
+<li>--apply-to exchanges</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Federation links state:</li>
+</ul>
+         </em> 
+<ul>
+<li>States:</li>
+<li>- running: actively federating</li>
+<li>- starting: establishing connection</li>
+<li>- connecting: trying to connect</li>
+<li>- disconnected: connection lost</li>
+<li>- failed: unrecoverable error</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Check status:</li>
+<li>rabbitmqctl list_federation_links</li>
+</ul>
+         </em>/
+<p>&#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>6. Memory Management and Flow Control</h2>
+<h3>6.1 Memory Breakdown</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                       RABBITMQ MEMORY USAGE                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Total Memory =                                                              │
+│  ├─ Erlang VM Code + Heap                                                   │
+│  │  ├─ Process heaps (per connection/channel/queue)                         │
+│  │  ├─ Memory pools (binary,ETS)                                           │
+│  │  └─ Atom table                                                          │
+│  ├─ RabbitMQ Core                                                          │
+│  │  ├─ Queue state (message IDs, pointers)                                │
+│  │  ├─ Connection/channel tracking                                         │
+│  │  ├─ Management statistics                                               │
+│  │  └─ Message indexes                                                    │
+│  ├─ Message Storage                                                        │
+│  │  ├─ In-memory message bodies (when not lazy)                           │
+│  │  ├─ Erlang message binaries                                            │
+│  │  └─ Disk cache (buffered writes)                                      │
+│  └─ OS Layer                                                               │
+│     ├─ Socket buffers                                                      │
+│     ├─ File descriptors                                                    │
+│     └─ Network buffers                                                     │
+│                                                                              │
+│  Default Memory Limits:                                                     │
+│  - vm_memory_high_watermark.relative = 0.40 (40% of available RAM)        │
+│  - Flow control activates at this threshold                                │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>6.2 Flow Control Mechanism</h3>
+<pre><code>%% Flow control implementation - simplified
+<p>handle_publish(Message) -&gt;
+    % Check memory threshold
+    case erlang:memory(used) &gt; get_memory_threshold() of
+        true -&gt;
+            % Enable flow control - pause publishers
+            flow_control:enable(publishers),
+</p>
+<p>% Store message anyway (with warning)
+            queue_store:insert(Message),
+</p>
+<p>% Or could reject with connection.blocked
+            case queue:memory_usage() of
+                high -&gt; reject_message(Message, &quot;memory&quot;);
+                _    -&gt; accept_message(Message)
+            end;
+        false -&gt;
+            % Normal operation - accept and store
+            queue_store:insert(Message)
+    end.
+</p>
+<p>%% Connection blocked callback
+connection_blocked(Reason, Connection) -&gt;
+    % Called when flow control is enabled
+    % - Publishers receive connection.blocked
+    % - Publish calls may return immediately
+    % - Consumer delivery continues normally
+    log:info(&quot;Connection ~p blocked: ~p&quot;, [Connection, Reason]).
+</p>
+</code></pre>
+<pre><code>// Java client handling connection blocked
+<p>public class FlowControlHandling &#123;
+</p>
+<p>public static void demonstrate(Channel channel) throws IOException &#123;
+</p>
+<p>// Add connection blocked listener
+        channel.addConnectionBlockedListener(reason -&gt; &#123;
+            System.out.println(&quot;Connection blocked: &quot; + reason);
+            // Possible reasons:
+            // - &quot;memory&quot; - memory threshold reached
+            // - &quot;disk&quot; - disk space low
+        &#125;);
+</p>
+<p>channel.addConnectionUnblockedListener(() -&gt; &#123;
+            System.out.println(&quot;Connection unblocked - can publish again&quot;);
+        &#125;);
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Flow control behavior:</li>
+</ul>
+         </em> 
+<ul>
+<li>1. Memory reaches 40% (default)</li>
+<li>2. Connections get blocked</li>
+<li>3. Publishers receive connection.blocked</li>
+<li>4. Messages queue up at client side</li>
+<li>5. Memory drops below threshold</li>
+<li>6. Connections unblocked</li>
+<li>7. Queued messages start flowing again</li>
+</ul>
+<p><em>/
+    &#125;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Tuning memory thresholds:</li>
+</ul>
+     </em> 
+<ul>
+<li># rabbitmq.conf</li>
+</ul>
+<p>vm_memory_high_watermark.relative = 0.65
+     vm_memory_high_watermark.paging_ratio = 0.75
+</p>
+<p># For high-throughput scenarios:
+     vm_memory_high_watermark.relative = 0.70
+     # More headroom for bursts
+     <em>/
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>7. Network Protocol Internals</h2>
+<h3>7.1 AMQP 0-9-1 Frame Structure</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+<p>│                         AMQP FRAME STRUCTURE                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Frame = Frame Type (1 byte) + Channel (2 bytes) + Size (4 bytes)          │
+│          + Payload + End Marker (1 byte)                                    │
+│                                                                              │
+│  ┌────┬────┬────┬────┬──────────────┬──┐                                    │
+│  │Type│Ch# │Size│    │   Payload    │End│                                    │
+│  │ 1  │ 2  │ 4  │    │    (N)       │ 1 │                                    │
+│  └────┴────┴────┴────┴──────────────┴──┘                                    │
+│                                                                              │
+│  Frame Types:                                                                │
+│  - 1: METHOD - Method frames (commands)                                     │
+│  - 2: HEADER - Content header (properties)                                  │
+│  - 3: BODY - Message content (payload)                                      │
+│  - 8: HEARTBEAT - Heartbeat frames                                          │
+│                                                                              │
+│  Example: Publish a message                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐│
+│  │ Frame 1: METHOD (basic.publish)                                         ││
+│  │   - Exchange name                                                       ││
+│  │   - Routing key                                                         ││
+│  │   - Mandatory flag                                                      ││
+│  │ Frame 2: HEADER (content header)                                       ││
+│  │   - Class ID, weight, body size                                         ││
+│  │   - Properties (delivery mode, priority, etc.)                         ││
+│  │ Frame 3: BODY (message payload)                                         ││
+│  └──────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+</p>
+</code></pre>
+<h3>7.2 TCP and Heartbeat</h3>
+<pre><code>// Connection tuning for high performance
+<p>public class NetworkTuning &#123;
+</p>
+<p>public static void configureConnection(ConnectionFactory factory) &#123;
+</p>
+<p>// Basic settings
+        factory.setHost(&quot;rabbitmq.internal&quot;);
+        factory.setPort(5672);
+</p>
+<p>// Frame size - larger = fewer round trips
+        factory.setRequestedFrameMax(131072);  // 128KB (default 60KB)
+</p>
+<p>// Heartbeat - detect dead connections
+        factory.setRequestedHeartBeat(60);  // 60 seconds
+</p>
+<p>// Connection timeout
+        factory.setConnectionTimeout(10000);  // 10 seconds
+</p>
+<p>// Enable TCP keepalive at OS level (in addition to heartbeat)
+        // This is a socket option that detects dead connections faster
+        // when intermediate network equipment times out connections
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Network performance settings:</li>
+</ul>
+         </em>/
+<p>&#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>When heartbeat fails:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. After 2 <em> heartbeat seconds (e.g., 120 seconds)</li>
+<li>2. Broker closes connection</li>
+<li>3. Client gets ShutdownSignalException</li>
+<li>4. Consumers stop receiving</li>
+<li>5. Unacked messages requeued</li>
+</ul>
+     </em> 
+<ul>
+<li>Common issues:</li>
+<li>- Firewalls closing idle connections</li>
+<li>- Load balancers with aggressive timeouts</li>
+<li>- Network path issues</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Solution: Set heartbeat to less than the shortest timeout in your path</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>8. Consumer Prefetch and Flow Control</h2>
+<h3>8.1 Prefetch Deep Dive</h3>
+<pre><code>// Understanding prefetch behavior
+<p>public class PrefetchDeepDive &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Prefetch concepts:</li>
+</ul>
+     </em> 
+<ul>
+<li>Basic QoS (Quality of Service):</li>
+<li>- Per-channel, per-consumer setting</li>
+<li>- Limits unacked messages at any time</li>
+<li>- Works differently for automatic vs manual acknowledgment</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>prefetch = &quot;how many messages can I have 'in flight'?&quot;</li>
+</ul>
+     </em>/
+<p>public static void demonstratePrefetch(Channel channel) throws IOException &#123;
+</p>
+<p>// QoS with prefetch count
+        // This means: &quot;only give me 100 messages at a time&quot;
+        channel.basicQos(100);
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>What happens:</li>
+</ul>
+         </em> 
+<ul>
+<li>1. Consumer connects, prefetch = 100</li>
+<li>2. Broker sends up to 100 messages</li>
+<li>3. Messages are unacked in RabbitMQ's eyes</li>
+<li>4. Consumer processes messages</li>
+<li>5. As consumer ACKs, broker sends more (up to prefetch)</li>
+<li>6. If consumer doesn't ACK, broker stops sending</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Prefetch = 1 (Serial processing):</li>
+<li>- One message at a time</li>
+<li>- Guarantees ordering (if single consumer)</li>
+<li>- Low throughput, high latency</li>
+<li>- Good for: critical ordering, debugging</li>
+</ul>
+         </em>/
+<p>channel.basicQos(1);  // Serial
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Prefetch = 100 (Batch processing):</li>
+<li>- Up to 100 in flight</li>
+<li>- High throughput</li>
+<li>- Memory usage: N </em> avg_message_size</li>
+<li>- Good for: high throughput, stateless processing</li>
+</ul>
+<p><em>/
+</p>
+<p>channel.basicQos(100);  // Batch
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Prefetch = 0 (Unlimited):</li>
+<li>- All messages sent immediately</li>
+<li>- Highest throughput (risky)</li>
+<li>- Memory spike potential</li>
+<li>- Can overwhelm consumers</li>
+<li>- NOT RECOMMENDED for production</li>
+</ul>
+         </em>/
+<p>channel.basicQos(0);  // Unlimited - dangerous!
+    &#125;
+&#125;
+</p>
+</code></pre>
+<h3>8.2 Acknowledgment Modes</h3>
+<pre><code>// Automatic vs Manual acknowledgment
+<p>public class AcknowledgmentModes &#123;
+</p>
+<p>public static void automaticAckExample(Channel channel) throws IOException &#123;
+        /*<em>
+</p>
+<ul>
+<li>AUTO ACK (default, dangerous):</li>
+<li>- Message considered delivered when sent to consumer</li>
+<li>- If consumer dies, message is LOST</li>
+<li>- High throughput but unreliable</li>
+</ul>
+         </em> 
+<ul>
+<li>Use only when: message loss is acceptable</li>
+</ul>
+<p><em>/
+</p>
+<p>// This is DANGEROUS in production
+        channel.basicConsume(&quot;queue&quot;, false, (consumerTag, delivery) -&gt; &#123;
+            // Processing...
+            // If this throws exception, message is LOST!
+            processMessage(delivery);
+            // Implicit ACK when method returns without exception
+            // OR on any exception, message is requeued!
+        &#125;);
+    &#125;
+</p>
+<p>public static void manualAckExample(Channel channel) throws IOException &#123;
+        /</em><em>
+</p>
+<ul>
+<li>MANUAL ACK (recommended):</li>
+<li>- Message stays unacked until explicitly ACK'd</li>
+<li>- If consumer dies, unacked messages are requeued</li>
+<li>- Exactly-once semantics possible</li>
+</ul>
+         </em> 
+<ul>
+<li>Best practice: ACK after successful processing</li>
+</ul>
+<p><em>/
+</p>
+<p>channel.basicConsume(&quot;queue&quot;, false, (consumerTag, delivery) -&gt; &#123;
+            try &#123;
+                // Process message
+                processMessage(delivery.getBody());
+</p>
+<p>// Explicit ACK - message processed
+                channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+</p>
+<p>&#125; catch (Exception e) &#123;
+                // Processing failed - choose what to do
+</p>
+<p>// Option 1: Requeue (try again)
+                // channel.basicNack(delivery.getEnvelope().getDeliveryTag(), 
+                //                   false, true);
+</p>
+<p>// Option 2: Don't requeue (send to DLX if configured)
+                channel.basicNack(delivery.getEnvelope().getDeliveryTag(), 
+                                  false, false);
+</p>
+<p>// Option 3: Reject without requeue
+                // channel.basicReject(delivery.getEnvelope().getDeliveryTag(),
+                //                     false);
+            &#125;
+        &#125;);
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Requeue = true vs false:</li>
+</ul>
+         </em> 
+<ul>
+<li>requeue = true:</li>
+<li>- Message goes back to same queue</li>
+<li>- Will be delivered to same or different consumer</li>
+<li>- Can cause infinite loop if always fails!</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>requeue = false:</li>
+<li>- Message sent to dead letter exchange (if configured)</li>
+<li>- Or discarded</li>
+<li>- Good for poison messages that should not retry</li>
+</ul>
+         </em>/
+<p>&#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>9. Authentication, Authorization and Security</h2>
+<h3>9.1 Authentication Backends</h3>
+<pre><code>// Authentication configuration options
+<p>public class AuthenticationConfig &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>RabbitMQ supports multiple authentication backends:</li>
+</ul>
+     </em> 
+<ul>
+<li>1. Internal (built-in)</li>
+<li>- Stored in Mnesia</li>
+<li>- Username/password</li>
+<li>- MD5 or PLAIN authentication</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>2. LDAP</li>
+<li>- Integration with corporate directory</li>
+<li>- Group membership for permissions</li>
+</ul>
+     </em> 
+<ul>
+<li>3. HTTP</li>
+<li>- External REST service</li>
+<li>- Flexible, but requires network call</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>4. PAM</li>
+<li>- Pluggable Authentication Modules</li>
+<li>- Unix/Linux authentication</li>
+</ul>
+     </em> 
+<ul>
+<li>5. SSL/Certificates</li>
+<li>- Client certificate authentication</li>
+<li>- Certificate Common Name as username</li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Internal authentication setup:</li>
+</ul>
+     </em>/
+<p>// Create user with password
+    // rabbitmqctl add_user admin secure_password_here
+</p>
+<p>// Set tags (administrator, monitoring, etc.)
+    // rabbitmqctl set_user_tags admin administrator
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>LDAP authentication:</li>
+<li># rabbitmq.conf</li>
+<li>auth_backends.1 = ldap</li>
+</ul>
+     </em> 
+<ul>
+<li>auth_ldap.server = ldap.internal</li>
+<li>auth_ldap.port = 389</li>
+<li>auth_ldap.user_dn_pattern = uid=$&#123;username&#125;,ou=users,dc=company,dc=com</li>
+<li>auth_ldap.timeout = 5000</li>
+</ul>
+<p><em>/
+&#125;
+</p>
+</code></pre>
+<h3>9.2 Authorization (Permissions)</h3>
+<pre><code>%% Authorization algorithm
+<p>check_permission(User, VHost, Permission, Object) -&gt;
+    % User has configure, write, read on VHOST?
+    % 
+    % configure: queues, exchanges (declare/delete)
+    % write: publish to exchanges, consume from queues  
+    % read: get messages, inspect queues
+</p>
+<p>Permissions = get_user_permissions(User, VHost),
+    matches(Permission, Permissions, Object).
+</p>
+</code></pre>
+<pre><code>// Permission configuration
+<p>public class PermissionConfig &#123;
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Permission structure:</li>
+</ul>
+     </em> 
+<ul>
+<li>^    - Regular expression for exchange/queue name</li>
+<li>.<em>   - Match all</li>
+<li>^orders\\..</em> - Match orders.shipped, orders.pending, etc.</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Three permission types:</li>
+<li>- configure: regex for queues/exchanges</li>
+<li>- write: regex for exchanges (publish)</li>
+<li>- read: regex for queues (consume)</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Example: User can only access orders queue</li>
+</ul>
+     </em> 
+<ul>
+<li>rabbitmqctl set_permissions -p /vhost1 user_name \</li>
+<li>&quot;^orders\\..<em>&quot; \       # configure: orders.</em></li>
+<li>&quot;^orders\\..<em>&quot; \       # write: orders.</em></li>
+<li>&quot;^orders\\..<em>&quot;         # read: orders.</em></li>
+</ul>
+<p><em>/
+</p>
+<p>/</em><em>
+</p>
+<ul>
+<li>Example: Monitoring user can only read</li>
+</ul>
+     </em> 
+<ul>
+<li>rabbitmqctl set_permissions -p /vhost1 monitoring_user \</li>
+<li>&quot;^$&quot; \                 # configure: nothing</li>
+<li>&quot;^$&quot; \                 # write: nothing</li>
+<li>&quot;.<em>&quot;                   # read: everything</li>
+</ul>
+     </em>/
+<p>/*<em>
+</p>
+<ul>
+<li>Per-object permissions:</li>
+</ul>
+     </em> 
+<ul>
+<li>Can be configured per exchange and queue</li>
+<li>Useful for fine-grained access control</li>
+</ul>
+<p><em>
+</p>
+<ul>
+<li>Example: Only order-service can publish to order exchange</li>
+</ul>
+     </em>/
+<p>&#125;
+</p>
+</code></pre>
+<hr>
+<h2>10. Performance Optimization Patterns</h2>
+<h3>10.1 Producer Patterns</h3>
+<pre><code>// High-performance producer implementation
+<p>public class HighPerformanceProducer &#123;
+</p>
+<p>private final Connection connection;
+    private final Channel channel;
+    private final String exchange = &quot;orders&quot;;
+</p>
+<p>public HighPerformanceProducer() throws IOException &#123;
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(&quot;rabbitmq.internal&quot;);
+        factory.setAutomaticRecoveryEnabled(true);
+        factory.setNetworkRecoveryInterval(10000);
+</p>
+<p>// Performance settings
+        factory.setRequestedFrameMax(131072);  // Large frame
+        factory.setHeartBeat(60);
+</p>
+<p>connection = factory.newConnection();
+        channel = connection.createChannel();
+</p>
+<p>// Enable publisher confirms
+        channel.confirmSelect();
+</p>
+<p>// Enable transaction mode (if needed, impacts performance!)
+        // channel.txSelect();
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 1: Batch publishing with confirms</li>
+</ul>
+     </em>/
+<p>public void batchPublishWithConfirms(List&lt;Order&gt; orders) throws Exception &#123;
+        // Start batch
+        long startTime = System.currentTimeMillis();
+</p>
+<p>// Publish batch
+        for (Order order : orders) &#123;
+            channel.basicPublish(
+                exchange,
+                order.getRoutingKey(),
+                MessageProperties.PERSISTENT_TEXT_PLAIN,
+                serialize(order)
+            );
+        &#125;
+</p>
+<p>// Wait for all confirms (blocking)
+        channel.waitForConfirmsOrDie(30000);  // 30 second timeout
+</p>
+<p>long batchTime = System.currentTimeMillis() - startTime;
+        System.out.println(&quot;Published &quot; + orders.size() + &quot; messages in &quot; + batchTime + &quot;ms&quot;);
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 2: Async confirms with callback</li>
+</ul>
+     </em>/
+<p>public void asyncPublishWithConfirms() &#123;
+        channel.addConfirmListener(
+            // ACK callback - message confirmed
+            (sequenceNumber, multiple) -&gt; &#123;
+                // Handle successful confirmation
+                // sequenceNumber identifies the message
+                // multiple = true means all up to this confirmed
+            &#125;,
+            // NACK callback - message rejected
+            (sequenceNumber, multiple) -&gt; &#123;
+                // Handle failed confirmation
+                // Need to republish messages
+            &#125;
+        );
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 3: Connection pooling (for multiple threads)</li>
+</ul>
+     </em>/
+<p>private final ConcurrentHashMap&lt;Integer, Channel&gt; channelPool =
+        new ConcurrentHashMap&lt;&gt;();
+</p>
+<p>public void publishWithPooledChannel(Order order) throws IOException &#123;
+        // Get channel from pool (keyed by thread ID)
+        int threadId = (int) Thread.currentThread().getId();
+</p>
+<p>Channel channel = channelPool.computeIfAbsent(
+            threadId, 
+            tid -&gt; &#123;
+                try &#123;
+                    Channel ch = connection.createChannel();
+                    ch.confirmSelect();
+                    return ch;
+                &#125; catch (IOException e) &#123;
+                    throw new RuntimeException(e);
+                &#125;
+            &#125;
+        );
+</p>
+<p>channel.basicPublish(exchange, order.getRoutingKey(),
+            MessageProperties.PERSISTENT_TEXT_PLAIN, serialize(order));
+    &#125;
+&#125;
+</p>
+</code></pre>
+<h3>10.2 Consumer Patterns</h3>
+<pre><code>// High-performance consumer implementation
+<p>public class HighPerformanceConsumer &#123;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 1: Prefetch tuning</li>
+</ul>
+     </em>/
+<p>public static void prefetchTuning(Channel channel) throws IOException &#123;
+        // Optimal prefetch depends on:
+        // - Message processing time
+        // - Network latency
+        // - Available memory
+        // - Required ordering
+</p>
+<p>// For fast processing (e.g., 1ms per message)
+        // Higher prefetch = better throughput
+        channel.basicQos(200);
+</p>
+<p>// For slow processing or important messages
+        // Lower prefetch = faster feedback
+        channel.basicQos(10);
+</p>
+<p>// For ordered processing
+        channel.basicQos(1);  // Serial processing
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 2: Executor-based consumer</li>
+</ul>
+     </em>/
+<p>public static void executorConsumer(Channel channel,
+            ExecutorService executor) throws IOException &#123;
+</p>
+<p>channel.basicQos(100);
+</p>
+<p>Consumer consumer = new DefaultConsumer(channel) &#123;
+            @Override
+            public void handleDelivery(String consumerTag,
+                    Envelope envelope,
+                    AMQP.BasicProperties properties,
+                    byte[] body) &#123;
+</p>
+<p>// Offload to thread pool
+                executor.submit(() -&gt; &#123;
+                    try &#123;
+                        processMessage(body);
+                        channel.basicAck(envelope.getDeliveryTag(), false);
+                    &#125; catch (Exception e) &#123;
+                        // Handle failure
+                        try &#123;
+                            channel.basicNack(envelope.getDeliveryTag(), 
+                                false, true);  // Requeue
+                        &#125; catch (IOException ex) &#123;
+                            // Log error
+                        &#125;
+                    &#125;
+                &#125;);
+            &#125;
+        &#125;;
+</p>
+<p>channel.basicConsume(&quot;orders&quot;, false, consumer);
+    &#125;
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Pattern 3: Batch consumer</li>
+</ul>
+     </em>/
+<p>public static void batchConsumer(Channel channel,
+            int batchSize, long batchTimeoutMs) throws IOException &#123;
+</p>
+<p>// This requires RabbitMQ 3.8+ and consumer implementation
+        // Many frameworks support this: Spring AMQP, QPID, etc.
+</p>
+<p>/*<em>
+</p>
+<ul>
+<li>Consumer callback receives List&lt;Delivery&gt; instead of single</li>
+<li>More efficient for high-volume scenarios</li>
+</ul>
+         </em>/
+<p>&#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>11. Troubleshooting Production Issues</h2>
+<h3>11.1 High Memory Investigation</h3>
+<pre><code># Step 1: Check current memory usage
+<p>rabbitmqctl status | grep -A 20 &quot;memory&quot;
+</p>
+<h1>Step 2: Check per-process memory</h1>
+<p>rabbitmqctl list_processes pid memory_vms memory_rss memory_du_use
+    | sort -k5 -n -r | head -20
+</p>
+<h1>Step 3: Check per-queue memory  </h1>
+<p>rabbitmqctl list_queues name memory messages memory_pid
+rabbitmqctl list_queues name messages_ram messages_disk
+</p>
+<h1>Step 4: Check connections and channels</h1>
+<p>rabbitmqctl list_connections name port state
+    memory_recv memory_sent
+</p>
+<h1>Step 5: Enable detailed memory accounting</h1>
+<h1>In rabbitmq.conf:</h1>
+<p>vm_memory_calculation_strategy = rss  # or allocated
+</p>
+</code></pre>
+<h3>11.2 Slow Consumer Detection</h3>
+<pre><code># Check consumer status
+<p>rabbitmqctl list_consumers queue_name consumer_tag
+    ack_required prefetch_count
+</p>
+<h1>Check consumer delivery rate</h1>
+<p>rabbitmqctl list_consumers queue_name consumer_tag
+    delivery_rate acked_rate
+</p>
+<h1>Find slow consumers</h1>
+<h1>If delivery_rate is high but acked_rate is low = slow consumer</h1>
+<h1>Consumer is accumulating messages</h1>
+<h1>Check queue depth</h1>
+<p>rabbitmqctl list_queues name messages message_bytes
+</p>
+</code></pre>
+<h3>11.3 Network Partition Detection and Resolution</h3>
+<pre><code># Detect partition
+<p>rabbitmqctl cluster_status
+</p>
+<h1>Look for:</h1>
+<h1>&#123;running_nodes,[rabbit@node1,rabbit@node2,rabbit@node3]&#125;</h1>
+<h1>This should show all nodes in one group</h1>
+<h1>If you see separate groups, partition exists!</h1>
+<h1>Check partition details</h1>
+<p>rabbitmqctl diagnose_partition
+</p>
+<h1>Recovery options:</h1>
+<h1>Option 1: pause_minority (default) - minority pauses</h1>
+<h1>Option 2: autoheal - majority continues, minority restarts</h1>
+<h1>Option 3: force_boot - if can't recover</h1>
+<h1>Force boot on failed node</h1>
+<h1>(run on the problematic node)</h1>
+<p>rabbitmqctl force_boot
+</p>
+</code></pre>
+<h3>11.4 Message Accumulation</h3>
+<pre><code># Identify backed-up queues
+<p>rabbitmqctl list_queues name messages
+    message_stats.publish_in message_stats.deliver_get
+</p>
+<h1>Check message age in queue</h1>
+<p>rabbitmqctl list_queues name messages
+    avg_message_age
+</p>
+<h1>If avg_message_age is high:</h1>
+<h1>- Consumer is not keeping up</h1>
+<h1>- Or consumer is blocked/stopped</h1>
+<h1>- Or messages are being produced faster than consumed</h1>
+<h1>Message age breakdown</h1>
+<p>rabbitmqctl list_queue_replicas name
+</p>
+</code></pre>
+<hr>
+<p>This comprehensive guide covers RabbitMQ at a deep technical level. Each section contains production-ready patterns, troubleshooting guides, and internal implementation details that will help you build robust, high-performance messaging systems.
+</p>
+        </article>
+    </div>
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Analytic Functions: The Complete Guide for WMS Developers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Analytic Functions: The Complete Guide for WMS Developers</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: Why Analytic Functions Change Everything</h2>
+<p>In my 30+ years of Oracle consulting, I've seen developers write 200-line PL/SQL cursors to solve problems that analytic functions handle in 5 lines. The difference is dramatic.
+</p>
+<p>At Manhattan Associates, we replaced hundreds of procedural reports with elegant SQL using analytic functions. The result? Reports that took 10 minutes now run in 2 seconds.
+</p>
+<p><strong>The Promise</strong>: Analytic functions let you process multiple rows in a "window" without grouping—exactly what you need for ranking, running totals, and time-series analysis in a WMS.
+</p>
+<hr>
+<h2>Chapter 1: Understanding the Window Concept</h2>
+<h3>The Fundamental Shift</h3>
+<p>Traditional aggregate functions collapse rows:
+</p>
+<pre><code>-- AGGREGATE: Many rows -&gt; One row
+<p>SELECT status, COUNT(<em>) AS cnt
+FROM wms_orders
+GROUP BY status;
+</p>
+</code></pre>
+<p>Analytic functions keep rows but add calculations:
+</p>
+<pre><code>-- ANALYTIC: Many rows -&gt; Many rows (with added info)
+<p>SELECT
+    order_id, 
+    status,
+    COUNT(</em>) OVER() AS total_orders,  -- Running count across ALL rows
+    COUNT(<em>) OVER(PARTITION BY status) AS status_count  -- Count within status
+FROM wms_orders;
+</p>
+</code></pre>
+<h3>The Window Syntax</h3>
+<pre><code>function_name() OVER (
+<p>PARTITION BY column(s)  -- How to divide the data
+    ORDER BY column(s)      -- How to order within partition
+    ROWS BETWEEN x PRECEDING AND y FOLLOWING  -- The window frame
+)
+</p>
+</code></pre>
+<p><strong>Real Example: Running Total of Inventory Value</strong>
+</p>
+<pre><code>SELECT 
+<p>i.inventory_id,
+    i.sku_id,
+    i.quantity,
+    i.unit_cost,
+    i.quantity </em> i.unit_cost AS line_value,
+    SUM(i.quantity <em> i.unit_cost) OVER (
+        ORDER BY i.inventory_id
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_total_value
+FROM wms_inventory i
+WHERE i.location_id LIKE 'PICK-A-%'
+ORDER BY i.inventory_id;
+</p>
+</code></pre>
+<p><strong>This calculates cumulative inventory value without GROUP BY!</strong>
+</p>
+<hr>
+<h2>Chapter 2: Ranking Functions</h2>
+<h3>ROW_NUMBER, RANK, and DENSE_RANK</h3>
+<pre><code>-- Find top 10 orders by value
+<p>SELECT </em> FROM (
+    SELECT 
+        order_id,
+        SUM(quantity <em> unit_price) AS order_total,
+        ROW_NUMBER() OVER (ORDER BY SUM(quantity </em> unit_price) DESC) AS rn,
+        RANK() OVER (ORDER BY SUM(quantity <em> unit_price) DESC) AS rk,
+        DENSE_RANK() OVER (ORDER BY SUM(quantity </em> unit_price) DESC) AS dr
+    FROM wms_order_lines
+    GROUP BY order_id
+) WHERE rn &lt;= 10;
+</p>
+</code></pre>
+<p><strong>The difference:</strong>
+</p>
+<ul>
+<li><strong>ROW_NUMBER()</strong>: 1, 2, 3, 4, 5 (always sequential)</li>
+<li><strong>RANK()</strong>: 1, 1, 3, 4, 4 (skips for ties)</li>
+<li><strong>DENSE_RANK()</strong>: 1, 1, 2, 3, 3 (no gaps)</li>
+</ul>
+<h3>Real WMS Example: Top SKUs by Zone</h3>
+<pre><code>-- Rank SKUs within each zone by total picks
+<p>SELECT
+    zone_id,
+    sku_id,
+    total_picks,
+    RANK() OVER (PARTITION BY zone_id ORDER BY total_picks DESC) AS zone_rank
+FROM (
+    SELECT 
+        l.zone_id,
+        i.sku_id,
+        SUM(p.quantity_picked) AS total_picks
+    FROM wms_pick_tasks p
+    JOIN wms_inventory inv ON p.inventory_id = inv.inventory_id
+    JOIN wms_locations l ON inv.location_id = l.location_id
+    GROUP BY l.zone_id, i.sku_id
+)
+WHERE zone_rank &lt;= 10;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 3: Window Frame Functions</h2>
+<h3>Moving Averages and Sums</h3>
+<pre><code>-- 3-day moving average of orders
+<p>SELECT
+    order_date,
+    daily_orders,
+    AVG(daily_orders) OVER (
+        ORDER BY order_date
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) AS moving_avg_3day,
+    SUM(daily_orders) OVER (
+        ORDER BY order_date
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) AS moving_sum_3day
+FROM (
+    SELECT 
+        TRUNC(order_date) AS order_date,
+        COUNT(<em>) AS daily_orders
+    FROM wms_order_headers
+    WHERE order_date &gt;= TRUNC(SYSDATE - 30)
+    GROUP BY TRUNC(order_date)
+);
+</p>
+</code></pre>
+<h3>FIRST_VALUE and LAST_VALUE</h3>
+<pre><code>-- First and last inventory location for each SKU
+<p>SELECT
+    sku_id,
+    FIRST_VALUE(location_id) OVER (
+        PARTITION BY sku_id 
+        ORDER BY receipt_date
+    ) AS first_location,
+    LAST_VALUE(location_id) OVER (
+        PARTITION BY sku_id 
+        ORDER BY receipt_date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) AS current_location
+FROM wms_inventory_receipts;
+</p>
+</code></pre>
+<p><strong>Important</strong>: For LAST_VALUE, you need "ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" or you'll get unexpected results!
+</p>
+<hr>
+<h2>Chapter 4: Lead and Lag Functions</h2>
+<h3>Analyzing Time-Based Data</h3>
+<pre><code>-- Compare today's orders to yesterday
+<p>SELECT
+    order_date,
+    order_count,
+    LAG(order_count, 1) OVER (ORDER BY order_date) AS prev_day_count,
+    order_count - LAG(order_count, 1) OVER (ORDER BY order_date) AS day_over_day_change
+FROM (
+    SELECT 
+        TRUNC(order_date) AS order_date,
+        COUNT(</em>) AS order_count
+    FROM wms_order_headers
+    GROUP BY TRUNC(order_date)
+);
+</p>
+</code></pre>
+<h3>Real Case: Detecting Stock-Outs</h3>
+<pre><code>-- Find when inventory dropped to zero
+<p>SELECT
+    sku_id,
+    transaction_date,
+    quantity_after,
+    LAG(quantity_after, 1) OVER (PARTITION BY sku_id ORDER BY transaction_date) AS prev_qty,
+    CASE 
+        WHEN quantity_after = 0 
+         AND LAG(quantity_after, 1) OVER (PARTITION BY sku_id ORDER BY transaction_date) &gt; 0 
+        THEN 'STOCKOUT'
+    END AS event_type
+FROM wms_inventory_transactions;
+</p>
+</code></pre>
+<h3>Lead: Looking Ahead</h3>
+<pre><code>-- Compare current pick to next pick in zone
+<p>SELECT
+    pick_id,
+    location_id,
+    quantity,
+    LEAD(quantity, 1) OVER (ORDER BY pick_id) AS next_pick_qty,
+    LEAD(location_id, 1) OVER (ORDER BY pick_id) AS next_location
+FROM wms_pick_tasks
+WHERE task_status = 'ASSIGNED'
+  AND zone_id = 'ZONE-A';
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 5: Advanced Analytic Patterns</h2>
+<h3>Percentile Calculations</h3>
+<pre><code>-- Find median order value
+<p>SELECT
+    MEDIAN(order_total) AS median_order_value,
+    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY order_total) AS p25,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY order_total) AS p75
+FROM (
+    SELECT order_id, SUM(quantity <em> unit_price) AS order_total
+    FROM wms_order_lines
+    GROUP BY order_id
+);
+</p>
+</code></pre>
+<h3>Ratio_to_Report</h3>
+<pre><code>-- What percentage of zone picks is each SKU?
+<p>SELECT
+    zone_id,
+    sku_id,
+    total_picks,
+    ROUND(RATIO_TO_REPORT(total_picks) OVER (PARTITION BY zone_id) </em> 100, 2) AS pct_of_zone
+FROM (
+    SELECT 
+        l.zone_id,
+        i.sku_id,
+        SUM(p.quantity_picked) AS total_picks
+    FROM wms_pick_tasks p
+    JOIN wms_inventory inv ON p.inventory_id = inv.inventory_id
+    JOIN wms_locations l ON inv.location_id = l.location_id
+    GROUP BY l.zone_id, i.sku_id
+);
+</p>
+</code></pre>
+<h3>NTILE: Distributing into Buckets</h3>
+<pre><code>-- Divide orders into quartiles by value
+<p>SELECT
+    order_id,
+    order_total,
+    NTILE(4) OVER (ORDER BY order_total) AS quartile
+FROM (
+    SELECT order_id, SUM(quantity <em> unit_price) AS order_total
+    FROM wms_order_lines
+    GROUP BY order_id
+);
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 6: Real-World WMS Analytics</h2>
+<h3>Case Study: Inventory Turnover Report</h3>
+<p><strong>Before (PL/SQL cursor, 8 minutes):</strong>
+</p>
+<pre><code>DECLARE
+<p>CURSOR c_sku IS
+        SELECT sku_id FROM wms_sku WHERE active = 'Y';
+BEGIN
+    FOR rec IN c_sku LOOP
+        -- Calculate turns for each SKU
+        INSERT INTO sku_turnover VALUES (rec.sku_id, ...);
+    END LOOP;
+END;
+</p>
+</code></pre>
+<p><strong>After (Analytic SQL, 12 seconds):</strong>
+</p>
+<pre><code>SELECT 
+<p>sku_id,
+    total_received,
+    total_shipped,
+    ROUND(total_shipped / NULLIF(total_received, 0), 2) AS turnover_rate,
+    DENSE_RANK() OVER (ORDER BY ROUND(total_shipped / NULLIF(total_received, 0), 2) DESC) AS turnover_rank
+FROM (
+    SELECT 
+        sku_id,
+        SUM(CASE WHEN trans_type = 'RECEIPT' THEN quantity ELSE 0 END) AS total_received,
+        SUM(CASE WHEN trans_type = 'SHIP' THEN quantity ELSE 0 END) AS total_shipped
+    FROM wms_inventory_transactions
+    WHERE trans_date &gt;= ADD_MONTHS(TRUNC(SYSDATE), -12)
+    GROUP BY sku_id
+)
+WHERE total_received &gt; 0;
+</p>
+</code></pre>
+<h3>Case Study: Worker Productivity Ranking</h3>
+<pre><code>-- Rank workers by picks per hour
+<p>SELECT
+    worker_id,
+    zone_id,
+    shift_date,
+    total_picks,
+    picks_per_hour,
+    RANK() OVER (PARTITION BY zone_id ORDER BY picks_per_hour DESC) AS zone_rank,
+    RANK() OVER (PARTITION BY shift_date ORDER BY picks_per_hour DESC) AS daily_rank
+FROM (
+    SELECT 
+        p.worker_id,
+        l.zone_id,
+        TRUNC(p.start_time) AS shift_date,
+        SUM(p.quantity_picked) AS total_picks,
+        ROUND(SUM(p.quantity_picked) / 
+            NULLIF(SUM((p.end_time - p.start_time) </em> 24), 0), 2) AS picks_per_hour
+    FROM wms_pick_tasks p
+    JOIN wms_inventory inv ON p.inventory_id = inv.inventory_id
+    JOIN wms_locations l ON inv.location_id = l.location_id
+    WHERE p.task_status = 'COMPLETED'
+    GROUP BY p.worker_id, l.zone_id, TRUNC(p.start_time)
+);
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: Master the Window</h2>
+<p><strong>Donald Sez</strong>: "Once you understand the window, you never go back to old-school aggregation."
+</p>
+<p>At Manhattan Associates, analytic functions are our secret weapon:
+</p>
+<ol>
+<li><strong>Replace PL/SQL cursors</strong> - 10x faster execution</li>
+<li><strong>Single-pass processing</strong> - No temp tables</li>
+<li><strong>Running calculations</strong> - Without self-joins</li>
+<li><strong>Ranking and distribution</strong> - Without complex GROUP BY</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "Advanced Oracle Analytic Functions: Window Frames Deep Dive" - Understanding ROWS, RANGE, and the subtle differences that matter for WMS reporting.
+</p>
+        </article>
+    </div>
+</body>
+</html>

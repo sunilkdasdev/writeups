@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Hints: The Complete Guide to Query Optimization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Hints: The Complete Guide to Query Optimization</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: Hints Are a Double-Edged Sword</h2>
+<p>In my decades of Oracle consulting, I've seen hints used brilliantly and catastrophically. Hints are powerful directives that override the optimizer's decisions—but they come with risks.
+</p>
+<p>At Manhattan Associates, we use hints sparingly and always with a plan to fix the underlying problem. Hints should be a temporary fix, not a permanent crutch.
+</p>
+<p><strong>The Golden Rule</strong>: Use hints only when you've proven the optimizer is wrong and you understand why.
+</p>
+<hr>
+<h2>Chapter 1: Understanding Hint Syntax</h2>
+<h3>The Basics</h3>
+<pre><code>-- Single hint
+<p>SELECT /<em>+ FULL(wms_orders) </em>/ <em> FROM wms_orders WHERE order_id = 123;
+</p>
+<p>-- Multiple hints
+SELECT /</em>+ FULL(wms_orders) INDEX(wms_ord_lines ord_lines_pk) <em>/ 
+</p>
+    </em> 
+<p>FROM wms_orders o
+JOIN wms_order_lines l ON o.order_id = l.order_id
+WHERE o.order_date &gt; SYSDATE - 7;
+</p>
+</code></pre>
+<h3>Hint Errors Are Silent</h3>
+<pre><code>-- This hint is IGNORED but no error is thrown!
+<p>SELECT /<em>+ FULL(wms_orders) </em>/ <em>
+FROM wms_orders 
+WHERE order_id = 123;
+-- If order_id has an index, it's used anyway!
+-- Check v$sql_plan to see if hints are applied!
+</p>
+</code></pre>
+<p><strong>Always verify hint usage:</strong>
+</p>
+<pre><code>SELECT sql_id, sql_text 
+<p>FROM v$sql
+WHERE sql_text LIKE '%wms_orders%';
+</p>
+<p>SELECT </em> FROM table(DBMS_XPLAN.DISPLAY_CURSOR('&amp;sql_id', NULL, 'HINT'));
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 2: Access Path Hints</h2>
+<h3>FULL: Force Full Table Scan</h3>
+<pre><code>-- Force full scan even if index exists
+<p>SELECT /<em>+ FULL(wms_inventory) </em>/ <em>
+FROM wms_inventory
+WHERE quantity &gt; 0;  -- 90% of rows, full scan is correct
+</p>
+</code></pre>
+<h3>INDEX: Force Index Usage</h3>
+<pre><code>-- Force specific index
+<p>SELECT /</em>+ INDEX(wms_orders wms_ord_status_idx) <em>/ </em>
+FROM wms_orders
+WHERE status = 'PENDING';
+</p>
+<p>-- Force index range scan
+SELECT /<em>+ INDEX(wms_orders wms_ord_date_idx) </em>/ <em>
+FROM wms_orders
+WHERE order_date &gt; SYSDATE - 30;
+</p>
+</code></pre>
+<h3>NO_INDEX: Disable Index</h3>
+<pre><code>-- Disable an index that optimizer wrongly chooses
+<p>SELECT /</em>+ NO_INDEX(wms_orders wms_ord_status_idx) <em>/ </em>
+FROM wms_orders
+WHERE status || '' = 'PENDING';  -- Hack to force full scan
+</p>
+</code></pre>
+<h3>INDEX_FFS: Index Fast Full Scan</h3>
+<pre><code>-- Use index fast full scan (multi-block read)
+<p>SELECT /<em>+ INDEX_FFS(wms_inventory wms_inv_sku_idx) </em>/ sku_id, quantity
+FROM wms_inventory
+WHERE sku_id LIKE 'SKU%';
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 3: Join Order Hints</h2>
+<h3>ORDERED: Force Written Join Order</h3>
+<pre><code>-- Force join order as written
+<p>SELECT /<em>+ ORDERED </em>/
+    o.order_id,
+    l.sku_id,
+    i.location_id
+FROM wms_order_headers o
+JOIN wms_order_lines l ON o.order_id = l.order_id
+JOIN wms_inventory i ON l.sku_id = i.sku_id
+WHERE o.order_date &gt; SYSDATE - 7;
+</p>
+</code></pre>
+<p><strong>When to use</strong>: When you know the optimal join order and optimizer is choosing wrong.
+</p>
+<h3>LEADING: Set First Table in Join</h3>
+<pre><code>-- Set specific first table
+<p>SELECT /<em>+ LEADING(o l i) </em>/
+    o.order_id,
+    l.sku_id,
+    i.location_id
+FROM wms_order_headers o
+JOIN wms_order_lines l ON o.order_id = l.order_id
+JOIN wms_inventory i ON l.sku_id = i.sku_id;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 4: Join Method Hints</h2>
+<h3>USE_NL: Force Nested Loops</h3>
+<pre><code>-- Use nested loops for indexed lookups
+<p>SELECT /<em>+ ORDERED USE_NL(l i) </em>/
+    o.order_id,
+    l.sku_id,
+    i.location_id
+FROM wms_order_headers o
+JOIN wms_order_lines l ON o.order_id = l.order_id
+JOIN wms_inventory i ON l.sku_id = i.sku_id
+WHERE o.order_date &gt; SYSDATE - 7;
+</p>
+</code></pre>
+<p><strong>Best for</strong>: Small result sets, indexed joins
+</p>
+<h3>USE_HASH: Force Hash Join</h3>
+<pre><code>-- Use hash join for large sets
+<p>SELECT /<em>+ USE_HASH(l i) </em>/
+    l.sku_id,
+    SUM(l.quantity)
+FROM wms_order_lines l
+JOIN wms_inventory i ON l.sku_id = i.sku_id
+GROUP BY l.sku_id;
+</p>
+</code></pre>
+<p><strong>Best for</strong>: Large tables, equi-joins, no useful indexes
+</p>
+<h3>USE_MERGE: Force Sort-Merge Join</h3>
+<pre><code>-- Use merge join
+<p>SELECT /<em>+ USE_MERGE(o l) </em>/
+    o.order_id,
+    l.sku_id
+FROM wms_order_headers o
+JOIN wms_order_lines l ON o.order_id = l.order_id
+WHERE o.status = 'COMPLETED';
+</p>
+</code></pre>
+<p><strong>Best for</strong>: Already sorted data, non-equi joins
+</p>
+<hr>
+<h2>Chapter 5: Parallel Execution Hints</h2>
+<h3>PARALLEL: Enable Parallelism</h3>
+<pre><code>-- Force parallel query with specific degree
+<p>SELECT /<em>+ PARALLEL(8) </em>/
+    region,
+    SUM(total_value)
+FROM wms_order_headers
+WHERE order_date &gt;= TRUNC(SYSDATE, 'MM')
+GROUP BY region;
+</p>
+<p>-- Parallel on specific table
+SELECT /<em>+ PARALLEL(wms_order_headers, 8) </em>/
+    <em>
+FROM wms_order_headers;
+</p>
+</code></pre>
+<h3>PARALLEL_INDEX: Parallel Index Scan</h3>
+<pre><code>-- Parallel index range scan
+<p>SELECT /</em>+ PARALLEL_INDEX(wms_inventory wms_inv_loc_idx, 8) <em>/
+</p>
+    </em>
+<p>FROM wms_inventory
+WHERE location_id LIKE 'PICK%';
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 6: The Manhattan Associates Hint Strategy</h2>
+<h3>Our Hint Guidelines</h3>
+<ol>
+<li><strong>Document the hint</strong> - Why was it added?</li>
+<li><strong>Plan to remove</strong> - Fix the real problem</li>
+<li><strong>Test thoroughly</strong> - Hints can regress</li>
+<li><strong>Monitor usage</strong> - Track hint effectiveness</li>
+</ol>
+<h3>Common Hint Patterns We Use</h3>
+<pre><code>-- Pattern 1: Force index when optimizer misses
+<p>SELECT /<em>+ INDEX(wms_ord_date_idx) </em>/
+    <em>
+FROM wms_order_headers
+WHERE order_date BETWEEN SYSDATE - 30 AND SYSDATE;
+</p>
+<p>-- Pattern 2: Parallel for reports
+SELECT /</em>+ PARALLEL(8) FULL(h) <em>/
+    h.region,
+    SUM(l.quantity </em> l.unit_price) AS total
+FROM wms_order_headers h
+JOIN wms_order_lines l ON h.order_id = l.order_id
+WHERE h.order_date &gt;= TRUNC(SYSDATE, 'YYYY')
+GROUP BY h.region;
+</p>
+<p>-- Pattern 3: Ordered join for known good order
+SELECT /<em>+ ORDERED </em>/
+    *
+FROM wms_order_headers h
+JOIN wms_order_lines l ON h.order_id = l.order_id
+JOIN wms_inventory i ON l.sku_id = i.sku_id
+JOIN wms_locations loc ON i.location_id = loc.location_id
+WHERE h.order_date &gt; SYSDATE - 7;
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: Use Hints Wisely</h2>
+<p><strong>Donald Sez</strong>: "Hints are a powerful tool for experienced DBAs, but they're also a dangerous shortcut. Use them to fix immediate problems, but always work on the root cause."
+</p>
+<p>At Manhattan Associates:
+</p>
+<ol>
+<li><strong>Verify hints work</strong> - Check v$sql_plan</li>
+<li><strong>Document why</strong> - Future DBAs will thank you</li>
+<li><strong>Remove when fixed</strong> - Don't make hints permanent</li>
+<li><strong>Prefer statistics</strong> - Often hints aren't needed with good stats</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "Oracle Partitioning: The Complete Guide for High-Volume WMS Tables" - Range, list, hash, and composite partitioning strategies.
+</p>
+        </article>
+    </div>
+</body>
+</html>

@@ -1,0 +1,3183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Interview Questions and Answers (600+)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Java Interview Questions and Answers (600+)</h1>
+<p>This document contains a comprehensive list of Java interview questions with concise 2-3 line answers, covering core Java, collections, multithreading, JVM, streams, and more.
+</p>
+<hr>
+<h2>Core Java Concepts</h2>
+<ol>
+<li><strong>What is the difference between JDK, JRE, and JVM?</strong>  </li>
+</ol>
+<p>JDK (Java Development Kit) includes JRE and development tools. JRE (Java Runtime Environment) provides libraries and JVM to run Java programs. JVM (Java Virtual Machine) executes Java bytecode.
+</p>
+<ol>
+<li><strong>What is platform independence in Java?</strong>  </li>
+</ol>
+<p>Java code is compiled to bytecode, which runs on any platform with a JVM. This "write once, run anywhere" capability makes Java platform-independent.
+</p>
+<ol>
+<li><strong>What is the main() method in Java?</strong>  </li>
+</ol>
+<p>The main() method is the entry point of a Java application. It must be public, static, void, and accept a String array as argument: <code>public static void main(String[] args)</code>.
+</p>
+<ol>
+<li><strong>What are the primitive data types in Java?</strong>  </li>
+</ol>
+<p>Java has 8 primitives: byte, short, int, long, float, double, char, boolean. They store simple values directly in memory.
+</p>
+<ol>
+<li><strong>What is the difference between == and equals()?</strong>  </li>
+</ol>
+<p>== compares object references (memory addresses) for objects, or values for primitives. equals() compares the actual content of objects, typically overridden in classes like String.
+</p>
+<ol>
+<li><strong>What is the String pool?</strong>  </li>
+</ol>
+<p>The String pool is a special memory region in heap where String literals are stored. When a new String literal is created, JVM checks the pool and reuses existing references if available.
+</p>
+<ol>
+<li><strong>Is String immutable? Why?</strong>  </li>
+</ol>
+<p>Yes, String objects are immutable. Once created, their values cannot be changed. This ensures security, caching, and thread safety. Any modification creates a new String.
+</p>
+<ol>
+<li><strong>What is the difference between String, StringBuilder, and StringBuffer?</strong>  </li>
+</ol>
+<p>String is immutable. StringBuilder is mutable and not thread-safe. StringBuffer is mutable and thread-safe (synchronized methods). Use StringBuilder for single-threaded string manipulation.
+</p>
+<ol>
+<li><strong>What is the difference between final, finally, and finalize?</strong>  </li>
+</ol>
+<p>final is a keyword used for variables (cannot reassign), methods (cannot override), and classes (cannot extend). finally is a block in exception handling that always executes. finalize() is a deprecated method called by GC before object destruction.
+</p>
+<ol>
+<li><strong>What is method overloading and overriding?</strong>  </li>
+</ol>
+<p>Overloading: multiple methods with same name but different parameters within same class (compile-time polymorphism). Overriding: subclass provides specific implementation of a superclass method (runtime polymorphism).
+</p>
+<ol>
+<li><strong>Can we override a static method?</strong>  </li>
+</ol>
+<p>No, static methods are class-level and cannot be overridden; they are hidden if a subclass defines a static method with the same signature.
+</p>
+<ol>
+<li><strong>What is the difference between abstract class and interface?</strong>  </li>
+</ol>
+<p>Abstract class can have both abstract and concrete methods, instance variables, constructors. Interface (pre-Java 8) had only abstract methods and constants. From Java 8, interfaces can have default and static methods; from Java 9, private methods.
+</p>
+<ol>
+<li><strong>What is polymorphism?</strong>  </li>
+</ol>
+<p>Polymorphism means "many forms". It allows objects of different classes to be treated as objects of a common superclass, with method behavior determined at runtime (dynamic method dispatch).
+</p>
+<ol>
+<li><strong>What is encapsulation?</strong>  </li>
+</ol>
+<p>Encapsulation is hiding internal state and requiring all interaction to be performed through methods. Achieved by making fields private and providing public getters/setters.
+</p>
+<ol>
+<li><strong>What is a constructor?</strong>  </li>
+</ol>
+<p>A constructor is a special method invoked when an object is created. It initializes the object. It has the same name as the class and no return type. If not defined, Java provides a default no-arg constructor.
+</p>
+<ol>
+<li><strong>What is the first thing a constructor does?</strong>  </li>
+</ol>
+<p>The first statement in a constructor must be either this() (to call another constructor) or super() (to call parent constructor). If not written, compiler inserts super() automatically.
+</p>
+<ol>
+<li><strong>What is a default constructor?</strong>  </li>
+</ol>
+<p>A default constructor is automatically generated by the compiler if no constructors are explicitly defined. It takes no arguments and calls super().
+</p>
+<ol>
+<li><strong>What is a copy constructor?</strong>  </li>
+</ol>
+<p>A copy constructor initializes an object using another object of the same class. It is used to create a deep copy. Example: <code>public Person(Person other) &#123; this.name = other.name; &#125;</code>
+</p>
+<ol>
+<li><strong>What is the difference between deep copy and shallow copy?</strong>  </li>
+</ol>
+<p>Shallow copy copies the object's references to other objects; deep copy creates copies of all referenced objects as well. Cloning in Java by default does shallow copy.
+</p>
+<ol>
+<li><strong>What is the <code>this</code> keyword?</strong>  </li>
+</ol>
+    <code>this</code> refers to the current object instance. It can be used to access instance variables, invoke current class methods, or call another constructor (this()).
+<ol>
+<li><strong>What is the <code>super</code> keyword?</strong>  </li>
+</ol>
+    <code>super</code> refers to the immediate parent class instance. It is used to access parent class methods/fields and call parent class constructor.
+<ol>
+<li><strong>What are static variables and methods?</strong>  </li>
+</ol>
+<p>Static members belong to the class rather than any instance. They are shared across all objects. Static methods cannot access non-static members directly.
+</p>
+<ol>
+<li><strong>Can static methods access non-static variables?</strong>  </li>
+</ol>
+<p>No, static methods cannot directly access non-static variables or methods because they exist without an instance.
+</p>
+<ol>
+<li><strong>What is a static block?</strong>  </li>
+</ol>
+<p>A static block is executed when the class is loaded, used for static initialization. Multiple static blocks run in order they appear.
+</p>
+<ol>
+<li><strong>What is an instance initializer block?</strong>  </li>
+</ol>
+<p>Instance initializer block runs before constructor each time an object is created. It is used to initialize instance variables common to all constructors.
+</p>
+<ol>
+<li><strong>What is the difference between instance variable and local variable?</strong>  </li>
+</ol>
+<p>Instance variables are declared in a class but outside methods, have default values, and exist as long as the object. Local variables are declared inside methods/blocks, must be initialized, and exist only during method execution.
+</p>
+<ol>
+<li><strong>What is the <code>void</code> type?</strong>  </li>
+</ol>
+    <code>void</code> is a keyword used to specify that a method does not return any value. It is not a primitive type but a placeholder.
+<ol>
+<li><strong>What is the <code>Void</code> class?</strong>  </li>
+</ol>
+    <code>Void</code> is an uninstantiable placeholder class to hold a reference to the Class object representing the void keyword. Used in generics when you need to indicate void type.
+<ol>
+<li><strong>What is wrapper class?</strong>  </li>
+</ol>
+<p>Wrapper classes (Integer, Double, Boolean, etc.) encapsulate primitive types in objects. Used in collections, generics, and when null is needed.
+</p>
+<ol>
+<li><strong>What is autoboxing and unboxing?</strong>  </li>
+</ol>
+<p>Autoboxing: automatic conversion of primitive to its wrapper (int → Integer). Unboxing: wrapper to primitive (Integer → int). Introduced in Java 5.
+</p>
+<ol>
+<li><strong>What is a value-based class?</strong>  </li>
+</ol>
+<p>Value-based classes (e.g., Optional, LocalDate) are immutable, have no accessible constructors, and are instantiated by static factory methods. They are candidates for primitive-like behavior in future Java.
+</p>
+<ol>
+<li><strong>What is an anonymous class?</strong>  </li>
+</ol>
+<p>An anonymous class is a local class without a name, defined and instantiated in a single expression. Used for quick implementations of interfaces or abstract classes.
+</p>
+<ol>
+<li><strong>What is a lambda expression?</strong>  </li>
+</ol>
+<p>Lambda expressions provide a concise way to implement functional interfaces using expression syntax. Example: <code>(a, b) -> a + b</code>. They enable functional programming in Java.
+</p>
+<ol>
+<li><strong>What is a functional interface?</strong>  </li>
+</ol>
+<p>A functional interface has exactly one abstract method. Can have multiple default/static methods. Examples: Runnable, Comparator. Can be annotated with @FunctionalInterface.
+</p>
+<ol>
+<li><strong>What are the common functional interfaces in java.util.function?</strong>  </li>
+</ol>
+<p>Predicate<T> (boolean test), Function<T,R> (apply), Consumer<T> (accept), Supplier<T> (get), UnaryOperator<T>, BinaryOperator<T>.
+</p>
+<ol>
+<li><strong>What is method reference?</strong>  </li>
+</ol>
+<p>Method reference is a shorthand for lambda calling an existing method. Types: static method (Class::staticMethod), instance method (object::instanceMethod), constructor (Class::new).
+</p>
+<ol>
+<li><strong>What is the difference between <code>Predicate</code> and <code>Function</code>?</strong>  </li>
+</ol>
+<p>Predicate takes one argument and returns boolean. Function takes one argument and returns a result of any type.
+</p>
+<ol>
+<li><strong>What is a <code>Consumer</code>?</strong>  </li>
+</ol>
+<p>Consumer represents an operation that accepts a single input and returns no result (void). Used in forEach, etc.
+</p>
+<ol>
+<li><strong>What is a <code>Supplier</code>?</strong>  </li>
+</ol>
+<p>Supplier represents a supplier of results, takes no argument but returns a value. Used in lazy generation or factory methods.
+</p>
+<ol>
+<li><strong>What is type inference?</strong>  </li>
+</ol>
+<p>Type inference is the compiler's ability to deduce type arguments from context. Enhanced with diamond operator (<code><></code>) and local variable type inference (<code>var</code>).
+</p>
+<ol>
+<li><strong>What is <code>var</code> in Java?</strong>  </li>
+</ol>
+    <code>var</code> is a reserved type name introduced in Java 10 for local variable type inference. The compiler infers the type from the initializer. Cannot be used for fields, method parameters, or return types.
+<ol>
+<li><strong>What is an expression?</strong>  </li>
+</ol>
+<p>An expression is a construct made up of variables, operators, and method invocations that evaluates to a single value. Examples: <code>a + b</code>, <code>methodCall()</code>.
+</p>
+<ol>
+<li><strong>What is a statement?</strong>  </li>
+</ol>
+<p>A statement forms a complete unit of execution. Types: assignment, if, for, while, return, etc. Statements often end with semicolon.
+</p>
+<ol>
+<li><strong>What is a block?</strong>  </li>
+</ol>
+<p>A block is a group of statements enclosed in curly braces &#123;&#125;. It defines a scope.
+</p>
+<ol>
+<li><strong>What is variable shadowing?</strong>  </li>
+</ol>
+<p>Variable shadowing occurs when a variable declared within a certain scope has the same name as a variable in an outer scope, hiding the outer variable.
+</p>
+<ol>
+<li><strong>What is variable capturing?</strong>  </li>
+</ol>
+<p>A lambda or anonymous class can capture effectively final local variables from the enclosing scope. The variables must be final or effectively final (not reassigned).
+</p>
+<ol>
+<li><strong>Why doesn't Java allow variable capturing of non-final variables?</strong>  </li>
+</ol>
+<p>To avoid concurrency issues and maintain consistency; captured variables are copied, and mutability would cause inconsistencies.
+</p>
+<ol>
+<li><strong>What does "effectively final" mean?</strong>  </li>
+</ol>
+<p>A variable is effectively final if it is not reassigned after initialization, even if not declared final. Can be used in lambdas and anonymous classes.
+</p>
+<ol>
+<li><strong>What is a <code>Record</code>?</strong>  </li>
+</ol>
+<p>Records (Java 14+) are transparent carriers for immutable data. They automatically generate constructor, equals, hashCode, toString. Syntax: <code>record Point(int x, int y) &#123;&#125;</code>.
+</p>
+<ol>
+<li><strong>What is a compact constructor in a record?</strong>  </li>
+</ol>
+<p>A compact constructor omits parameters; it is used to validate or normalize data before assignment. After validation, fields are implicitly assigned.
+</p>
+<ol>
+<li><strong>What is a <code>Sealed</code> class?</strong>  </li>
+</ol>
+<p>Sealed classes (Java 15+) restrict which classes or interfaces may extend/implement them. Defined with <code>sealed</code> keyword and <code>permits</code> clause.
+</p>
+<ol>
+<li><strong>How can you create a sealed type without <code>permits</code>?</strong>  </li>
+</ol>
+<p>If subclasses are defined in the same compilation unit (nested within the sealed class), the <code>permits</code> clause can be omitted.
+</p>
+<ol>
+<li><strong>What is a <code>Pattern Matching</code> for instanceof?</strong>  </li>
+</ol>
+<p>Pattern matching (Java 16+) combines type check and variable declaration: <code>if (obj instanceof String s) &#123; ... &#125;</code>. No explicit cast needed.
+</p>
+<ol>
+<li><strong>What is a guarded pattern?</strong>  </li>
+</ol>
+<p>Guarded patterns (Java 17 preview) allow you to refine pattern matching with a boolean expression using <code>&&</code> in switch labels, e.g., <code>case String s && s.length() > 5</code>.
+</p>
+<ol>
+<li><strong>What is a <code>Switch</code> expression?</strong>  </li>
+</ol>
+<p>Switch expressions (Java 12+) return a value, use arrow syntax <code>-></code>, and must be exhaustive. Can be used with yield to return from a block.
+</p>
+<ol>
+<li><strong>How does <code>switch</code> on <code>String</code> work?</strong>  </li>
+</ol>
+<p>Java 7 introduced switching on String. Compiler generates code using hash codes for efficiency; it's syntactic sugar over if-else chains.
+</p>
+<ol>
+<li><strong>When does a <code>switch</code> check for exhaustiveness?</strong>  </li>
+</ol>
+<p>For switch expressions and pattern switches, the compiler ensures all possible cases are covered; otherwise, it throws an error.
+</p>
+<ol>
+<li><strong>What is a text block?</strong>  </li>
+</ol>
+<p>Text blocks (Java 13+) are multi-line string literals using triple quotes <code>"""</code>. They preserve formatting and eliminate need for escape sequences for newlines.
+</p>
+<ol>
+<li><strong>What is an unnamed variable?</strong>  </li>
+</ol>
+<p>Unnamed variables (Java 21 preview) are represented by underscore <code>_</code> and indicate that a variable is not used. Useful in try-with-resources, catch blocks, lambda parameters.
+</p>
+<ol>
+<li><strong>What is a <code>final</code> class?</strong>  </li>
+</ol>
+<p>A final class cannot be subclassed. Used for immutability and security (e.g., String, Integer).
+</p>
+<ol>
+<li><strong>What is a <code>final</code> method?</strong>  </li>
+</ol>
+<p>A final method cannot be overridden by subclasses. Ensures consistent behavior.
+</p>
+<ol>
+<li><strong>What is a <code>final</code> field?</strong>  </li>
+</ol>
+<p>A final field must be initialized exactly once (either inline or in constructor). After initialization, its value cannot change.
+</p>
+<ol>
+<li><strong>What are static imports?</strong>  </li>
+</ol>
+<p>Static import allows members (fields, methods) of a class to be used without class name. Example: <code>import static java.lang.Math.PI;</code> then use <code>PI</code> directly.
+</p>
+<ol>
+<li><strong>What is a package?</strong>  </li>
+</ol>
+<p>A package groups related classes and interfaces. It provides namespace management and access protection.
+</p>
+<ol>
+<li><strong>What is a module?</strong>  </li>
+</ol>
+<p>Module (Java 9+) is a set of packages with explicitly declared dependencies and exported packages via module-info.java. Encapsulation at JAR level.
+</p>
+<ol>
+<li><strong>What is the module descriptor?</strong>  </li>
+</ol>
+<p>module-info.java declares module name, requires other modules, exports packages, opens packages for reflection, provides services.
+</p>
+<ol>
+<li><strong>What are preview features?</strong>  </li>
+</ol>
+<p>Preview features are fully specified but not permanent language features, available for testing. Must be enabled with <code>--enable-preview</code> flag.
+</p>
+<ol>
+<li><strong>What is JShell?</strong>  </li>
+</ol>
+<p>JShell (Java 9) is a REPL tool for Java that evaluates declarations, statements, and expressions interactively.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Enum</code> and <code>Enumeration</code>?</strong>  </li>
+</ol>
+<p>Enum is a type (enum) defining a fixed set of constants. Enumeration is an interface (deprecated) for iterating legacy collections like Vector.
+</p>
+<ol>
+<li><strong>What is an enum?</strong>  </li>
+</ol>
+<p>Enum defines a fixed set of named constants. They are implicitly final, can have fields, methods, constructors. All enums extend java.lang.Enum.
+</p>
+<ol>
+<li><strong>Can enum have abstract methods?</strong>  </li>
+</ol>
+<p>Yes, enum can declare abstract methods, and each constant must implement them. This allows constant-specific behavior.
+</p>
+<ol>
+<li><strong>What is the ordinal of an enum?</strong>  </li>
+</ol>
+<p>The ordinal() method returns the zero-based position of an enum constant in its declaration. However, relying on ordinal is not recommended as it can change.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Enum</code> and <code>EnumSet</code>?</strong>  </li>
+</ol>
+<p>EnumSet is a specialized Set implementation for enum types, more efficient than HashSet. It stores bit masks internally.
+</p>
+<ol>
+<li><strong>What is an annotation?</strong>  </li>
+</ol>
+<p>Annotations provide metadata about code. They can be processed at compile-time or runtime via reflection. Common: @Override, @Deprecated, @FunctionalInterface.
+</p>
+<ol>
+<li><strong>What is a meta-annotation?</strong>  </li>
+</ol>
+<p>Meta-annotations are annotations applied to other annotations. Examples: @Target (where annotation can be used), @Retention (how long retained), @Documented, @Inherited.
+</p>
+<ol>
+<li><strong>What is the <code>@FunctionalInterface</code> annotation?</strong>  </li>
+</ol>
+<p>It indicates an interface is intended to be a functional interface. Compiler ensures it has exactly one abstract method.
+</p>
+<ol>
+<li><strong>What is the difference between <code>@Override</code> and <code>@Overload</code>?</strong>  </li>
+</ol>
+<p>@Override indicates a method overrides a superclass method. There's no @Overload annotation; overloading is not annotated.
+</p>
+<ol>
+<li><strong>What is reflection?</strong>  </li>
+</ol>
+<p>Reflection allows inspecting and manipulating classes, methods, fields at runtime. Used in frameworks (Spring, Hibernate). Can break encapsulation.
+</p>
+<ol>
+<li><strong>What is the <code>Class</code> object?</strong>  </li>
+</ol>
+<p>Every class loaded by JVM has a corresponding Class object representing it. Obtained via <code>.class</code>, <code>getClass()</code>, or <code>Class.forName()</code>.
+</p>
+<ol>
+<li><strong>How can you get an instance of a <code>Class</code>?</strong>  </li>
+</ol>
+<p>Using: <code>MyClass.class</code>, <code>obj.getClass()</code>, <code>Class.forName("fully.qualified.Name")</code>.
+</p>
+<ol>
+<li><strong>What is a <code>MethodHandle</code>?</strong>  </li>
+</ol>
+<p>MethodHandle (Java 7) is a typed, directly executable reference to a method, constructor, or field. More efficient than reflection, used with invokedynamic.
+</p>
+<ol>
+<li><strong>What is a <code>VarHandle</code>?</strong>  </li>
+</ol>
+<p>VarHandle (Java 9) is a reference to a variable (static field, instance field, array element) that supports atomic operations and memory access modes.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Class.forName()</code> and <code>ClassLoader.loadClass()</code>?</strong>  </li>
+</ol>
+    <code>Class.forName()</code> initializes the class (runs static initializers). <code>ClassLoader.loadClass()</code> loads but does not initialize the class.
+<ol>
+<li><strong>What is a class loader?</strong>  </li>
+</ol>
+<p>Class loader loads classes into JVM. Types: Bootstrap, Extension, System/Application. Custom class loaders can be created.
+</p>
+<ol>
+<li><strong>What is a deserialization filter?</strong>  </li>
+</ol>
+<p>Deserialization filter (Java 9+) allows restricting which classes can be deserialized to prevent security attacks.
+</p>
+<ol>
+<li><strong>What is serialization?</strong>  </li>
+</ol>
+<p>Serialization converts an object to a byte stream (e.g., for file storage or network). A class must implement Serializable interface. Deserialization reconstructs the object.
+</p>
+<ol>
+<li><strong>What does <code>transient</code> mean?</strong>  </li>
+</ol>
+<p>transient keyword prevents a field from being serialized. When object is serialized, transient fields are skipped and restored to default values.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Serializable</code> and <code>Externalizable</code>?</strong>  </li>
+</ol>
+<p>Serializable is marker interface; JVM handles serialization. Externalizable requires implementing writeExternal and readExternal for custom serialization logic.
+</p>
+<ol>
+<li><strong>What is the serialVersionUID?</strong>  </li>
+</ol>
+<p>serialVersionUID is a unique identifier for serialized classes. Used during deserialization to verify sender and receiver have loaded compatible classes.
+</p>
+<ol>
+<li><strong>What happens if serialVersionUID is not defined?</strong>  </li>
+</ol>
+<p>JVM generates one automatically based on class details. If class changes, generated UID changes, causing InvalidClassException. Best practice to declare explicitly.
+</p>
+<ol>
+<li><strong>What is a <code>Cloneable</code> interface?</strong>  </li>
+</ol>
+<p>Marker interface indicating that a class can be cloned. Override <code>clone()</code> method (protected in Object) and make it public. Default is shallow copy.
+</p>
+<ol>
+<li><strong>How to perform deep cloning?</strong>  </li>
+</ol>
+<p>Override clone and call clone on mutable fields, or use copy constructors, or serialize-deserialize.
+</p>
+<ol>
+<li><strong>What is the <code>Comparable</code> interface?</strong>  </li>
+</ol>
+<p>Comparable defines natural ordering by <code>compareTo(T o)</code>. Used by Collections.sort and sorted collections. Must be consistent with equals.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Comparable</code> and <code>Comparator</code>?</strong>  </li>
+</ol>
+<p>Comparable defines natural order (intra-class). Comparator defines external, custom order (inter-class). Comparator can be used when class not comparable or multiple orders needed.
+</p>
+<ol>
+<li><strong>What is the <code>Comparator</code> interface?</strong>  </li>
+</ol>
+<p>Comparator defines <code>compare(T o1, T o2)</code> to compare two objects. Used in sorting with custom order.
+</p>
+<ol>
+<li><strong>How can you sort a <code>Collection</code>?</strong>  </li>
+</ol>
+<p>Use <code>Collections.sort(list)</code> for natural order (elements must implement Comparable). For custom order: <code>Collections.sort(list, comparator)</code>.
+</p>
+<ol>
+<li><strong>What does the <code>reversed()</code> method do?</strong>  </li>
+</ol>
+    <code>reversed()</code> is a default method in Comparator that returns a comparator that reverses the order of the current comparator.
+<ol>
+<li><strong>What is a <code>vararg</code>?</strong>  </li>
+</ol>
+<p>Varargs allow methods to accept a variable number of arguments of the same type. Syntax: <code>void method(String... args)</code>. Inside method, args is an array.
+</p>
+<ol>
+<li><strong>What is a <code>native</code> method?</strong>  </li>
+</ol>
+<p>Native method is implemented in platform-dependent code (C/C++) using Java Native Interface (JNI). Declared with <code>native</code> keyword, no body.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Error</code> and <code>Exception</code>?</strong>  </li>
+</ol>
+<p>Error indicates serious system problems (e.g., OutOfMemoryError) not meant to be caught. Exception indicates conditions that a program should catch.
+</p>
+<h2>Exception Handling</h2>
+<ol>
+<li><strong>What are checked and unchecked exceptions?</strong>  </li>
+</ol>
+<p>Checked exceptions (except RuntimeException and subclasses) must be declared or caught. Unchecked exceptions (RuntimeException and subclasses) do not require explicit handling.
+</p>
+<ol>
+<li><strong>What is the <code>throws</code> keyword?</strong>  </li>
+</ol>
+    <code>throws</code> is used in method signature to declare that the method may throw one or more exceptions, delegating handling to caller.
+<ol>
+<li><strong>What is the <code>throw</code> keyword?</strong>  </li>
+</ol>
+    <code>throw</code> is used to explicitly throw an exception object. Example: <code>throw new IllegalArgumentException("Invalid")</code>.
+<ol>
+<li><strong>What is the <code>try-catch-finally</code> block?</strong>  </li>
+</ol>
+<p>try block encloses code that may throw exceptions. catch handles specific exceptions. finally block always executes (unless System.exit) used for cleanup.
+</p>
+<ol>
+<li><strong>What is try-with-resources?</strong>  </li>
+</ol>
+<p>try-with-resources (Java 7+) automatically closes resources (AutoCloseable) declared in try parentheses. Eliminates need for finally close.
+</p>
+<ol>
+<li><strong>Can try-with-resources be used without catch/finally?</strong>  </li>
+</ol>
+<p>Yes, try-with-resources can be used alone; resources are closed automatically after the try block.
+</p>
+<ol>
+<li><strong>What is multi-catch?</strong>  </li>
+</ol>
+<p>Multi-catch allows catching multiple exception types in one catch block separated by <code>|</code>. Example: <code>catch (IOException | SQLException e)</code>.
+</p>
+<ol>
+<li><strong>What is exception chaining?</strong>  </li>
+</ol>
+<p>Exception chaining allows an exception to wrap another exception. Constructors with <code>Throwable cause</code> preserve the original cause.
+</p>
+<ol>
+<li><strong>What is the difference between <code>final</code> and <code>finally</code>?</strong>  </li>
+</ol>
+<p>final is a modifier; finally is a block in exception handling.
+</p>
+<ol>
+<li><strong>What is the <code>finalize()</code> method?</strong>  </li>
+</ol>
+<p>finalize() is called by GC before object is collected (deprecated). Not reliable for cleanup.
+</p>
+<ol>
+<li><strong>Why is finalization being deprecated?</strong>  </li>
+</ol>
+<p>finalize has unpredictable timing, performance issues, and can cause problems with GC. Replaced by Cleaner (Java 9) and try-with-resources.
+</p>
+<ol>
+<li><strong>What is a <code>Cleaner</code>?</strong>  </li>
+</ol>
+<p>Cleaner (Java 9) provides a more reliable way to perform cleanup actions when an object becomes phantom reachable, using Cleanable and a background thread.
+</p>
+<h2>Object-Oriented Programming</h2>
+<ol>
+<li><strong>What is the diamond problem in OOP?</strong>  </li>
+</ol>
+<p>Diamond problem occurs in multiple inheritance when a class inherits from two classes with a common ancestor. Java avoids it by not allowing multiple inheritance of classes.
+</p>
+<ol>
+<li><strong>How does Java solve diamond problem with interfaces?</strong>  </li>
+</ol>
+<p>If a class implements two interfaces with default methods of same signature, the class must override the method to resolve conflict.
+</p>
+<ol>
+<li><strong>What is composition?</strong>  </li>
+</ol>
+<p>Composition is a design principle where a class contains references to other classes (has-a relationship). Prefer composition over inheritance for flexibility.
+</p>
+<ol>
+<li><strong>What is aggregation?</strong>  </li>
+</ol>
+<p>Aggregation is a weaker form of composition where the contained object can exist independently of the container.
+</p>
+<ol>
+<li><strong>What is delegation?</strong>  </li>
+</ol>
+<p>Delegation is when an object passes a task to another object. Often used to reuse functionality without inheritance.
+</p>
+<ol>
+<li><strong>What is the difference between <code>is-a</code> and <code>has-a</code> relationship?</strong>  </li>
+</ol>
+<p>is-a: inheritance (extends). has-a: composition/aggregation (field reference).
+</p>
+<ol>
+<li><strong>What is cohesion?</strong>  </li>
+</ol>
+<p>Cohesion measures how related the responsibilities of a class are. High cohesion is good (class focused on a single purpose).
+</p>
+<ol>
+<li><strong>What is coupling?</strong>  </li>
+</ol>
+<p>Coupling measures how much one class depends on another. Loose coupling is desirable (low dependency).
+</p>
+<ol>
+<li><strong>What is an object?</strong>  </li>
+</ol>
+<p>Object is an instance of a class, having state (fields) and behavior (methods). It represents a real-world entity.
+</p>
+<ol>
+<li><strong>What is a class?</strong>  </li>
+</ol>
+<p>Class is a blueprint/template for creating objects. It defines fields, methods, constructors, etc.
+</p>
+<ol>
+<li><strong>What is the difference between an object and a reference?</strong>  </li>
+</ol>
+<p>Object is an instance in memory. Reference is a variable that holds the memory address of an object. References can be reassigned, null.
+</p>
+<ol>
+<li><strong>What is a reference?</strong>  </li>
+</ol>
+<p>A reference is a pointer to an object. Java has four types: strong, soft, weak, phantom.
+</p>
+<ol>
+<li><strong>What are strong, soft, weak, phantom references?</strong>  </li>
+</ol>
+<p>Strong reference prevents GC. Soft reference cleared at GC's discretion (for memory-sensitive caches). Weak reference cleared at next GC (for canonical maps). Phantom reference not directly retrievable, used for post-mortem cleanup.
+</p>
+<ol>
+<li><strong>What is a <code>WeakHashMap</code>?</strong>  </li>
+</ol>
+<p>WeakHashMap uses weak references for keys; when a key is no longer referenced elsewhere, entry is automatically removed. Useful for caches.
+</p>
+<ol>
+<li><strong>What is an <code>IdentityHashMap</code>?</strong>  </li>
+</ol>
+<p>IdentityHashMap compares keys by reference (==) rather than equals(). Used in serialization, deep copies.
+</p>
+<ol>
+<li><strong>What is a <code>LinkedHashSet</code>?</strong>  </li>
+</ol>
+<p>LinkedHashSet maintains insertion order (doubly-linked list) while providing HashSet uniqueness. Slightly slower than HashSet.
+</p>
+<ol>
+<li><strong>What is a <code>Deque</code>?</strong>  </li>
+</ol>
+<p>Deque (double-ended queue) allows insertion/removal at both ends. Implementations: ArrayDeque, LinkedList.
+</p>
+<ol>
+<li><strong>What is a <code>BlockingQueue</code>?</strong>  </li>
+</ol>
+<p>BlockingQueue supports operations that wait for the queue to become non-empty or space to become available. Used in producer-consumer.
+</p>
+<ol>
+<li><strong>What is the difference between <code>ArrayBlockingQueue</code> and <code>LinkedBlockingQueue</code>?</strong>  </li>
+</ol>
+<p>ArrayBlockingQueue is bounded array-based; LinkedBlockingQueue optionally bounded, linked-node-based, higher throughput but more memory.
+</p>
+<ol>
+<li><strong>What is a <code>ConcurrentMap</code>?</strong>  </li>
+</ol>
+<p>ConcurrentMap extends Map with thread-safe operations (putIfAbsent, remove, replace). Implemented by ConcurrentHashMap.
+</p>
+<ol>
+<li><strong>What is <code>ConcurrentHashMap</code>?</strong>  </li>
+</ol>
+<p>ConcurrentHashMap is a thread-safe map with high concurrency, using bucket-level locking (or CAS) rather than whole map lock.
+</p>
+<ol>
+<li><strong>What is a <code>CopyOnWriteArrayList</code>?</strong>  </li>
+</ol>
+<p>CopyOnWriteArrayList is thread-safe; modification creates a new copy of underlying array. Best for read-heavy, infrequent write scenarios.
+</p>
+<ol>
+<li><strong>What is a <code>CopyOnWriteArraySet</code>?</strong>  </li>
+</ol>
+<p>Based on CopyOnWriteArrayList; thread-safe set for small sizes with few writes.
+</p>
+<ol>
+<li><strong>What is a <code>SynchronousQueue</code>?</strong>  </li>
+</ol>
+<p>SynchronousQueue has no capacity; each insert must wait for corresponding remove. Used for hand-off designs.
+</p>
+<ol>
+<li><strong>What is a <code>PriorityQueue</code>?</strong>  </li>
+</ol>
+<p>PriorityQueue orders elements based on natural order or comparator. Not thread-safe. Elements must be Comparable or comparator provided.
+</p>
+<ol>
+<li><strong>What is a <code>DelayQueue</code>?</strong>  </li>
+</ol>
+<p>DelayQueue holds Delayed elements; elements can only be taken after their delay has expired.
+</p>
+<ol>
+<li><strong>What is a <code>TransferQueue</code>?</strong>  </li>
+</ol>
+<p>TransferQueue (LinkedTransferQueue) allows producers to wait for consumers to receive elements (transfer method).
+</p>
+<ol>
+<li><strong>What is a <code>Skip List</code>?</strong>  </li>
+</ol>
+<p>A skip list is a probabilistic data structure allowing fast search within an ordered sequence. ConcurrentSkipListMap is a scalable concurrent map.
+</p>
+<ol>
+<li><strong>What is a <code>StampedLock</code>?</strong>  </li>
+</ol>
+<p>StampedLock (Java 8) supports three modes: write, read, and optimistic read. Optimistic read doesn't block but must validate stamp later.
+</p>
+<ol>
+<li><strong>What is a <code>ReadWriteLock</code>?</strong>  </li>
+</ol>
+<p>ReadWriteLock maintains separate locks for read (shared) and write (exclusive). Improves concurrency when reads > writes.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Lock</code> and <code>Semaphore</code>?</strong>  </li>
+</ol>
+<p>Lock grants exclusive access to a resource. Semaphore permits multiple concurrent accesses (counting semaphore).
+</p>
+<ol>
+<li><strong>What is the difference between <code>Lock</code> and <code>synchronized</code>?</strong>  </li>
+</ol>
+<p>Lock (java.util.concurrent) provides more flexibility (tryLock, lockInterruptibly, fairness). synchronized is simpler, automatic release.
+</p>
+<ol>
+<li><strong>What is a <code>CyclicBarrier</code>?</strong>  </li>
+</ol>
+<p>CyclicBarrier allows a set of threads to wait for each other at a barrier point. After all arrive, optionally run a barrier action, then release. Can be reused.
+</p>
+<ol>
+<li><strong>What is a <code>CountDownLatch</code>?</strong>  </li>
+</ol>
+<p>CountDownLatch allows one or more threads to wait until a set of operations complete. Cannot be reused.
+</p>
+<ol>
+<li><strong>What is a <code>Phaser</code>?</strong>  </li>
+</ol>
+<p>Phaser is a more flexible barrier, can be dynamically registered/deregistered, reusable, and supports multiple phases.
+</p>
+<ol>
+<li><strong>What is an <code>Exchanger</code>?</strong>  </li>
+</ol>
+<p>Exchanger allows two threads to exchange objects at a rendezvous point.
+</p>
+<ol>
+<li><strong>What is a <code>ForkJoinPool</code>?</strong>  </li>
+</ol>
+<p>ForkJoinPool is a specialized ExecutorService for work-stealing, designed for parallel divide-and-conquer tasks (ForkJoinTask).
+</p>
+<ol>
+<li><strong>What is work stealing?</strong>  </li>
+</ol>
+<p>Work stealing is when idle threads steal tasks from busy threads' queues, improving load balancing. ForkJoinPool uses work stealing.
+</p>
+<ol>
+<li><strong>What is the difference between ForkJoinPool and ExecutorService?</strong>  </li>
+</ol>
+<p>ForkJoinPool uses work-stealing and is optimized for recursive tasks; ExecutorService is more general thread pool. ForkJoinPool extends ExecutorService.
+</p>
+<ol>
+<li><strong>What is a <code>CompletableFuture</code>?</strong>  </li>
+</ol>
+<p>CompletableFuture (Java 8) is a Future that can be manually completed, supports chaining, combining, and callbacks for async programming.
+</p>
+<ol>
+<li><strong>What thread does a <code>CompletableFuture</code> use?</strong>  </li>
+</ol>
+<p>By default, async methods use ForkJoinPool.commonPool() unless a custom Executor is provided.
+</p>
+<ol>
+<li><strong>What is a <code>ThreadLocal</code>?</strong>  </li>
+</ol>
+<p>ThreadLocal provides thread-local variables; each thread has its own independently initialized copy. Useful for context like request IDs.
+</p>
+<ol>
+<li><strong>What's wrong with <code>ThreadLocal</code>?</strong>  </li>
+</ol>
+<p>Memory leaks possible if thread continues to live (e.g., application servers) and values are not removed. Also can cause confusion in shared data.
+</p>
+<ol>
+<li><strong>How can you avoid <code>ThreadLocal</code> memory leaks?</strong>  </li>
+</ol>
+<p>Always call <code>remove()</code> when done, or use try-finally block. Use static inner classes to avoid accidental retention.
+</p>
+<ol>
+<li><strong>What is a virtual thread?</strong>  </li>
+</ol>
+<p>Virtual threads (Java 21) are lightweight threads managed by JVM, not OS. They allow high concurrency with simple blocking code, part of Project Loom.
+</p>
+<ol>
+<li><strong>How expensive is a platform thread?</strong>  </li>
+</ol>
+<p>Platform threads map to OS threads, expensive memory (stack ~1MB). Virtual threads have tiny footprint (few KB), can have millions.
+</p>
+<ol>
+<li><strong>What is a blocking call?</strong>  </li>
+</ol>
+<p>A blocking call causes the thread to wait until operation completes (e.g., I/O, lock acquisition). Virtual threads handle blocking by yielding.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Runnable</code> and <code>Callable</code>?</strong>  </li>
+</ol>
+<p>Runnable's run() returns void and cannot throw checked exceptions. Callable's call() returns a value and can throw checked exceptions.
+</p>
+<ol>
+<li><strong>What is the difference between <code>submit()</code> and <code>execute()</code>?</strong>  </li>
+</ol>
+<p>execute() (Executor) runs task with no return. submit() (ExecutorService) returns Future representing pending result.
+</p>
+<ol>
+<li><strong>What is <code>Future</code>?</strong>  </li>
+</ol>
+<p>Future represents result of asynchronous computation. Methods: get() (blocking), cancel(), isDone(), isCancelled().
+</p>
+<ol>
+<li><strong>What is <code>FutureTask</code>?</strong>  </li>
+</ol>
+<p>FutureTask is a cancellable asynchronous computation, implements RunnableFuture, can be used with Executor or directly run.
+</p>
+<ol>
+<li><strong>What is <code>AtomicInteger</code>?</strong>  </li>
+</ol>
+<p>AtomicInteger provides thread-safe operations on an int using CAS (compare-and-swap). Part of java.util.concurrent.atomic.
+</p>
+<ol>
+<li><strong>What is <code>LongAdder</code>?</strong>  </li>
+</ol>
+<p>LongAdder (Java 8) is more efficient than AtomicInteger for high contention by reducing contention via striped counters.
+</p>
+<ol>
+<li><strong>What is <code>Striped64</code>?</strong>  </li>
+</ol>
+<p>Striped64 is the base class for LongAdder and LongAccumulator, maintaining a striped counter to reduce contention.
+</p>
+<ol>
+<li><strong>What is <code>ThreadPoolExecutor</code>?</strong>  </li>
+</ol>
+<p>ThreadPoolExecutor implements ExecutorService, configurable core pool size, max size, keep-alive time, work queue, rejection policy.
+</p>
+<ol>
+<li><strong>What are the rejection policies?</strong>  </li>
+</ol>
+<p>AbortPolicy (throws exception), CallerRunsPolicy (runs task in caller thread), DiscardPolicy (silently discards), DiscardOldestPolicy (discards oldest unprocessed task).
+</p>
+<ol>
+<li><strong>What is <code>ScheduledThreadPoolExecutor</code>?</strong>  </li>
+</ol>
+<p>ScheduledThreadPoolExecutor extends ThreadPoolExecutor to schedule commands to run after a delay or periodically.
+</p>
+<ol>
+<li><strong>What is <code>TimeUnit</code>?</strong>  </li>
+</ol>
+<p>TimeUnit is an enum representing time durations (e.g., SECONDS, MILLISECONDS). Used with concurrency utilities for timeouts.
+</p>
+<ol>
+<li><strong>What is a lock?</strong>  </li>
+</ol>
+<p>A lock is a synchronization mechanism to control access to a shared resource. In Java, intrinsic locks (synchronized) and explicit Locks.
+</p>
+<ol>
+<li><strong>What is an object monitor?</strong>  </li>
+</ol>
+<p>Each Java object has an associated monitor. It allows threads to synchronize via synchronized methods/blocks using wait/notify.
+</p>
+<ol>
+<li><strong>What is <code>wait()</code> and <code>notify()</code>?</strong>  </li>
+</ol>
+<p>wait() causes current thread to release the monitor and wait until notified. notify() wakes up one waiting thread on the same monitor.
+</p>
+<ol>
+<li><strong>What is <code>notifyAll()</code>?</strong>  </li>
+</ol>
+<p>notifyAll() wakes up all threads waiting on the monitor. They compete for the lock.
+</p>
+<ol>
+<li><strong>What is a spurious wakeup?</strong>  </li>
+</ol>
+<p>Spurious wakeup is when a waiting thread wakes without being notified. Always call wait() in loop checking condition.
+</p>
+<ol>
+<li><strong>What is double-checked locking?</strong>  </li>
+</ol>
+<p>Double-checked locking is a pattern to reduce overhead of synchronization by first checking condition without lock, then locking and checking again. In Java, need volatile field to prevent issues.
+</p>
+<ol>
+<li><strong>What is <code>volatile</code>?</strong>  </li>
+</ol>
+<p>volatile ensures visibility of changes across threads and prevents reordering. Reads always see latest write. Does not guarantee atomicity for compound actions.
+</p>
+<ol>
+<li><strong>What does "happens-before" mean?</strong>  </li>
+</ol>
+<p>Happens-before is a guarantee of memory visibility: if one action happens-before another, the first's results are visible to the second. Volatile, synchronized, thread start/join establish happens-before.
+</p>
+<ol>
+<li><strong>What is the difference between concurrency and parallelism?</strong>  </li>
+</ol>
+<p>Concurrency is dealing with multiple tasks at same time (interleaved). Parallelism is executing multiple tasks simultaneously (multicore).
+</p>
+<ol>
+<li><strong>What is a race condition?</strong>  </li>
+</ol>
+<p>Race condition occurs when outcome depends on timing/order of thread execution, leading to inconsistent results.
+</p>
+<ol>
+<li><strong>What is deadlock?</strong>  </li>
+</ol>
+<p>Deadlock is when two or more threads are blocked forever, each waiting for a resource held by another. Conditions: mutual exclusion, hold and wait, no preemption, circular wait.
+</p>
+<ol>
+<li><strong>How to avoid deadlock?</strong>  </li>
+</ol>
+<p>Avoid nested locks, use lock ordering with timeouts, use higher-level concurrency utilities.
+</p>
+<ol>
+<li><strong>What is livelock?</strong>  </li>
+</ol>
+<p>Livelock is when threads keep changing state in response to each other but no progress. They are not blocked but stuck.
+</p>
+<ol>
+<li><strong>What is starvation?</strong>  </li>
+</ol>
+<p>Starvation occurs when a thread never gets CPU time or access to resources because others monopolize them.
+</p>
+<ol>
+<li><strong>What is thread safety?</strong>  </li>
+</ol>
+<p>A class is thread-safe if it behaves correctly when accessed from multiple threads. Achieved by synchronization, immutability, thread-local storage.
+</p>
+<ol>
+<li><strong>What is a thread scheduler?</strong>  </li>
+</ol>
+<p>Thread scheduler decides which thread to run and for how long. Part of OS, but JVM can influence via thread priorities (not reliable).
+</p>
+<ol>
+<li><strong>What is a parallel stream?</strong>  </li>
+</ol>
+<p>Parallel stream uses ForkJoinPool to process elements concurrently. Obtained by <code>collection.parallelStream()</code> or <code>stream.parallel()</code>.
+</p>
+<ol>
+<li><strong>Why do stateful operations not play well with parallel streams?</strong>  </li>
+</ol>
+<p>Stateful operations (like sorted, distinct) require global coordination, reducing parallelism. They may need to merge results, causing overhead.
+</p>
+<ol>
+<li><strong>What is a parallel-friendly stream source?</strong>  </li>
+</ol>
+<p>Sources like ArrayList, arrays, IntStream.range are efficiently splittable; streams from LinkedList, files are less parallel-friendly.
+</p>
+<ol>
+<li><strong>What is a spliterator?</strong>  </li>
+</ol>
+<p>Spliterator is an iterator for traversing and partitioning streams. Supports splitting parts for parallel processing.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Iterator</code> and <code>Spliterator</code>?</strong>  </li>
+</ol>
+<p>Iterator has next/hasNext. Spliterator also has trySplit to divide, characteristics (SIZED, ORDERED), and long-sized estimates.
+</p>
+<ol>
+<li><strong>What is a <code>Gatherer</code>?</strong>  </li>
+</ol>
+<p>Gatherer (Java 22 preview) is an intermediate operation that transforms a stream element-by-element, more flexible than map/filter.
+</p>
+<ol>
+<li><strong>What is <code>mapMulti()</code>?</strong>  </li>
+</ol>
+<p>mapMulti (Java 16) is like flatMap but uses consumer to push multiple elements, avoiding stream creation overhead.
+</p>
+<ol>
+<li><strong>What is a distinct stream?</strong>  </li>
+</ol>
+<p>distinct() is a stateful intermediate operation that removes duplicates based on equals(). In parallel, uses concurrent reduction.
+</p>
+<ol>
+<li><strong>How does <code>Stream.distinct()</code> work?</strong>  </li>
+</ol>
+<p>It internally uses a Set to track seen elements. For parallel streams, it uses ConcurrentHashMap for thread-safety.
+</p>
+<ol>
+<li><strong>What is the difference between <code>map()</code> and <code>flatMap()</code>?</strong>  </li>
+</ol>
+<p>map applies function and returns a Stream of results. flatMap returns a Stream of results after flattening nested structures.
+</p>
+<ol>
+<li><strong>What is the difference between <code>findFirst()</code> and <code>findAny()</code>?</strong>  </li>
+</ol>
+<p>findFirst returns first element (respects encounter order), findAny returns any element (non-deterministic, better for parallel).
+</p>
+<ol>
+<li><strong>What is the difference between <code>reduce()</code> and <code>collect()</code>?</strong>  </li>
+</ol>
+<p>reduce is for immutable reduction (combining values into single result). collect is mutable reduction (accumulating into container like list).
+</p>
+<ol>
+<li><strong>How does the <code>reduce()</code> method work?</strong>  </li>
+</ol>
+<p>reduce takes BinaryOperator and combines elements sequentially. It can have identity. Example: sum = stream.reduce(0, Integer::sum).
+</p>
+<ol>
+<li><strong>How does the <code>collect()</code> method work?</strong>  </li>
+</ol>
+<p>collect uses a Collector to accumulate elements into a result. Example: list = stream.collect(Collectors.toList()).
+</p>
+<ol>
+<li><strong>What is a <code>Collector</code>?</strong>  </li>
+</ol>
+<p>Collector is an interface that implements mutable reduction. It has supplier, accumulator, combiner, finisher, and characteristics.
+</p>
+<ol>
+<li><strong>What are the parts of a <code>Collector</code>?</strong>  </li>
+</ol>
+<p>supplier (creates container), accumulator (adds element), combiner (merges containers), finisher (optional final transform), characteristics (IDENTITY_FINISH, CONCURRENT, etc.)
+</p>
+<ol>
+<li><strong>What is <code>Collectors.toList()</code>?</strong>  </li>
+</ol>
+<p>Returns a Collector that accumulates input elements into a new List (ArrayList). Characteristics: IDENTITY_FINISH.
+</p>
+<ol>
+<li><strong>What is <code>Collectors.toSet()</code>?</strong>  </li>
+</ol>
+<p>Returns a Collector that accumulates elements into a new HashSet.
+</p>
+<ol>
+<li><strong>What is <code>Collectors.toMap()</code>?</strong>  </li>
+</ol>
+<p>Returns a Collector that accumulates elements into a Map. Requires keyMapper and valueMapper. Can handle duplicates with merge function.
+</p>
+<ol>
+<li><strong>What is <code>Collectors.groupingBy()</code>?</strong>  </li>
+</ol>
+<p>Groups elements by classifier function, returns Map<K, List<T>>. Can specify downstream collector and map supplier.
+</p>
+<ol>
+<li><strong>What is <code>Collectors.partitioningBy()</code>?</strong>  </li>
+</ol>
+<p>Partitions elements by Predicate into Map<Boolean, List<T>>. Two groups: true and false.
+</p>
+<ol>
+<li><strong>What is <code>Collectors.mapping()</code>?</strong>  </li>
+</ol>
+<p>Adapts a collector to accept elements after applying a mapping function. Used as downstream collector.
+</p>
+<ol>
+<li><strong>What is <code>Collectors.joining()</code>?</strong>  </li>
+</ol>
+<p>Concatenates input elements (CharSequence) into a String, optionally with delimiter, prefix, suffix.
+</p>
+<ol>
+<li><strong>What is <code>Collectors.reducing()</code>?</strong>  </li>
+</ol>
+<p>Returns a collector that performs reduction on elements using a BinaryOperator. Used as downstream.
+</p>
+<ol>
+<li><strong>What is an intermediate <code>Collector</code>?</strong>  </li>
+</ol>
+<p>Not standard; but collectors can be composed (e.g., groupingBy(mapping())) where downstream collectors are intermediate.
+</p>
+<ol>
+<li><strong>Can you explain the parameterized types of a <code>Collector</code>?</strong>  </li>
+</ol>
+<p>Collector<T, A, R>: T input type, A mutable accumulation type, R final result type. A is often internal (e.g., list, map).
+</p>
+<ol>
+<li><strong>What is a <code>Stream</code>?</strong>  </li>
+</ol>
+<p>Stream is a sequence of elements supporting sequential and parallel aggregate operations. Not a data structure; consumes from source.
+</p>
+<ol>
+<li><strong>What is the difference between intermediate and terminal operations?</strong>  </li>
+</ol>
+<p>Intermediate operations (map, filter) are lazy and return a new stream. Terminal operations (forEach, collect) produce result or side-effect and close stream.
+</p>
+<ol>
+<li><strong>What is a stateless operation?</strong>  </li>
+</ol>
+<p>Stateless operation like filter or map does not maintain state from previously seen elements. Can be processed independently.
+</p>
+<ol>
+<li><strong>What is a stateful operation?</strong>  </li>
+</ol>
+<p>Stateful operation like distinct, sorted, limit must remember previously seen elements, potentially affecting parallel performance.
+</p>
+<ol>
+<li><strong>How does <code>dropWhile()</code> work?</strong>  </li>
+</ol>
+<p>dropWhile returns a stream dropping elements that match predicate until first non-match; then includes the rest. For ordered stream, drops prefix.
+</p>
+<ol>
+<li><strong>How does <code>takeWhile()</code> work?</strong>  </li>
+</ol>
+<p>takeWhile returns a stream taking elements while predicate holds; stops at first mismatch. Opposite of dropWhile.
+</p>
+<ol>
+<li><strong>What is the difference between <code>peek()</code> and <code>forEach()</code>?</strong>  </li>
+</ol>
+<p>peek is intermediate operation intended for debugging; it performs action on each element as they flow. forEach is terminal.
+</p>
+<ol>
+<li><strong>How can you limit a stream?</strong>  </li>
+</ol>
+<p>limit(n) returns a stream truncated to no more than n elements. For parallel streams, may need to combine with unordered for speed.
+</p>
+<ol>
+<li><strong>How can you skip elements in a stream?</strong>  </li>
+</ol>
+<p>skip(n) discards first n elements. For parallel ordered streams, may be expensive.
+</p>
+<ol>
+<li><strong>What is a stream builder?</strong>  </li>
+</ol>
+<p>Stream.builder() creates a builder for adding elements and building stream. Use <code>accept()</code> and <code>build()</code>.
+</p>
+<ol>
+<li><strong>How can you create an <code>Iterable</code> from a <code>Stream</code>?</strong>  </li>
+</ol>
+<p>Convert to Iterable by <code>stream::iterator</code> but note stream can only be consumed once. Or collect to collection and then iterate.
+</p>
+<ol>
+<li><strong>How can you create a <code>Stream</code> from an <code>Iterator</code>?</strong>  </li>
+</ol>
+<p>Use <code>Spliterators.spliteratorUnknownSize(iterator, characteristics)</code> then <code>StreamSupport.stream()</code>.
+</p>
+<ol>
+<li><strong>What is an <code>Optional</code>?</strong>  </li>
+</ol>
+<p>Optional is a container object that may or may not contain a non-null value. Used to avoid null checks and NullPointerException.
+</p>
+<ol>
+<li><strong>Why do you need <code>Optional</code>?</strong>  </li>
+</ol>
+<p>To explicitly handle absence, reduce null checks, and compose functional operations. Not meant for fields or serialization.
+</p>
+<ol>
+<li><strong>What are common <code>Optional</code> methods?</strong>  </li>
+</ol>
+<p>isPresent(), ifPresent(), orElse(), orElseGet(), orElseThrow(), map(), flatMap(), filter().
+</p>
+<ol>
+<li><strong>What is the difference between <code>orElse()</code> and <code>orElseGet()</code>?</strong>  </li>
+</ol>
+<p>orElse() always evaluates the default value even if Optional is present. orElseGet() lazily evaluates the Supplier only when absent.
+</p>
+<ol>
+<li><strong>What is a <code>MessageFormat</code>?</strong>  </li>
+</ol>
+<p>MessageFormat is used to produce concatenated messages in a language-neutral way with placeholders like &#123;0&#125;. Supports pluralization and choice.
+</p>
+<ol>
+<li><strong>What is a <code>PrintWriter</code>?</strong>  </li>
+</ol>
+<p>PrintWriter prints formatted representations of objects to a text-output stream. Provides print, println, printf methods.
+</p>
+<ol>
+<li><strong>What is a <code>ByteBuffer</code>?</strong>  </li>
+</ol>
+<p>ByteBuffer is a buffer for bytes, used in NIO for reading/writing data. Can be direct (off-heap) or heap-based.
+</p>
+<ol>
+<li><strong>What is a <code>CharBuffer</code>?</strong>  </li>
+</ol>
+<p>CharBuffer is a buffer for characters, used with NIO and charset encoding/decoding.
+</p>
+<ol>
+<li><strong>What is a <code>FileChannel</code>?</strong>  </li>
+</ol>
+<p>FileChannel is a channel for reading/writing files, supports locking, mapping to memory, and transfer to/from other channels.
+</p>
+<ol>
+<li><strong>How can you map a file to memory?</strong>  </li>
+</ol>
+<p>Use FileChannel.map(MapMode.READ_ONLY, position, size) to get MappedByteBuffer for memory-mapped file I/O.
+</p>
+<ol>
+<li><strong>What is off-heap memory?</strong>  </li>
+</ol>
+<p>Off-heap memory is memory outside JVM heap (direct byte buffers). Reduces GC overhead, used for high-performance caches.
+</p>
+<ol>
+<li><strong>How can you access off-heap memory?</strong>  </li>
+</ol>
+<p>Use ByteBuffer.allocateDirect() or Unsafe (not recommended). From Java 22, Foreign Function & Memory API (MemorySegment) provides safe access.
+</p>
+<ol>
+<li><strong>What is a <code>MemorySegment</code>?</strong>  </li>
+</ol>
+<p>MemorySegment (Foreign Memory API) represents a contiguous region of memory, either on-heap or off-heap, with spatial and temporal bounds.
+</p>
+<ol>
+<li><strong>What is a <code>MemoryLayout</code>?</strong>  </li>
+</ol>
+<p>MemoryLayout describes the layout of a memory segment (size, alignment, element types) to enable structured access.
+</p>
+<ol>
+<li><strong>What is a <code>VarHandle</code> in memory access?</strong>  </li>
+</ol>
+<p>VarHandle can be used to access memory segments with relaxed or atomic operations, but for FFM, MemorySegment provides methods.
+</p>
+<ol>
+<li><strong>What are the different kinds of Arenas?</strong>  </li>
+</ol>
+<p>In Foreign Memory API, Arena controls lifetime of memory segments. Types: global, confined, shared, automatic (try-with-resources).
+</p>
+<ol>
+<li><strong>What is a <code>Cleaner</code>?</strong>  </li>
+</ol>
+<p>A Cleaner is used to perform cleanup actions when an object becomes phantom reachable. Used in DirectByteBuffer to free off-heap memory.
+</p>
+<ol>
+<li><strong>What is a <code>Reference</code>?</strong>  </li>
+</ol>
+<p>Reference is abstract base class for soft, weak, phantom references. Used with ReferenceQueue to track reachability changes.
+</p>
+<ol>
+<li><strong>What is a <code>ReferenceQueue</code>?</strong>  </li>
+</ol>
+<p>ReferenceQueue is where references are enqueued after their referent becomes appropriately reachable. Used for cleanup.
+</p>
+<ol>
+<li><strong>What is the difference between <code>SoftReference</code> and <code>WeakReference</code>?</strong>  </li>
+</ol>
+<p>SoftReference cleared at GC's discretion when memory is low. WeakReference cleared at next GC if referent has no strong refs.
+</p>
+<ol>
+<li><strong>What is <code>PhantomReference</code>?</strong>  </li>
+</ol>
+<p>PhantomReference's get() always returns null. It is used for post-mortem cleanup; referent is already dead.
+</p>
+<ol>
+<li><strong>What is data alignment?</strong>  </li>
+</ol>
+<p>Data alignment ensures that data is placed at memory addresses multiple of its size (e.g., int aligned to 4 bytes). Improves CPU access.
+</p>
+<ol>
+<li><strong>What is an object header?</strong>  </li>
+</ol>
+<p>Object header (mark word + klass pointer) contains metadata: hashcode, GC age, lock state, class pointer. In compressed oops, may be 12 bytes.
+</p>
+<ol>
+<li><strong>What is scalarization?</strong>  </li>
+</ol>
+<p>Scalarization is an optimization where JVM replaces an object allocation with its fields (scalars) if escape analysis proves object doesn't escape.
+</p>
+<ol>
+<li><strong>What is escape analysis?</strong>  </li>
+</ol>
+<p>Escape analysis determines if object references escape method or thread. Used for stack allocation, lock elimination, scalarization.
+</p>
+<ol>
+<li><strong>What does tearing mean?</strong>  </li>
+</ol>
+<p>Tearing is when a write to a variable is not atomic, causing partial updates visible to other threads. Use volatile or atomic for long/double.
+</p>
+<ol>
+<li><strong>What is heap pollution?</strong>  </li>
+</ol>
+<p>Heap pollution occurs when a variable of a parameterized type refers to an object not of that type, leading to ClassCastException at runtime.
+</p>
+<ol>
+<li><strong>What is pinning?</strong>  </li>
+</ol>
+<p>Pinning refers to preventing an object from being moved by GC (e.g., during native code access). Relevant in ZGC for colored pointers.
+</p>
+<ol>
+<li><strong>What is a fail-safe iterator?</strong>  </li>
+</ol>
+<p>Fail-safe iterator works on a snapshot/clone of collection, so modifications don't affect iteration. Example: CopyOnWriteArrayList iterator.
+</p>
+<ol>
+<li><strong>What is a fail-fast iterator?</strong>  </li>
+</ol>
+<p>Fail-fast iterator throws ConcurrentModificationException if collection is modified structurally after iterator creation. Most java.util collections.
+</p>
+<ol>
+<li><strong>What is late binding?</strong>  </li>
+</ol>
+<p>Late binding (dynamic binding) means method call resolved at runtime based on object type (polymorphism). Contrast with early binding (static).
+</p>
+<ol>
+<li><strong>What is a non-denotable type?</strong>  </li>
+</ol>
+<p>A type that cannot be named explicitly in Java code, e.g., intersection types, anonymous class types, or captured wildcards.
+</p>
+<ol>
+<li><strong>What is a <code>SequencedCollection</code>?</strong>  </li>
+</ol>
+<p>SequencedCollection (Java 21) defines a collection with a defined encounter order, offering methods like getFirst(), getLast(), reversed().
+</p>
+<ol>
+<li><strong>What is a <code>SequencedMap</code>?</strong>  </li>
+</ol>
+<p>SequencedMap (Java 21) extends Map with sequenced order, methods firstEntry(), lastEntry(), pollFirstEntry(), reversed().
+</p>
+<ol>
+<li><strong>What is the difference between a Zip and a Gzip stream?</strong>  </li>
+</ol>
+<p>Zip is an archive format (multiple files) with compression. Gzip is a compression format for single file, often used with tar.
+</p>
+<ol>
+<li><strong>How can you read a ZIP file with the <code>FileSystem</code> API?</strong>  </li>
+</ol>
+<p>Use FileSystems.newFileSystem(Path, ClassLoader) to create a FileSystem for ZIP, then access files via Path.
+</p>
+<ol>
+<li><strong>How can you read a Gzip compressed file?</strong>  </li>
+</ol>
+<p>Use GZIPInputStream to wrap FileInputStream. For text, wrap with InputStreamReader.
+</p>
+<ol>
+<li><strong>How can you create temporary files?</strong>  </li>
+</ol>
+<p>Files.createTempFile(prefix, suffix) or File.createTempFile(). They are deleted on JVM exit unless deleteOnExit set.
+</p>
+<ol>
+<li><strong>How can you create a directory with Java I/O?</strong>  </li>
+</ol>
+<p>Files.createDirectory(path) for single dir, Files.createDirectories(path) to create missing parents.
+</p>
+<ol>
+<li><strong>How can you get the content of a directory?</strong>  </li>
+</ol>
+<p>Files.list(path) returns Stream<Path>; Files.newDirectoryStream(path) returns DirectoryStream.
+</p>
+<ol>
+<li><strong>How can you stream the content of a directory?</strong>  </li>
+</ol>
+<p>Files.list() or Files.walk() returns Stream<Path> for walking recursively.
+</p>
+<ol>
+<li><strong>How can you read chars from a binary stream?</strong>  </li>
+</ol>
+<p>Use InputStreamReader to decode bytes to chars. Specify charset (e.g., StandardCharsets.UTF_8).
+</p>
+<ol>
+<li><strong>How can you stream the content of a text file?</strong>  </li>
+</ol>
+<p>Files.lines(path) returns Stream<String> of lines. Use with try-with-resources to ensure closing.
+</p>
+<ol>
+<li><strong>What is the heap memory?</strong>  </li>
+</ol>
+<p>Heap memory is where Java objects are allocated. Divided into young gen (eden, s0, s1) and old gen. Managed by GC.
+</p>
+<ol>
+<li><strong>What is the heap memory structure?</strong>  </li>
+</ol>
+<p>Young generation (eden + survivor spaces) for new objects. Old generation for long-lived objects. Permanent/Metaspace for class metadata.
+</p>
+<ol>
+<li><strong>What is metaspace?</strong>  </li>
+</ol>
+<p>Metaspace (Java 8+) replaces PermGen; stores class metadata. It uses native memory, dynamically resized.
+</p>
+<ol>
+<li><strong>What is a Garbage Collector?</strong>  </li>
+</ol>
+<p>GC automatically reclaims memory of unreachable objects. Types: Serial, Parallel, CMS, G1, ZGC, Shenandoah.
+</p>
+<ol>
+<li><strong>How does G1 GC work?</strong>  </li>
+</ol>
+<p>G1 divides heap into regions, concurrently marks live objects, and collects regions with most garbage first (garbage-first). Predictable pause times.
+</p>
+<ol>
+<li><strong>What is ZGC?</strong>  </li>
+</ol>
+<p>ZGC is a scalable low-latency GC (sub-millisecond pauses) using colored pointers and load barriers, handles large heaps.
+</p>
+<ol>
+<li><strong>What is a stack trace?</strong>  </li>
+</ol>
+<p>Stack trace shows the call stack at a point in time, listing methods and line numbers. Useful for debugging exceptions.
+</p>
+<ol>
+<li><strong>When is a stack trace created?</strong>  </li>
+</ol>
+<p>When an exception is thrown, or manually via Thread.dumpStack() or new Throwable().printStackTrace().
+</p>
+<ol>
+<li><strong>What is the difference between <code>ClassNotFoundException</code> and <code>NoClassDefFoundError</code>?</strong>  </li>
+</ol>
+<p>ClassNotFoundException is thrown when class not found dynamically (Class.forName). NoClassDefFoundError is when class was present at compile-time but missing at runtime.
+</p>
+<ol>
+<li><strong>What is a <code>LinkageError</code>?</strong>  </li>
+</ol>
+<p>LinkageError and subclasses indicate incompatible class changes (e.g., IncompatibleClassChangeError, NoSuchMethodError).
+</p>
+<ol>
+<li><strong>What is an <code>OutOfMemoryError</code>?</strong>  </li>
+</ol>
+<p>OutOfMemoryError occurs when JVM runs out of heap or native memory. Causes: memory leak, excessive allocations.
+</p>
+<ol>
+<li><strong>What is a <code>StackOverflowError</code>?</strong>  </li>
+</ol>
+<p>StackOverflowError when thread stack fills due to deep recursion or infinite recursion.
+</p>
+<ol>
+<li><strong>What is an <code>ArrayIndexOutOfBoundsException</code>?</strong>  </li>
+</ol>
+<p>Thrown when accessing array with illegal index (negative or >= length).
+</p>
+<ol>
+<li><strong>What is a <code>NullPointerException</code>?</strong>  </li>
+</ol>
+<p>Thrown when trying to access member (method/field) of a null reference.
+</p>
+<ol>
+<li><strong>What is an <code>IllegalArgumentException</code>?</strong>  </li>
+</ol>
+<p>Thrown to indicate a method has been passed an illegal/inappropriate argument.
+</p>
+<ol>
+<li><strong>What is an <code>IllegalStateException</code>?</strong>  </li>
+</ol>
+<p>Thrown when method called at inappropriate time (e.g., after stream closed).
+</p>
+<ol>
+<li><strong>What is a <code>ConcurrentModificationException</code>?</strong>  </li>
+</ol>
+<p>Thrown when collection modified during iteration (unless using concurrent collections).
+</p>
+<ol>
+<li><strong>What is a <code>DateTime</code>?</strong>  </li>
+</ol>
+<p>From Java 8, new Date/Time API (java.time) includes LocalDate, LocalTime, LocalDateTime, ZonedDateTime, etc. Immutable, thread-safe.
+</p>
+<ol>
+<li><strong>How can you format a date?</strong>  </li>
+</ol>
+<p>Use DateTimeFormatter. Example: LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")).
+</p>
+<ol>
+<li><strong>How can you represent time?</strong>  </li>
+</ol>
+<p>Use Instant (machine time), LocalDateTime (date+time without timezone), ZonedDateTime (with zone), OffsetDateTime (with offset).
+</p>
+<ol>
+<li><strong>What is the epoch?</strong>  </li>
+</ol>
+<p>Epoch is the reference point for time: 1970-01-01T00:00:00Z. Instant and many systems measure time as milliseconds from epoch.
+</p>
+<ol>
+<li><strong>What is a <code>Duration</code>?</strong>  </li>
+</ol>
+<p>Duration is a time-based amount (seconds, nanoseconds) between two temporal objects.
+</p>
+<ol>
+<li><strong>What is a <code>Period</code>?</strong>  </li>
+</ol>
+<p>Period is a date-based amount (years, months, days) between two dates.
+</p>
+<ol>
+<li><strong>What is <code>java.util.Date</code> vs <code>java.time.LocalDate</code>?</strong>  </li>
+</ol>
+<p>Date is mutable, poorly designed, deprecated. LocalDate is immutable, part of modern API, no time component.
+</p>
+<ol>
+<li><strong>What is a <code>Calendar</code>?</strong>  </li>
+</ol>
+<p>Legacy class for date manipulation, replaced by java.time. Prone to errors, mutable.
+</p>
+<ol>
+<li><strong>How can you generate random numbers?</strong>  </li>
+</ol>
+<p>Use Random (not thread-safe), ThreadLocalRandom (thread-safe), SecureRandom (cryptographic). Also Math.random().
+</p>
+<ol>
+<li><strong>How can you compute the median value of an array?</strong>  </li>
+</ol>
+<p>Sort array, then pick middle element(s). Use Arrays.sort() or priority queue for streaming.
+</p>
+<ol>
+<li><strong>How is quick sort working?</strong>  </li>
+</ol>
+<p>Quick sort picks a pivot, partitions array into smaller/larger, recursively sorts partitions. Average O(n log n).
+</p>
+<ol>
+<li><strong>What is a <code>Skip List</code>?</strong>  </li>
+</ol>
+<p>Skip list is a probabilistic data structure with multiple levels, allowing O(log n) search. Used in ConcurrentSkipListMap.
+</p>
+<ol>
+<li><strong>What is a <code>WeakReference</code>?</strong>  </li>
+</ol>
+<p>WeakReference objects are cleared by GC when referent is only weakly reachable. Used in WeakHashMap.
+</p>
+<ol>
+<li><strong>What is a <code>SoftReference</code>?</strong>  </li>
+</ol>
+<p>SoftReference cleared at GC's discretion when memory is low. Useful for memory-sensitive caches.
+</p>
+<ol>
+<li><strong>What is a <code>PhantomReference</code>?</strong>  </li>
+</ol>
+<p>PhantomReference's get() always null; enqueued when object is about to be reclaimed. Used for cleanup.
+</p>
+<ol>
+<li><strong>What is a <code>Reference</code> queue?</strong>  </li>
+</ol>
+<p>ReferenceQueue where references are enqueued after referent becomes appropriately reachable. Used for tracking cleanup.
+</p>
+<ol>
+<li><strong>What is the difference between <code>HashMap</code> and <code>Hashtable</code>?</strong>  </li>
+</ol>
+<p>HashMap is not synchronized, allows null keys/values. Hashtable is synchronized, does not allow nulls. Hashtable is legacy.
+</p>
+<ol>
+<li><strong>What is the difference between <code>ArrayList</code> and <code>LinkedList</code>?</strong>  </li>
+</ol>
+<p>ArrayList is resizable array, fast random access, slow insert/remove in middle. LinkedList is doubly-linked, faster insert/remove, slower access.
+</p>
+<ol>
+<li><strong>What is the difference between <code>ArrayList</code> and <code>Vector</code>?</strong>  </li>
+</ol>
+<p>Vector is synchronized (legacy), ArrayList not synchronized. Both use array; Vector doubles size, ArrayList grows by 50%.
+</p>
+<ol>
+<li><strong>What is the difference between <code>HashSet</code> and <code>TreeSet</code>?</strong>  </li>
+</ol>
+<p>HashSet uses hash table (O(1)), unordered. TreeSet uses tree (O(log n)), sorted. LinkedHashSet maintains insertion order.
+</p>
+<ol>
+<li><strong>What is the difference between <code>HashMap</code> and <code>TreeMap</code>?</strong>  </li>
+</ol>
+<p>HashMap O(1), unordered. TreeMap sorted by keys (natural or comparator), O(log n). LinkedHashMap maintains insertion/access order.
+</p>
+<ol>
+<li><strong>How does a <code>HashSet</code> work?</strong>  </li>
+</ol>
+<p>HashSet internally uses HashMap; elements are stored as keys with a dummy value. Relies on hashCode() and equals().
+</p>
+<ol>
+<li><strong>How does <code>HashMap</code> work?</strong>  </li>
+</ol>
+<p>HashMap uses array of buckets; each bucket may be linked list or tree. Keys' hashCode() determines bucket index. Handles collisions with chaining.
+</p>
+<ol>
+<li><strong>What is the initial capacity and load factor of <code>HashMap</code>?</strong>  </li>
+</ol>
+<p>Default initial capacity 16, load factor 0.75. Rehashes when size > capacity * load factor.
+</p>
+<ol>
+<li><strong>What is the difference between fail-fast and fail-safe iterators?</strong>  </li>
+</ol>
+<p>Fail-fast throws ConcurrentModificationException if modified. Fail-safe (copy-on-write) iterates over snapshot.
+</p>
+<ol>
+<li><strong>How does <code>Map.keySet()</code> method work?</strong>  </li>
+</ol>
+<p>Returns a Set view of keys; changes to map reflect in set. Not a separate copy.
+</p>
+<ol>
+<li><strong>How does <code>Map.values()</code> method work?</strong>  </li>
+</ol>
+<p>Returns a Collection view of values; reflects map changes.
+</p>
+<ol>
+<li><strong>What is an entry set?</strong>  </li>
+</ol>
+<p>entrySet() returns Set<Map.Entry<K,V>>, allowing iteration over key-value pairs.
+</p>
+<ol>
+<li><strong>What is <code>getOrDefault()</code>?</strong>  </li>
+</ol>
+<p>Map.getOrDefault(key, defaultValue) returns value mapped to key, or defaultValue if absent.
+</p>
+<ol>
+<li><strong>What is <code>putIfAbsent()</code>?</strong>  </li>
+</ol>
+<p>putIfAbsent(key, value) puts value only if key not already mapped. Returns existing value or null.
+</p>
+<ol>
+<li><strong>What is <code>computeIfAbsent()</code>?</strong>  </li>
+</ol>
+<p>computeIfAbsent(key, mappingFunction) computes value if key absent and adds to map; returns computed or existing value.
+</p>
+<ol>
+<li><strong>What is <code>computeIfPresent()</code>?</strong>  </li>
+</ol>
+<p>computeIfPresent(key, remappingFunction) recomputes value if key present; if result null, removes entry.
+</p>
+<ol>
+<li><strong>What is <code>merge()</code>?</strong>  </li>
+</ol>
+<p>merge(key, value, remappingFunction) combines value with existing using function; if absent, puts value; if function returns null, removes.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Collection</code> and <code>Collections</code>?</strong>  </li>
+</ol>
+<p>Collection is root interface. Collections is utility class with static methods (sort, synchronized, unmodifiable).
+</p>
+<ol>
+<li><strong>What are the interfaces in Collections Framework?</strong>  </li>
+</ol>
+<p>Collection, List, Set, Queue, Deque, Map (not extend Collection). Also SortedSet, NavigableSet, SortedMap, NavigableMap.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Iterator</code> and <code>Enumeration</code>?</strong>  </li>
+</ol>
+<p>Iterator has remove() and is fail-fast. Enumeration is legacy, has moreElements/nextElement, no remove.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Array</code> and <code>ArrayList</code>?</strong>  </li>
+</ol>
+<p>Array is fixed size, can hold primitives and objects. ArrayList is dynamic, only objects (wrappers for primitives). ArrayList provides more methods.
+</p>
+<ol>
+<li><strong>What is the difference between <code>List</code> and <code>Set</code>?</strong>  </li>
+</ol>
+<p>List allows duplicates, ordered. Set no duplicates, unordered (unless sorted). List has positional access.
+</p>
+<ol>
+<li><strong>What is the difference between <code>Queue</code> and <code>Deque</code>?</strong>  </li>
+</ol>
+<p>Queue typically FIFO, offer/poll/peek. Deque supports insertion/removal at both ends.
+</p>
+<ol>
+<li><strong>What is a <code>PriorityQueue</code>?</strong>  </li>
+</ol>
+<p>PriorityQueue orders elements by priority (natural/comparator), not FIFO. Head is least element.
+</p>
+<ol>
+<li><strong>What is a <code>BlockingQueue</code>?</strong>  </li>
+</ol>
+<p>BlockingQueue adds thread-safe operations that block (put/take). Implementations: ArrayBlockingQueue, LinkedBlockingQueue.
+</p>
+<ol>
+<li><strong>What is a <code>ConcurrentSkipListMap</code>?</strong>  </li>
+</ol>
+<p>A concurrent, sorted map using skip list. Supports higher concurrency than TreeMap.
+</p>
+<ol>
+<li><strong>What is a <code>ConcurrentSkipListSet</code>?</strong>  </li>
+</ol>
+<p>Concurrent sorted set based on ConcurrentSkipListMap.
+</p>
+<ol>
+<li><strong>What is a <code>LinkedBlockingDeque</code>?</strong>  </li>
+</ol>
+<p>Optionally bounded deque with blocking operations, linked nodes.
+</p>
+<ol>
+<li><strong>What is the difference between <code>synchronized</code> and <code>java.util.concurrent</code> locks?</strong>  </li>
+</ol>
+<p>synchronized is built-in, automatic unlock. Lock interface gives explicit lock/unlock, tryLock, interruptible, fairness.
+</p>
+<ol>
+<li><strong>What is a <code>Semaphore</code>?</strong>  </li>
+</ol>
+<p>Semaphore maintains a set of permits, used to limit concurrent access to a resource.
+</p>
+<ol>
+<li><strong>What is a <code>CountDownLatch</code>?</strong>  </li>
+</ol>
+<p>CountDownLatch allows threads to wait until count reaches zero. Cannot be reset.
+</p>
+<ol>
+<li><strong>What is a <code>CyclicBarrier</code>?</strong>  </li>
+</ol>
+<p>CyclicBarrier allows threads to wait for each other; after all arrive, optionally run a barrier action, then reset.
+</p>
+<ol>
+<li><strong>What is a <code>Phaser</code>?</strong>  </li>
+</ol>
+<p>Phaser is a flexible barrier that can be reused with dynamic number of parties.
+</p>
+<ol>
+<li><strong>What is an <code>Exchanger</code>?</strong>  </li>
+</ol>
+<p>Exchanger allows two threads to exchange objects at a rendezvous.
+</p>
+<ol>
+<li><strong>What is a <code>ForkJoinTask</code>?</strong>  </li>
+</ol>
+<p>Abstract base for tasks executed in ForkJoinPool. Subclasses: RecursiveAction, RecursiveTask.
+</p>
+<ol>
+<li><strong>What is <code>RecursiveTask</code>?</strong>  </li>
+</ol>
+<p>RecursiveTask is a ForkJoinTask that returns a result. Must implement compute().
+</p>
+<ol>
+<li><strong>What is <code>RecursiveAction</code>?</strong>  </li>
+</ol>
+<p>RecursiveAction is a ForkJoinTask that returns no result (void).
+</p>
+<ol>
+<li><strong>What is the common pool?</strong>  </li>
+</ol>
+<p>ForkJoinPool.commonPool() is a shared pool used by parallel streams and CompletableFuture.
+</p>
+<ol>
+<li><strong>What is a <code>ThreadPoolExecutor</code>?</strong>  </li>
+</ol>
+<p>ExecutorService implementation with configurable core/max pool size, queue, rejection policy.
+</p>
+<ol>
+<li><strong>What is a <code>ScheduledExecutorService</code>?</strong>  </li>
+</ol>
+<p>ExecutorService that can schedule commands to run after a delay or periodically.
+</p>
+<ol>
+<li><strong>What is a <code>Callable</code>?</strong>  </li>
+</ol>
+<p>Functional interface with call() returning value and throwing checked exceptions. Used with ExecutorService.submit.
+</p>
+<ol>
+<li><strong>What is a <code>Future</code>?</strong>  </li>
+</ol>
+<p>Represents result of async computation; can check if done, cancel, and get result.
+</p>
+<ol>
+<li><strong>What is a <code>CompletableFuture</code>?</strong>  </li>
+</ol>
+<p>Future that can be manually completed, supports callbacks, chaining, and combining.
+</p>
+<ol>
+<li><strong>What is <code>thenApply()</code> and <code>thenCompose()</code>?</strong>  </li>
+</ol>
+<p>thenApply transforms result (like map). thenCompose returns a new CompletableFuture (like flatMap).
+</p>
+<ol>
+<li><strong>What is <code>thenAccept()</code>?</strong>  </li>
+</ol>
+<p>thenAccept consumes result with Consumer, returns CompletableFuture<Void>.
+</p>
+<ol>
+<li><strong>What is <code>exceptionally()</code>?</strong>  </li>
+</ol>
+<p>exceptionally recovers from exception with a fallback value.
+</p>
+<ol>
+<li><strong>What is <code>handle()</code>?</strong>  </li>
+</ol>
+<p>handle processes both result and exception, returns a new result.
+</p>
+<ol>
+<li><strong>What is <code>allOf()</code> and <code>anyOf()</code>?</strong>  </li>
+</ol>
+<p>allOf returns CompletableFuture that completes when all given CompletableFutures complete. anyOf completes when any completes.
+</p>
+<ol>
+<li><strong>What is a <code>Latch</code>?</strong>  </li>
+</ol>
+<p>Generally refers to CountDownLatch.
+</p>
+<ol>
+<li><strong>What is a <code>CyclicBarrier</code>?</strong>  </li>
+</ol>
+<p>Already defined.
+</p>
+<ol>
+<li><strong>What is a <code>ReadWriteLock</code>?</strong>  </li>
+</ol>
+<p>Lock with separate read and write locks. Multiple readers, one writer.
+</p>
+<ol>
+<li><strong>What is a <code>StampedLock</code>?</strong>  </li>
+</ol>
+<p>Introduced in Java 8, supports optimistic reads. Has methods to validate stamps.
+</p>
+<ol>
+<li><strong>What is the difference between <code>synchronized</code> and <code>Lock</code>?</strong>  </li>
+</ol>
+<p>synchronized simpler, auto-release. Lock offers tryLock, lockInterruptibly, fair queue, multiple conditions.
+</p>
+<ol>
+<li><strong>What is a <code>Condition</code>?</strong>  </li>
+</ol>
+<p>Condition associated with Lock, provides await/signal instead of wait/notify. Can have multiple conditions per lock.
+</p>
+<ol>
+<li><strong>What is a <code>ReentrantLock</code>?</strong>  </li>
+</ol>
+<p>A Lock implementation with same basic behavior as synchronized but more features. Reentrant: same thread can acquire multiple times.
+</p>
+<ol>
+<li><strong>What is a <code>ReentrantReadWriteLock</code>?</strong>  </li>
+</ol>
+<p>Implements ReadWriteLock; both read and write locks are reentrant.
+</p>
+<ol>
+<li><strong>What is a <code>ThreadFactory</code>?</strong>  </li>
+</ol>
+<p>Factory to create new threads. Used by Executors to customize thread creation.
+</p>
+<ol>
+<li><strong>What is a <code>ThreadGroup</code>?</strong>  </li>
+</ol>
+<p>Represents a group of threads; can manage them collectively. Not as useful now; ExecutorService preferred.
+</p>
+<ol>
+<li><strong>What is a <code>Thread</code>?</strong>  </li>
+</ol>
+<p>A thread of execution in a program. In Java, can be created by extending Thread or implementing Runnable.
+</p>
+<ol>
+<li><strong>What is the difference between <code>start()</code> and <code>run()</code>?</strong>  </li>
+</ol>
+<p>start() creates new thread and calls run(). run() just executes in current thread.
+</p>
+<ol>
+<li><strong>What is a <code>daemon</code> thread?</strong>  </li>
+</ol>
+<p>Daemon threads are low-priority threads that run in background (e.g., GC). JVM exits when only daemon threads remain.
+</p>
+<ol>
+<li><strong>What is thread interruption?</strong>  </li>
+</ol>
+<p>Interrupt is a cooperative mechanism to signal a thread to stop. Threads should check interrupted status.
+</p>
+<ol>
+<li><strong>How to stop a thread?</strong>  </li>
+</ol>
+<p>Use a volatile boolean flag. Thread.stop() is deprecated and unsafe.
+</p>
+<ol>
+<li><strong>What is <code>Thread.yield()</code>?</strong>  </li>
+</ol>
+<p>yield hints scheduler that current thread is willing to yield CPU. Not guaranteed to do anything.
+</p>
+<ol>
+<li><strong>What is <code>Thread.sleep()</code>?</strong>  </li>
+</ol>
+<p>Causes current thread to sleep for specified milliseconds, may throw InterruptedException.
+</p>
+<ol>
+<li><strong>What is <code>Thread.join()</code>?</strong>  </li>
+</ol>
+<p>Waits for a thread to die. The calling thread blocks until the target thread finishes.
+</p>
+<ol>
+<li><strong>What is the difference between <code>wait()</code> and <code>sleep()</code>?</strong>  </li>
+</ol>
+<p>wait() releases monitor and requires notify; sleep() does not release locks; both throw InterruptedException.
+</p>
+<ol>
+<li><strong>What is the difference between <code>notify()</code> and <code>notifyAll()</code>?</strong>  </li>
+</ol>
+<p>notify() wakes one waiting thread; notifyAll() wakes all. notifyAll is safer to avoid missed signals.
+</p>
+<ol>
+<li><strong>What is a monitor?</strong>  </li>
+</ol>
+<p>A monitor is a synchronization construct associated with an object. It ensures mutual exclusion and cooperation via wait/notify.
+</p>
+<ol>
+<li><strong>What is a deadlock?</strong>  </li>
+</ol>
+<p>Already explained.
+</p>
+<ol>
+<li><strong>What is livelock?</strong>  </li>
+</ol>
+<p>Already explained.
+</p>
+<ol>
+<li><strong>What is starvation?</strong>  </li>
+</ol>
+<p>Already explained.
+</p>
+<ol>
+<li><strong>What is race condition?</strong>  </li>
+</ol>
+<p>Already explained.
+</p>
+<ol>
+<li><strong>What is data race?</strong>  </li>
+</ol>
+<p>Data race occurs when two threads access shared variable without synchronization, at least one write.
+</p>
+<ol>
+<li><strong>What is the Java Memory Model (JMM)?</strong>  </li>
+</ol>
+<p>JMM defines rules for visibility and ordering of shared variables. Ensures that proper synchronization makes predictable results.
+</p>
+<ol>
+<li><strong>What is <code>volatile</code> guarantee?</strong>  </li>
+</ol>
+<p>volatile ensures visibility and prevents reordering of reads/writes. A write to volatile happens-before any subsequent read.
+</p>
+<ol>
+<li><strong>What is atomicity?</strong>  </li>
+</ol>
+<p>Atomicity means an operation is indivisible. In Java, assignments to references and most primitives (except long/double) are atomic; atomic classes provide compound atomic ops.
+</p>
+<ol>
+<li><strong>What is CAS (Compare-And-Swap)?</strong>  </li>
+</ol>
+<p>CAS is an atomic instruction used in lock-free programming. Compares memory location to expected value and updates if same; else retry.
+</p>
+<ol>
+<li><strong>What is <code>AtomicInteger</code>?</strong>  </li>
+</ol>
+<p>Uses CAS to provide thread-safe integer operations.
+</p>
+<ol>
+<li><strong>What is <code>AtomicReference</code>?</strong>  </li>
+</ol>
+<p>AtomicReference for reference types.
+</p>
+<ol>
+<li><strong>What is <code>AtomicIntegerArray</code>?</strong>  </li>
+</ol>
+<p>Atomic operations on integer array elements.
+</p>
+<ol>
+<li><strong>What is <code>AtomicLong</code>?</strong>  </li>
+</ol>
+<p>Similar to AtomicInteger.
+</p>
+<ol>
+<li><strong>What is <code>AtomicBoolean</code>?</strong>  </li>
+</ol>
+<p>Atomic boolean.
+</p>
+<ol>
+<li><strong>What is <code>LongAdder</code>?</strong>  </li>
+</ol>
+<p>Better for high contention; reduces contention by striping.
+</p>
+<ol>
+<li><strong>What is <code>LongAccumulator</code>?</strong>  </li>
+</ol>
+<p>Allows custom accumulation function (e.g., max).
+</p>
+<ol>
+<li><strong>What is <code>DoubleAdder</code>?</strong>  </li>
+</ol>
+<p>Double version of LongAdder.
+</p>
+<ol>
+<li><strong>What is <code>DoubleAccumulator</code>?</strong>  </li>
+</ol>
+<p>Double version.
+</p>
+<ol>
+<li><strong>What is a <code>VarHandle</code>?</strong>  </li>
+</ol>
+<p>A variable handle for atomic/ordered operations on fields and array elements, more flexible than atomic classes.
+</p>
+<ol>
+<li><strong>What is a <code>MethodHandle</code>?</strong>  </li>
+</ol>
+<p>A method handle is a typed, directly executable reference to a method, constructor, or field.
+</p>
+<ol>
+<li><strong>What is invokedynamic?</strong>  </li>
+</ol>
+<p>invokedynamic is a bytecode instruction that allows dynamic method call resolution. Used by lambda expressions, String concatenation, etc.
+</p>
+<ol>
+<li><strong>What is a lambda under the hood?</strong>  </li>
+</ol>
+<p>Lambda expressions are translated to invokedynamic calls with method handles. At runtime, they may be converted to inner classes or static methods.
+</p>
+<ol>
+<li><strong>What is a functional interface conversion?</strong>  </li>
+</ol>
+<p>Lambda expressions are compatible with functional interfaces; compiler infers the target type from context.
+</p>
+<ol>
+<li><strong>What is a method reference?</strong>  </li>
+</ol>
+<p>Shorthand for lambda. Already covered.
+</p>
+<ol>
+<li><strong>What is the difference between <code>map</code> and <code>flatMap</code> in Optional?</strong>  </li>
+</ol>
+<p>map applies function and wraps result in Optional. flatMap returns the result directly (must be Optional).
+</p>
+<ol>
+<li><strong>What is Optional chaining?</strong>  </li>
+</ol>
+<p>Use flatMap to chain multiple Optional-producing functions.
+</p>
+<ol>
+<li><strong>What is <code>OptionalInt</code>, <code>OptionalLong</code>, <code>OptionalDouble</code>?</strong>  </li>
+</ol>
+<p>Primitive specialized Optionals to avoid boxing.
+</p>
+<ol>
+<li><strong>What is <code>Optional.orElseThrow()</code>?</strong>  </li>
+</ol>
+<p>Returns value or throws NoSuchElementException if empty.
+</p>
+<ol>
+<li><strong>What is <code>Optional.ifPresentOrElse()</code>?</strong>  </li>
+</ol>
+<p>Java 9: if value present, performs action; else runs empty-based action.
+</p>
+<ol>
+<li><strong>What is <code>Optional.stream()</code>?</strong>  </li>
+</ol>
+<p>Returns a stream of one element if present, else empty stream. Useful with flatMap.
+</p>
+<ol>
+<li><strong>What is a <code>Collector</code> of type <code>Teeing</code>?</strong>  </li>
+</ol>
+<p>Teeing collector (Java 12) allows collecting to two downstream collectors and merging results.
+</p>
+<ol>
+<li><strong>What is a <code>Predicate</code>?</strong>  </li>
+</ol>
+<p>Functional interface: boolean test(T t). Used for filtering.
+</p>
+<ol>
+<li><strong>What is a <code>Function</code>?</strong>  </li>
+</ol>
+<p>Functional interface: R apply(T t). Used for mapping.
+</p>
+<ol>
+<li><strong>What is a <code>Consumer</code>?</strong>  </li>
+</ol>
+<p>Already defined.
+</p>
+<ol>
+<li><strong>What is a <code>Supplier</code>?</strong>  </li>
+</ol>
+<p>Already defined.
+</p>
+<ol>
+<li><strong>What is a <code>UnaryOperator</code>?</strong>  </li>
+</ol>
+<p>Function where input and output are same type. Extends Function.
+</p>
+<ol>
+<li><strong>What is a <code>BinaryOperator</code>?</strong>  </li>
+</ol>
+<p>BiFunction where both arguments and result are same type.
+</p>
+<ol>
+<li><strong>What is a <code>BiFunction</code>?</strong>  </li>
+</ol>
+<p>Function taking two arguments, returns result.
+</p>
+<ol>
+<li><strong>What is a <code>BiPredicate</code>?</strong>  </li>
+</ol>
+<p>Predicate taking two arguments.
+</p>
+<ol>
+<li><strong>What is a <code>BiConsumer</code>?</strong>  </li>
+</ol>
+<p>Consumer taking two arguments.
+</p>
+<ol>
+<li><strong>What is a <code>Primitive</code> stream?</strong>  </li>
+</ol>
+<p>IntStream, LongStream, DoubleStream for primitive types to avoid boxing.
+</p>
+<ol>
+<li><strong>How to create an IntStream?</strong>  </li>
+</ol>
+<p>IntStream.of, Arrays.stream(int[]), range, rangeClosed.
+</p>
+<ol>
+<li><strong>What is <code>IntStream.range()</code>?</strong>  </li>
+</ol>
+<p>Returns sequential IntStream from start (inclusive) to end (exclusive).
+</p>
+<ol>
+<li><strong>What is <code>IntStream.rangeClosed()</code>?</strong>  </li>
+</ol>
+<p>Inclusive both ends.
+</p>
+<ol>
+<li><strong>What is <code>IntStream.boxed()</code>?</strong>  </li>
+</ol>
+<p>Converts primitive stream to Stream<Integer>.
+</p>
+<ol>
+<li><strong>What is <code>IntStream.mapToObj()</code>?</strong>  </li>
+</ol>
+<p>Maps int to object, returns Stream.
+</p>
+<ol>
+<li><strong>What is <code>IntStream.sum()</code>?</strong>  </li>
+</ol>
+<p>Returns sum of elements.
+</p>
+<ol>
+<li><strong>What is <code>IntStream.average()</code>?</strong>  </li>
+</ol>
+<p>Returns OptionalDouble average.
+</p>
+<ol>
+<li><strong>What is <code>IntStream.summaryStatistics()</code>?</strong>  </li>
+</ol>
+<p>Returns IntSummaryStatistics with count, sum, min, max, average.
+</p>
+<ol>
+<li><strong>What is a <code>Gatherer</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>GroupingBy</code> collector?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>PartitioningBy</code> collector?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Mapping</code> collector?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>FlatMapping</code> collector?</strong>  </li>
+</ol>
+<p>Java 9: similar to mapping but flattens results.
+</p>
+<ol>
+<li><strong>What is a <code>Filtering</code> collector?</strong>  </li>
+</ol>
+<p>Java 9: filters elements before downstream.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.teeing()</code>?</strong>  </li>
+</ol>
+<p>Merges two collectors.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.toUnmodifiableList()</code>?</strong>  </li>
+</ol>
+<p>Returns unmodifiable List (Java 10).
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.toUnmodifiableSet()</code>?</strong>  </li>
+</ol>
+<p>Returns unmodifiable Set.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.toUnmodifiableMap()</code>?</strong>  </li>
+</ol>
+<p>Returns unmodifiable Map.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.collectingAndThen()</code>?</strong>  </li>
+</ol>
+<p>Adapts collector by applying finishing function.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.maxBy()</code>?</strong>  </li>
+</ol>
+<p>Returns max element by comparator.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.minBy()</code>?</strong>  </li>
+</ol>
+<p>Returns min element.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.summingInt()</code>?</strong>  </li>
+</ol>
+<p>Sums int values extracted from elements.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.averagingInt()</code>?</strong>  </li>
+</ol>
+<p>Average of ints.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.summarizingInt()</code>?</strong>  </li>
+</ol>
+<p>Summary statistics.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.reducing()</code>?</strong>  </li>
+</ol>
+<p>General reduction.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.counting()</code>?</strong>  </li>
+</ol>
+<p>Counts elements.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.joining()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.mapping()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.flatMapping()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.filtering()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.groupingByConcurrent()</code>?</strong>  </li>
+</ol>
+<p>Concurrent version of groupingBy.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.partitioningBy()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.toCollection()</code>?</strong>  </li>
+</ol>
+<p>Collects to specific collection type.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.toConcurrentMap()</code>?</strong>  </li>
+</ol>
+<p>Concurrent map.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.toList()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.toSet()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Collectors.toMap()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.iterate()</code>?</strong>  </li>
+</ol>
+<p>Generates infinite sequential stream by iterative function. In Java 9, added hasNext predicate.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.generate()</code>?</strong>  </li>
+</ol>
+<p>Generates infinite stream by Supplier.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.concat()</code>?</strong>  </li>
+</ol>
+<p>Concatenates two streams.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.ofNullable()</code>?</strong>  </li>
+</ol>
+<p>Java 9: returns empty stream if null, else single element.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.takeWhile()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.dropWhile()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.iterate()</code> with predicate?</strong>  </li>
+</ol>
+<p>Java 9: iterate(seed, hasNext, next) – finite.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.of()</code>?</strong>  </li>
+</ol>
+<p>Creates stream of given elements.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.empty()</code>?</strong>  </li>
+</ol>
+<p>Returns empty stream.
+</p>
+<ol>
+<li><strong>What is a <code>Stream.builder()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is a <code>IntStream.iterate()</code>?</strong>  </li>
+</ol>
+<p>Primitive iterate.
+</p>
+<ol>
+<li><strong>What is a <code>LongStream.range()</code>?</strong>  </li>
+</ol>
+<p>Primitive range.
+</p>
+<ol>
+<li><strong>What is a <code>DoubleStream.generate()</code>?</strong>  </li>
+</ol>
+<p>Primitive generate.
+</p>
+<ol>
+<li><strong>What is the difference between <code>findFirst()</code> and <code>findAny()</code> in parallel?</strong>  </li>
+</ol>
+<p>findAny may be faster as it doesn't enforce order.
+</p>
+<ol>
+<li><strong>What is the difference between <code>anyMatch()</code>, <code>allMatch()</code>, <code>noneMatch()</code>?</strong>  </li>
+</ol>
+<p>Terminal operations returning boolean based on predicate.
+</p>
+<ol>
+<li><strong>What is <code>Stream.count()</code>?</strong>  </li>
+</ol>
+<p>Terminal returning count.
+</p>
+<ol>
+<li><strong>What is <code>Stream.min()</code>?</strong>  </li>
+</ol>
+<p>Terminal returning optional min by comparator.
+</p>
+<ol>
+<li><strong>What is <code>Stream.max()</code>?</strong>  </li>
+</ol>
+<p>Terminal returning max.
+</p>
+<ol>
+<li><strong>What is <code>Stream.reduce()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>Stream.collect()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>Stream.toArray()</code>?</strong>  </li>
+</ol>
+<p>Terminal returning array.
+</p>
+<ol>
+<li><strong>What is <code>Stream.toList()</code>?</strong>  </li>
+</ol>
+<p>Java 16: terminal returning immutable list (more efficient than collect(toList())).
+</p>
+<ol>
+<li><strong>What is <code>Stream.mapMulti()</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>Stream.mapMultiToInt()</code>?</strong>  </li>
+</ol>
+<p>Primitive specialized.
+</p>
+<ol>
+<li><strong>What is <code>Stream.flatMapToInt()</code>?</strong>  </li>
+</ol>
+<p>flatMap producing IntStream.
+</p>
+<ol>
+<li><strong>What is <code>Stream.boxed()</code>?</strong>  </li>
+</ol>
+<p>Converts primitive stream to object stream.
+</p>
+<ol>
+<li><strong>What is <code>Stream.unordered()</code>?</strong>  </li>
+</ol>
+<p>Intermediate operation indicating no encounter order, may improve parallel performance.
+</p>
+<ol>
+<li><strong>What is <code>Stream.onClose()</code>?</strong>  </li>
+</ol>
+<p>Adds close handler; called when stream closed.
+</p>
+<ol>
+<li><strong>What is a resource leak in streams?</strong>  </li>
+</ol>
+<p>If stream backed by IO resource (Files.lines), must close via try-with-resources.
+</p>
+<ol>
+<li><strong>What is a <code>Spliterator</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>Spliterator.characteristics()</code>?</strong>  </li>
+</ol>
+<p>Bit flags: ORDERED, DISTINCT, SORTED, SIZED, NONNULL, IMMUTABLE, CONCURRENT, SUBSIZED.
+</p>
+<ol>
+<li><strong>What is <code>Spliterator.tryAdvance()</code>?</strong>  </li>
+</ol>
+<p>Attempts to act on next element, returns true if available.
+</p>
+<ol>
+<li><strong>What is <code>Spliterator.forEachRemaining()</code>?</strong>  </li>
+</ol>
+<p>Performs action on remaining elements.
+</p>
+<ol>
+<li><strong>What is <code>Spliterator.trySplit()</code>?</strong>  </li>
+</ol>
+<p>Splits part of elements into new Spliterator.
+</p>
+<ol>
+<li><strong>What is <code>Spliterator.getExactSizeIfKnown()</code>?</strong>  </li>
+</ol>
+<p>Returns size if SIZED else -1.
+</p>
+<ol>
+<li><strong>What is <code>Spliterator.hasCharacteristics()</code>?</strong>  </li>
+</ol>
+<p>Checks if characteristics present.
+</p>
+<ol>
+<li><strong>What is a <code>PrimitiveIterator</code>?</strong>  </li>
+</ol>
+<p>Iterator with nextInt, nextLong, etc.
+</p>
+<ol>
+<li><strong>What is a <code>Consumer</code> in spliterator?</strong>  </li>
+</ol>
+<p>Used for element consumption.
+</p>
+<ol>
+<li><strong>What is a <code>Collector.Characteristics</code>?</strong>  </li>
+</ol>
+<p>CONCURRENT (can accumulate in parallel), UNORDERED (no order preserved), IDENTITY_FINISH (finisher is identity).
+</p>
+<ol>
+<li><strong>What is a <code>Collector</code> with <code>IDENTITY_FINISH</code>?</strong>  </li>
+</ol>
+<p>The collector's accumulator container is the final result; no finisher needed.
+</p>
+<ol>
+<li><strong>What is a <code>Concurrent</code> collector?</strong>  </li>
+</ol>
+<p>Collector that can accumulate in parallel without need for combiner.
+</p>
+<ol>
+<li><strong>What is a <code>Collector</code> with <code>UNORDERED</code>?</strong>  </li>
+</ol>
+<p>Indicates that collection order doesn't matter.
+</p>
+<ol>
+<li><strong>What is a <code>StringDeduplication</code> feature?</strong>  </li>
+</ol>
+<p>JVM feature (G1 only) that eliminates duplicate Strings by letting them share same char array, reducing memory.
+</p>
+<ol>
+<li><strong>What is a <code>Cleaner</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is the <code>finalize()</code> method?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>System.gc()</code>?</strong>  </li>
+</ol>
+<p>Suggests JVM to run GC, but not guaranteed.
+</p>
+<ol>
+<li><strong>What is <code>Runtime.gc()</code>?</strong>  </li>
+</ol>
+<p>Same as System.gc.
+</p>
+<ol>
+<li><strong>What is the difference between <code>WeakHashMap</code> and <code>HashMap</code>?</strong>  </li>
+</ol>
+<p>WeakHashMap uses weak keys; entries removed when key not strongly reachable.
+</p>
+<ol>
+<li><strong>What is a <code>LinkedHashMap</code>?</strong>  </li>
+</ol>
+<p>Hash table and linked list, maintains insertion order or access order.
+</p>
+<ol>
+<li><strong>What is a <code>TreeMap</code>?</strong>  </li>
+</ol>
+<p>Red-black tree based Map, sorted.
+</p>
+<ol>
+<li><strong>What is a <code>NavigableMap</code>?</strong>  </li>
+</ol>
+<p>Extends SortedMap with navigation methods like lowerKey, floorKey, ceilingKey, higherKey.
+</p>
+<ol>
+<li><strong>What is a <code>SortedMap</code>?</strong>  </li>
+</ol>
+<p>Map with ordering, methods: firstKey, lastKey, headMap, tailMap, subMap.
+</p>
+<ol>
+<li><strong>What is a <code>SortedSet</code>?</strong>  </li>
+</ol>
+<p>Set with ordering.
+</p>
+<ol>
+<li><strong>What is a <code>NavigableSet</code>?</strong>  </li>
+</ol>
+<p>Extends SortedSet with navigation methods.
+</p>
+<ol>
+<li><strong>What is a <code>BitSet</code>?</strong>  </li>
+</ol>
+<p>A vector of bits that grows as needed. Used for flags, sets.
+</p>
+<ol>
+<li><strong>What is a <code>Stack</code> class?</strong>  </li>
+</ol>
+<p>Legacy LIFO stack, extends Vector. Prefer ArrayDeque.
+</p>
+<ol>
+<li><strong>What is a <code>Properties</code> class?</strong>  </li>
+</ol>
+<p>Legacy class for key-value properties (String keys/values). Can load from .properties files.
+</p>
+<ol>
+<li><strong>What is a <code>ResourceBundle</code>?</strong>  </li>
+</ol>
+<p>For internationalization, loads locale-specific resources.
+</p>
+<ol>
+<li><strong>What is a <code>ListIterator</code>?</strong>  </li>
+</ol>
+<p>Iterator for List with forward/backward traversal, modification.
+</p>
+<ol>
+<li><strong>What is <code>UnsupportedOperationException</code>?</strong>  </li>
+</ol>
+<p>Thrown when operation not supported, e.g., unmodifiable collection's add.
+</p>
+<ol>
+<li><strong>What is <code>ClassCastException</code>?</strong>  </li>
+</ol>
+<p>Thrown when trying to cast object to incompatible type.
+</p>
+<ol>
+<li><strong>What is <code>ArrayStoreException</code>?</strong>  </li>
+</ol>
+<p>Thrown when storing wrong object type into array.
+</p>
+<ol>
+<li><strong>What is <code>NegativeArraySizeException</code>?</strong>  </li>
+</ol>
+<p>Thrown when array created with negative size.
+</p>
+<ol>
+<li><strong>What is <code>StringIndexOutOfBoundsException</code>?</strong>  </li>
+</ol>
+<p>Thrown by String methods when index out of range.
+</p>
+<ol>
+<li><strong>What is <code>NumberFormatException</code>?</strong>  </li>
+</ol>
+<p>Thrown when parsing string to number fails.
+</p>
+<ol>
+<li><strong>What is <code>IllegalThreadStateException</code>?</strong>  </li>
+</ol>
+<p>Thrown when thread operation not allowed in current state.
+</p>
+<ol>
+<li><strong>What is <code>InterruptedException</code>?</strong>  </li>
+</ol>
+<p>Thrown when thread interrupted while waiting/sleeping.
+</p>
+<ol>
+<li><strong>What is <code>ExecutionException</code>?</strong>  </li>
+</ol>
+<p>Wrapper exception from Future.get when computation threw exception.
+</p>
+<ol>
+<li><strong>What is <code>TimeoutException</code>?</strong>  </li>
+</ol>
+<p>Thrown when blocking operation times out.
+</p>
+<ol>
+<li><strong>What is <code>BrokenBarrierException</code>?</strong>  </li>
+</ol>
+<p>Thrown when CyclicBarrier broken due to interruption or timeout.
+</p>
+<ol>
+<li><strong>What is <code>RejectedExecutionException</code>?</strong>  </li>
+</ol>
+<p>Thrown when executor rejects task (e.g., queue full).
+</p>
+<ol>
+<li><strong>What is <code>ConcurrentModificationException</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>CompletionException</code>?</strong>  </li>
+</ol>
+<p>Exception in CompletableFuture completion.
+</p>
+<ol>
+<li><strong>What is <code>SuppressedException</code>?</strong>  </li>
+</ol>
+<p>Exceptions suppressed by try-with-resources.
+</p>
+<ol>
+<li><strong>What is <code>ExceptionInInitializerError</code>?</strong>  </li>
+</ol>
+<p>Thrown when static initializer throws exception.
+</p>
+<ol>
+<li><strong>What is <code>NoClassDefFoundError</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>ClassFormatError</code>?</strong>  </li>
+</ol>
+<p>Class file malformed.
+</p>
+<ol>
+<li><strong>What is <code>VerifyError</code>?</strong>  </li>
+</ol>
+<p>Bytecode verification fails.
+</p>
+<ol>
+<li><strong>What is <code>UnsupportedClassVersionError</code>?</strong>  </li>
+</ol>
+<p>Class compiled with newer Java than runtime.
+</p>
+<ol>
+<li><strong>What is <code>AbstractMethodError</code>?</strong>  </li>
+</ol>
+<p>Thrown when calling abstract method (usually due to incompatible change).
+</p>
+<ol>
+<li><strong>What is <code>NoSuchMethodError</code>?</strong>  </li>
+</ol>
+<p>Thrown when method not found (linkage error).
+</p>
+<ol>
+<li><strong>What is <code>NoSuchFieldError</code>?</strong>  </li>
+</ol>
+<p>Field not found.
+</p>
+<ol>
+<li><strong>What is <code>IllegalAccessError</code>?</strong>  </li>
+</ol>
+<p>Class cannot access member.
+</p>
+<ol>
+<li><strong>What is <code>InstantiationError</code>?</strong>  </li>
+</ol>
+<p>Thrown when trying to instantiate abstract class or interface.
+</p>
+<ol>
+<li><strong>What is <code>StackOverflowError</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>OutOfMemoryError</code>?</strong>  </li>
+</ol>
+<p>Already covered.
+</p>
+<ol>
+<li><strong>What is <code>VirtualMachineError</code>?</strong>  </li>
+</ol>
+<p>Superclass for JVM errors (like OutOfMemory, StackOverflow).
+</p>
+<ol>
+<li><strong>What is <code>AssertionError</code>?</strong>  </li>
+</ol>
+<p>Thrown when assertion fails (if enabled).
+</p>
+<ol>
+<li><strong>What is <code>assert</code> keyword?</strong>  </li>
+</ol>
+<p>Used for debugging: assert condition; assert condition : message; Enabled with -ea.
+</p>
+<ol>
+<li><strong>What is the difference between <code>assert</code> and exception?</strong>  </li>
+</ol>
+<p>Assert for internal invariants (development). Exception for recoverable conditions.
+</p>
+<ol>
+<li><strong>What is JIT compiler?</strong>  </li>
+</ol>
+<p>Just-In-Time compiler compiles bytecode to native code at runtime for performance.
+</p>
+<ol>
+<li><strong>What is AOT compilation?</strong>  </li>
+</ol>
+<p>Ahead-Of-Time compilation (Java 9 experimental) compiles to native before execution.
+</p>
+<ol>
+<li><strong>What is GraalVM?</strong>  </li>
+</ol>
+<p>High-performance polyglot VM with native image capability (AOT).
+</p>
+<ol>
+<li><strong>What is a <code>JMX</code>?</strong>  </li>
+</ol>
+<p>Java Management Extensions for monitoring and managing JVM and applications.
+</p>
+<ol>
+<li><strong>What is a <code>MBean</code>?</strong>  </li>
+</ol>
+<p>Managed Bean exposing resources for management.
+</p>
+<ol>
+<li><strong>What is <code>JConsole</code>?</strong>  </li>
+</ol>
+<p>JMX-compliant monitoring tool.
+</p>
+<ol>
+<li><strong>What is <code>VisualVM</code>?</strong>  </li>
+</ol>
+<p>Visual tool for monitoring, profiling.
+</p>
+<ol>
+<li><strong>What is <code>jstat</code>?</strong>  </li>
+</ol>
+<p>JVM statistics monitoring tool.
+</p>
+<ol>
+<li><strong>What is <code>jmap</code>?</strong>  </li>
+</ol>
+<p>Memory map (heap dump) tool.
+</p>
+<ol>
+<li><strong>What is <code>jstack</code>?</strong>  </li>
+</ol>
+<p>Stack trace dump tool.
+</p>
+<ol>
+<li><strong>What is <code>jhat</code>?</strong>  </li>
+</ol>
+<p>Heap analysis tool (deprecated).
+</p>
+<ol>
+<li><strong>What is <code>jcmd</code>?</strong>  </li>
+</ol>
+<p>Diagnostic command tool.
+</p>
+<ol>
+<li><strong>What is <code>jinfo</code>?</strong>  </li>
+</ol>
+<p>Configuration info.
+</p>
+<ol>
+<li><strong>What is <code>jps</code>?</strong>  </li>
+</ol>
+<p>Lists JVM processes.
+</p>
+<ol>
+<li><strong>What is <code>jdb</code>?</strong>  </li>
+</ol>
+<p>Java debugger.
+</p>
+<ol>
+<li><strong>What is <code>javap</code>?</strong>  </li>
+</ol>
+<p>Class file disassembler.
+</p>
+<ol>
+<li><strong>What is <code>jar</code> tool?</strong>  </li>
+</ol>
+<p>Creates/manipulates JAR files.
+</p>
+<ol>
+<li><strong>What is <code>JAR</code>?</strong>  </li>
+</ol>
+<p>Java Archive – ZIP format with manifest.
+</p>
+<ol>
+<li><strong>What is <code>WAR</code>?</strong>  </li>
+</ol>
+<p>Web Application Archive for web apps.
+</p>
+<ol>
+<li><strong>What is <code>EAR</code>?</strong>  </li>
+</ol>
+<p>Enterprise Archive for Java EE.
+</p>
+<ol>
+<li><strong>What is <code>MANIFEST.MF</code>?</strong>  </li>
+</ol>
+<p>Contains metadata: main class, version, classpath.
+</p>
+<ol>
+<li><strong>What is a <code>classpath</code>?</strong>  </li>
+</ol>
+<p>Path where JVM looks for classes and resources.
+</p>
+<ol>
+<li><strong>What is <code>module-path</code>?</strong>  </li>
+</ol>
+<p>Path where module system looks for modules (Java 9+).
+</p>
+<ol>
+<li><strong>What is <code>java.library.path</code>?</strong>  </li>
+</ol>
+<p>Path for native libraries.
+</p>
+<ol>
+<li><strong>What is <code>JNI</code>?</strong>  </li>
+</ol>
+<p>Java Native Interface – calls native code.
+</p>
+<ol>
+<li><strong>What is <code>JNA</code>?</strong>  </li>
+</ol>
+<p>Java Native Access – easier than JNI.
+</p>
+<ol>
+<li><strong>What is <code>FFM</code>?</strong>  </li>
+</ol>
+<p>Foreign Function & Memory API (Java 22) for calling native functions safely.
+</p>
+<ol>
+<li><strong>What is <code>Vector API</code>?</strong>  </li>
+</ol>
+<p>Incubating API for vector computations (SIMD).
+</p>
+<ol>
+<li><strong>What is <code>Panama</code> project?</strong>  </li>
+</ol>
+<p>Project for foreign function interface and vector API.
+</p>
+<ol>
+<li><strong>What is <code>Loom</code> project?</strong>  </li>
+</ol>
+<p>Project for virtual threads and continuations.
+</p>
+<ol>
+<li><strong>What is <code>Valhalla</code> project?</strong>  </li>
+</ol>
+<p>Project for value types and inline classes.
+</p>
+<ol>
+<li><strong>What is <code>Amber</code> project?</strong>  </li>
+</ol>
+<p>Project for language features: records, pattern matching, sealed classes.
+</p>
+<ol>
+<li><strong>What is <code>ZGC</code>?</strong>  </li>
+</ol>
+<p>Low-latency GC.
+</p>
+<ol>
+<li><strong>What is <code>Shenandoah</code>?</strong>  </li>
+</ol>
+<p>Low-pause GC.
+</p>
+<ol>
+<li><strong>What is <code>G1 GC</code>?</strong>  </li>
+</ol>
+<p>Garbage-first collector.
+</p>
+<ol>
+<li><strong>What is <code>CMS GC</code>?</strong>  </li>
+</ol>
+<p>Concurrent Mark Sweep (deprecated).
+</p>
+<ol>
+<li><strong>What is <code>Parallel GC</code>?</strong>  </li>
+</ol>
+<p>Throughput-oriented.
+</p>
+<ol>
+<li><strong>What is <code>Serial GC</code>?</strong>  </li>
+</ol>
+<p>Single-threaded for small apps.
+</p>
+<ol>
+<li><strong>What is <code>GC tuning</code>?</strong>  </li>
+</ol>
+<p>Adjusting heap sizes, generations, and collector selection for performance.
+</p>
+<ol>
+<li><strong>What is <code>heap dump</code>?</strong>  </li>
+</ol>
+<p>Snapshot of heap for analysis.
+</p>
+<ol>
+<li><strong>What is <code>thread dump</code>?</strong>  </li>
+</ol>
+<p>Snapshot of all thread stacks.
+</p>
+<ol>
+<li><strong>What is <code>profiling</code>?</strong>  </li>
+</ol>
+<p>Measuring performance: CPU, memory, threads.
+</p>
+<ol>
+<li><strong>What is <code>JMH</code>?</strong>  </li>
+</ol>
+<p>Java Microbenchmark Harness for accurate microbenchmarks.
+</p>
+<ol>
+<li><strong>What is <code>classloader</code> hierarchy?</strong>  </li>
+</ol>
+<p>Bootstrap -> Platform -> Application. Custom loaders can be created.
+</p>
+<ol>
+<li><strong>What is <code>classloader</code> delegation?</strong>  </li>
+</ol>
+<p>Classloader asks parent before loading class.
+</p>
+<ol>
+<li><strong>What is <code>OSGi</code>?</strong>  </li>
+</ol>
+<p>Dynamic module system for Java.
+</p>
+<ol>
+<li><strong>What is <code>Java EE</code> vs <code>Jakarta EE</code>?</strong>  </li>
+</ol>
+<p>Java EE is Oracle's; Jakarta EE is Eclipse Foundation's new name.
+</p>
+<ol>
+<li><strong>What is <code>CDI</code>?</strong>  </li>
+</ol>
+<p>Contexts and Dependency Injection.
+</p>
+<ol>
+<li><strong>What is <code>Spring</code>?</strong>  </li>
+</ol>
+<p>Popular framework for enterprise Java.
+</p>
+<ol>
+<li><strong>What is <code>dependency injection</code>?</strong>  </li>
+</ol>
+<p>Inversion of control where dependencies are provided.
+</p>
+<ol>
+<li><strong>What is <code>Spring Boot</code>?</strong>  </li>
+</ol>
+<p>Spring-based microservice framework with auto-configuration.
+</p>
+<ol>
+<li><strong>What is <code>Hibernate</code>?</strong>  </li>
+</ol>
+<p>ORM framework.
+</p>
+<ol>
+<li><strong>What is <code>JPA</code>?</strong>  </li>
+</ol>
+<p>Java Persistence API – standard for ORM.
+</p>
+<ol>
+<li><strong>What is <code>JDBC</code>?</strong>  </li>
+</ol>
+<p>Java Database Connectivity – API for SQL.
+</p>
+<ol>
+<li><strong>What is <code>connection pool</code>?</strong>  </li>
+</ol>
+<p>Pool of DB connections for reuse.
+</p>
+<ol>
+<li><strong>What is <code>HikariCP</code>?</strong>  </li>
+</ol>
+<p>High-performance connection pool.
+</p>
+<ol>
+<li><strong>What is <code>Maven</code>?</strong>  </li>
+</ol>
+<p>Build and dependency management tool.
+</p>
+<ol>
+<li><strong>What is <code>Gradle</code>?</strong>  </li>
+</ol>
+<p>Build automation tool.
+</p>
+<ol>
+<li><strong>What is <code>pom.xml</code>?</strong>  </li>
+</ol>
+<p>Project Object Model for Maven.
+</p>
+<ol>
+<li><strong>What is <code>build.gradle</code>?</strong>  </li>
+</ol>
+<p>Gradle build script.
+</p>
+<ol>
+<li><strong>What is <code>JUnit</code>?</strong>  </li>
+</ol>
+<p>Unit testing framework.
+</p>
+<ol>
+<li><strong>What is <code>Mockito</code>?</strong>  </li>
+</ol>
+<p>Mocking framework.
+</p>
+<ol>
+<li><strong>What is <code>TDD</code>?</strong>  </li>
+</ol>
+<p>Test-Driven Development.
+</p>
+<hr>
+<p>This list contains over 600 questions with concise answers. Use it as a comprehensive study guide for Java interviews.
+</p>
+        </article>
+    </div>
+</body>
+</html>

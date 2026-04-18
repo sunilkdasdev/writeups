@@ -1,0 +1,4634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Framework FAQs - Detailed Answers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Spring Framework FAQs - Detailed Answers</h1>
+<h2>1️⃣ Core Spring Container & Dependency Injection</h2>
+<h3>Q1: How does Spring's <code>DefaultListableBeanFactory</code> manage bean definitions internally?</h3>
+<p><strong>Simple Answer:</strong>
+Spring stores all bean definitions in a thread-safe HashMap where the key is the bean name and the value contains all the metadata about how to create that bean.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<ul>
+<li>Uses <code>ConcurrentHashMap<String, BeanDefinition></code> internally for the bean definition registry</li>
+<li>Each <code>BeanDefinition</code> contains:</li>
+<li>Bean class name</li>
+<li>Constructor argument values</li>
+<li>Property values</li>
+<li>Scope (singleton, prototype, etc.)</li>
+<li>Initialization and destruction callbacks</li>
+<li>Autowiring mode</li>
+<li>Supports parent-child factory hierarchy for definition inheritance</li>
+<li>O(1) lookup performance for bean retrieval</li>
+<li>Thread-safe operations allow concurrent read access</li>
+<li>Bean definitions can be merged from parent factories during lookup</li>
+<li>Also maintains separate caches for singleton instances, factory bean objects, and partially created beans</li>
+</ul>
+<p><strong>Key Internal Data Structures:</strong>
+</p>
+<pre><code>// Simplified internal structure
+<p>private final Map&lt;String, BeanDefinition&gt; beanDefinitionMap = new ConcurrentHashMap&lt;&gt;(256);
+private volatile List&lt;String&gt; beanDefinitionNames = new ArrayList&lt;&gt;(256);
+private final Map&lt;String, Object&gt; singletonObjects = new ConcurrentHashMap&lt;&gt;(256);
+private final Map&lt;String, ObjectFactory&lt;?&gt;&gt; singletonFactories = new HashMap&lt;&gt;(16);
+</p>
+</code></pre>
+<hr>
+<h3>Q2: Explain the complete lifecycle of a Spring bean from definition registration to destruction.</h3>
+<p><strong>Simple Answer:</strong>
+A Spring bean goes through several phases: registration → instantiation → dependency injection → initialization → ready for use → destruction when context shuts down.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>Phase 1: Definition Registration</strong>
+</p>
+<ul>
+<li>Bean definitions are registered from @Configuration classes, XML, or component scanning</li>
+<li>Stored in <code>BeanDefinitionRegistry</code></li>
+</ul>
+<p><strong>Phase 2: BeanFactoryPostProcessor Execution</strong>
+</p>
+<ul>
+<li>Modify bean definitions before any beans are instantiated</li>
+<li>Examples: <code>PropertyPlaceholderConfigurer</code>, <code>CustomScopeConfigurer</code></li>
+</ul>
+<p><strong>Phase 3: Instantiation</strong>
+</p>
+<ul>
+<li><code>InstantiationAwareBeanPostProcessor.postProcessBeforeInstantiation()</code> (optional proxy creation)</li>
+<li>Constructor or factory method invoked</li>
+<li>Bean instance created in memory</li>
+<li><code>InstantiationAwareBeanPostProcessor.postProcessAfterInstantiation()</code></li>
+</ul>
+<p><strong>Phase 4: Property Population</strong>
+</p>
+<ul>
+<li><code>InstantiationAwareBeanPostProcessor.postProcessProperties()</code> - modify properties</li>
+<li>Dependency injection occurs (field, setter, or constructor injection)</li>
+<li><code>@Autowired</code>, <code>@Value</code>, <code>@Resource</code> resolved here</li>
+</ul>
+<p><strong>Phase 5: Aware Interfaces Callbacks</strong> (in order)
+</p>
+<ol>
+<li><code>BeanNameAware.setBeanName()</code></li>
+<li><code>BeanClassLoaderAware.setBeanClassLoader()</code></li>
+<li><code>BeanFactoryAware.setBeanFactory()</code></li>
+<li><code>EnvironmentAware.setEnvironment()</code></li>
+<li><code>EmbeddedValueResolverAware.setEmbeddedValueResolver()</code></li>
+<li><code>ResourceLoaderAware.setResourceLoader()</code></li>
+<li><code>ApplicationEventPublisherAware.setApplicationEventPublisher()</code></li>
+<li><code>MessageSourceAware.setMessageSource()</code></li>
+<li><code>ApplicationContextAware.setApplicationContext()</code></li>
+</ol>
+<p><strong>Phase 6: BeanPostProcessor Pre-Initialization</strong>
+</p>
+<ul>
+<li><code>BeanPostProcessor.postProcessBeforeInitialization()</code> for all registered post-processors</li>
+<li>Common AOP proxy creation happens here</li>
+</ul>
+<p><strong>Phase 7: Initialization Callbacks</strong> (in order)
+</p>
+<ol>
+<li><code>@PostConstruct</code> annotated methods</li>
+<li><code>InitializingBean.afterPropertiesSet()</code></li>
+<li>Custom <code>init-method</code> specified in configuration</li>
+</ol>
+<p><strong>Phase 8: BeanPostProcessor Post-Initialization</strong>
+</p>
+<ul>
+<li><code>BeanPostProcessor.postProcessAfterInitialization()</code></li>
+<li>Proxy wrapping (if not done earlier)</li>
+<li>Bean is now fully initialized and ready</li>
+</ul>
+<p><strong>Phase 9: Bean Ready for Use</strong>
+</p>
+<ul>
+<li>Bean is available in container</li>
+<li>Can be injected into other beans</li>
+</ul>
+<p><strong>Phase 10: Destruction</strong> (on context shutdown, in order)
+</p>
+<ol>
+<li><code>@PreDestroy</code> annotated methods</li>
+<li><code>DisposableBean.destroy()</code></li>
+<li>Custom <code>destroy-method</code> specified in configuration</li>
+<li><code>DestructionAwareBeanPostProcessor.postProcessBeforeDestruction()</code></li>
+</ol>
+<p><strong>Code Example:</strong>
+</p>
+<pre><code>@Component
+<p>public class LifecycleBean implements BeanNameAware, BeanFactoryAware,
+        InitializingBean, DisposableBean &#123;
+</p>
+<p>public LifecycleBean() &#123;
+        System.out.println(&quot;1. Constructor called&quot;);
+    &#125;
+</p>
+<p>@Autowired
+    public void setDependency(SomeDependency dep) &#123;
+        System.out.println(&quot;2. Dependency injected&quot;);
+    &#125;
+</p>
+<p>@Override
+    public void setBeanName(String name) &#123;
+        System.out.println(&quot;3. BeanNameAware: &quot; + name);
+    &#125;
+</p>
+<p>@Override
+    public void setBeanFactory(BeanFactory beanFactory) &#123;
+        System.out.println(&quot;4. BeanFactoryAware&quot;);
+    &#125;
+</p>
+<p>@PostConstruct
+    public void postConstruct() &#123;
+        System.out.println(&quot;5. @PostConstruct&quot;);
+    &#125;
+</p>
+<p>@Override
+    public void afterPropertiesSet() &#123;
+        System.out.println(&quot;6. InitializingBean.afterPropertiesSet()&quot;);
+    &#125;
+</p>
+<p>// Bean ready for use here
+</p>
+<p>@PreDestroy
+    public void preDestroy() &#123;
+        System.out.println(&quot;7. @PreDestroy&quot;);
+    &#125;
+</p>
+<p>@Override
+    public void destroy() &#123;
+        System.out.println(&quot;8. DisposableBean.destroy()&quot;);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h3>Q3: What is the difference between type-based and name-based autowiring?</h3>
+<p><strong>Simple Answer:</strong>
+Type-based autowiring matches beans by their Java class type. Name-based autowiring matches beans by their string name in the Spring container.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>Type-Based Autowiring (<code>@Autowired</code>)</strong>
+</p>
+<ul>
+<li>Matches by Java type</li>
+<li>Uses <code>AutowiredAnnotationBeanPostProcessor</code></li>
+<li>Resolution strategy:</li>
+</ul>
+<p>1. Find all beans of matching type
+  2. If exactly one → inject it
+  3. If multiple → check for <code>@Primary</code>
+  4. If still multiple → check for <code>@Qualifier</code>
+  5. If still multiple → fallback to field/parameter name matching
+  6. If still ambiguous → throw <code>NoUniqueBeanDefinitionException</code>
+</p>
+<p><strong>Name-Based Autowiring (<code>@Resource</code>)</strong>
+</p>
+<ul>
+<li>JSR-250 standard annotation</li>
+<li>Matches by bean name first, then by type</li>
+<li>Uses <code>CommonAnnotationBeanPostProcessor</code></li>
+<li>Resolution strategy:</li>
+</ul>
+<p>1. Look for bean with exact name specified in <code>@Resource(name="...")</code>
+  2. If no name specified, use field/parameter name
+  3. If name match fails, fallback to type matching
+  4. Throws <code>NoSuchBeanDefinitionException</code> if not found
+</p>
+<p><strong>Comparison:</strong>
+</p>
+<pre><code>@Component
+<p>public class ServiceA implements MyService &#123; &#125;
+</p>
+<p>@Component
+public class ServiceB implements MyService &#123; &#125;
+</p>
+<p>public class Example &#123;
+    // Type-based: Fails with NoUniqueBeanDefinitionException
+    @Autowired
+    private MyService service;
+</p>
+<p>// Type-based with qualifier: Works
+    @Autowired
+    @Qualifier(&quot;serviceA&quot;)
+    private MyService service;
+</p>
+<p>// Name-based: Matches by name &quot;serviceA&quot;
+    @Resource(name = &quot;serviceA&quot;)
+    private MyService service;
+</p>
+<p>// Name-based: Uses field name &quot;serviceB&quot; to find bean
+    @Resource
+    private MyService serviceB;
+&#125;
+</p>
+</code></pre>
+<p><strong>When to Use:</strong>
+</p>
+<ul>
+<li><strong>Type-based</strong>: Default choice, clearer intent, better for refactoring</li>
+<li><strong>Name-based</strong>: When you have multiple beans of same type and want explicit name matching</li>
+</ul>
+<hr>
+<h3>Q4: How does Spring resolve generic-type injection points (e.g., <code>Repository<User></code>)?</h3>
+<p><strong>Simple Answer:</strong>
+Spring uses Java's reflection API to read generic type parameters at runtime and matches them against the actual generic types declared on beans.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>Resolution Process:</strong>
+</p>
+<ol>
+<li><strong>Type Extraction</strong>: Spring uses <code>ResolvableType</code> class to extract generic information</li>
+<li><strong>Erasure Handling</strong>: Works around Java's type erasure using reflection on fields/methods</li>
+<li><strong>Matching Algorithm</strong>:</li>
+</ol>
+<ul>
+<li>Extract raw type (e.g., <code>Repository</code>)</li>
+<li>Extract generic arguments (e.g., <code>User</code>)</li>
+<li>Find all beans matching raw type</li>
+<li>Filter by generic argument compatibility</li>
+<li>Apply qualifier/primary bean rules if needed</li>
+</ul>
+<p><strong>Internal Mechanism:</strong>
+</p>
+<pre><code>// Spring's internal resolution
+<p>ResolvableType injectionType = ResolvableType.forField(field);
+Class&lt;?&gt; rawClass = injectionType.resolve(); // Repository
+ResolvableType genericArg = injectionType.getGeneric(0); // User
+</p>
+<p>// Find matching beans
+for (String beanName : candidateBeans) &#123;
+    ResolvableType beanType = getBeanType(beanName);
+    if (beanType.isAssignableFrom(injectionType)) &#123;
+        // Match found
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Example:</strong>
+</p>
+<pre><code>// Generic repository interface
+<p>public interface Repository&lt;T&gt; &#123;
+    T findById(Long id);
+&#125;
+</p>
+<p>// Concrete implementations
+@Component
+public class UserRepository implements Repository&lt;User&gt; &#123; &#125;
+</p>
+<p>@Component
+public class ProductRepository implements Repository&lt;Product&gt; &#123; &#125;
+</p>
+<p>// Injection points
+@Service
+public class UserService &#123;
+    @Autowired
+    private Repository&lt;User&gt; userRepo; // Correctly injects UserRepository
+</p>
+<p>@Autowired
+    private Repository&lt;Product&gt; productRepo; // Correctly injects ProductRepository
+&#125;
+</p>
+</code></pre>
+<p><strong>Limitations:</strong>
+</p>
+<ul>
+<li>Generic type info must be available at runtime (can't use wildcards like <code>Repository<?></code>)</li>
+<li>Doesn't work with local variables or constructor parameter generics in some cases</li>
+<li>Bridge methods from type erasure can complicate matching</li>
+</ul>
+<p><strong>Advanced Use Case:</strong>
+</p>
+<pre><code>// Custom generic qualifier
+<p>@Component
+public class GenericService&lt;T&gt; &#123;
+    @Autowired
+    private List&lt;Processor&lt;T&gt;&gt; processors; // Injects all matching processors
+&#125;
+</p>
+</code></pre>
+<hr>
+<h3>Q10: How does Spring handle a prototype bean injected into a singleton?</h3>
+<p><strong>Simple Answer:</strong>
+The singleton bean gets <strong>one instance</strong> of the prototype bean at creation time and keeps using that same instance, defeating the purpose of prototype scope.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>The Problem:</strong>
+</p>
+<pre><code>@Component
+<p>@Scope(&quot;prototype&quot;)
+public class PrototypeBean &#123;
+    private UUID id = UUID.randomUUID();
+    public UUID getId() &#123; return id; &#125;
+&#125;
+</p>
+<p>@Component // singleton by default
+public class SingletonBean &#123;
+    @Autowired
+    private PrototypeBean prototypeBean;
+</p>
+<p>public void doSomething() &#123;
+        System.out.println(prototypeBean.getId()); // Always same ID!
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Why This Happens:</strong>
+</p>
+<ol>
+<li>Spring creates <code>SingletonBean</code> once at startup</li>
+<li>Dependency injection occurs during singleton creation</li>
+<li>Spring creates <strong>one</strong> <code>PrototypeBean</code> instance and injects it</li>
+<li><code>SingletonBean</code> holds reference to that one instance forever</li>
+<li>Subsequent calls to <code>doSomething()</code> use the same cached instance</li>
+</ol>
+<p><strong>Solutions:</strong>
+</p>
+<p><strong>Solution 1: Method Injection with <code>@Lookup</code></strong> (Recommended)
+</p>
+<pre><code>@Component
+<p>public abstract class SingletonBean &#123;
+</p>
+<p>@Lookup // Spring generates implementation at runtime
+    public abstract PrototypeBean getPrototypeBean();
+</p>
+<p>public void doSomething() &#123;
+        PrototypeBean bean = getPrototypeBean(); // New instance each time
+        System.out.println(bean.getId());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p>How it works:
+</p>
+<ul>
+<li>Spring creates a CGLIB subclass at runtime</li>
+<li>Overrides the abstract method to return <code>applicationContext.getBean(PrototypeBean.class)</code></li>
+<li>Each call returns a fresh instance</li>
+</ul>
+<p><strong>Solution 2: <code>ObjectProvider<T></code></strong> (Clean, Type-Safe)
+</p>
+<pre><code>@Component
+<p>public class SingletonBean &#123;
+</p>
+<p>@Autowired
+    private ObjectProvider&lt;PrototypeBean&gt; prototypeBeanProvider;
+</p>
+<p>public void doSomething() &#123;
+        PrototypeBean bean = prototypeBeanProvider.getObject(); // New instance
+        System.out.println(bean.getId());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Solution 3: <code>ObjectFactory<T></code></strong> (Similar to Provider)
+</p>
+<pre><code>@Component
+<p>public class SingletonBean &#123;
+</p>
+<p>@Autowired
+    private ObjectFactory&lt;PrototypeBean&gt; prototypeBeanFactory;
+</p>
+<p>public void doSomething() &#123;
+        PrototypeBean bean = prototypeBeanFactory.getObject();
+        System.out.println(bean.getId());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Solution 4: <code>ApplicationContext</code> Injection</strong> (Less Preferred)
+</p>
+<pre><code>@Component
+<p>public class SingletonBean &#123;
+</p>
+<p>@Autowired
+    private ApplicationContext context;
+</p>
+<p>public void doSomething() &#123;
+        PrototypeBean bean = context.getBean(PrototypeBean.class);
+        System.out.println(bean.getId());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p>Drawbacks: Couples code to Spring, harder to test
+</p>
+<p><strong>Solution 5: Scoped Proxy</strong> (For Web Scopes Mainly)
+</p>
+<pre><code>@Component
+<p>@Scope(value = &quot;prototype&quot;, proxyMode = ScopedProxyMode.TARGET_CLASS)
+public class PrototypeBean &#123; &#125;
+</p>
+<p>@Component
+public class SingletonBean &#123;
+    @Autowired
+    private PrototypeBean prototypeBean; // Actually a proxy
+</p>
+<p>public void doSomething() &#123;
+        // Proxy creates new instance for each method call
+        System.out.println(prototypeBean.getId());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Performance Comparison:</strong>
+</p>
+<ul>
+<li><code>@Lookup</code>: Fastest, no interface overhead</li>
+<li><code>ObjectProvider</code>: Slight overhead, excellent for optional dependencies</li>
+<li><code>ApplicationContext</code>: Slowest, most flexible</li>
+</ul>
+<p><strong>Testing:</strong>
+</p>
+<pre><code>@Test
+<p>void testPrototypeInjection() &#123;
+    UUID firstId = singletonBean.getPrototypeBean().getId();
+    UUID secondId = singletonBean.getPrototypeBean().getId();
+    assertNotEquals(firstId, secondId); // Should be different
+&#125;
+</p>
+</code></pre>
+<hr>
+<h3>Q12: How does <code>@Configuration</code> class proxying affect bean method calls?</h3>
+<p><strong>Simple Answer:</strong>
+When <code>proxyBeanMethods = true</code> (default), Spring creates a proxy that intercepts calls between <code>@Bean</code> methods to ensure proper bean scoping. When <code>false</code>, methods are called directly like regular Java methods.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>With Proxying (Default: <code>proxyBeanMethods = true</code>)</strong>
+</p>
+<pre><code>@Configuration // proxyBeanMethods = true by default
+<p>public class AppConfig &#123;
+</p>
+<p>@Bean
+    public ServiceA serviceA() &#123;
+        return new ServiceA(serviceB()); // Intercepted!
+    &#125;
+</p>
+<p>@Bean
+    public ServiceB serviceB() &#123;
+        return new ServiceB();
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>What Happens:</strong>
+</p>
+<ol>
+<li>Spring creates a CGLIB proxy subclass of <code>AppConfig</code></li>
+<li>Proxy intercepts all <code>@Bean</code> method calls</li>
+<li>When <code>serviceA()</code> calls <code>serviceB()</code>:</li>
+</ol>
+<ul>
+<li>Proxy checks if <code>serviceB</code> bean already exists in container</li>
+<li>If yes: Returns existing singleton instance</li>
+<li>If no: Calls actual method, registers result, returns it</li>
+</ul>
+<ol>
+<li>Guarantees singleton semantics even for inter-bean method calls</li>
+</ol>
+<p><strong>Internal Proxy Mechanism:</strong>
+</p>
+<pre><code>// Simplified proxy behavior
+<p>public class AppConfig$$EnhancerBySpringCGLIB extends AppConfig &#123;
+</p>
+<p>@Override
+    public ServiceB serviceB() &#123;
+        // Check container first
+        if (beanFactory.containsBean(&quot;serviceB&quot;)) &#123;
+            return beanFactory.getBean(&quot;serviceB&quot;, ServiceB.class);
+        &#125;
+        // Call actual method if not found
+        return super.serviceB();
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Without Proxying (<code>proxyBeanMethods = false</code>)</strong>
+</p>
+<pre><code>@Configuration(proxyBeanMethods = false)
+<p>public class AppConfig &#123;
+</p>
+<p>@Bean
+    public ServiceA serviceA() &#123;
+        return new ServiceA(serviceB()); // Direct call!
+    &#125;
+</p>
+<p>@Bean
+    public ServiceB serviceB() &#123;
+        return new ServiceB(); // Creates NEW instance every call
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>What Happens:</strong>
+</p>
+<ol>
+<li>No CGLIB proxy created</li>
+<li>Methods called directly as regular Java methods</li>
+<li><code>serviceA()</code> calling <code>serviceB()</code> creates a <strong>new instance</strong> each time</li>
+<li>Breaks singleton semantics for inter-bean calls</li>
+<li>Faster startup time (no proxy generation)</li>
+</ol>
+<p><strong>Comparison Table:</strong>
+</p>
+<table><thead><tr><th>Aspect</th><th>proxyBeanMethods = true</th><th>proxyBeanMethods = false</th></tr></thead><tbody><tr><td>Proxy Creation</td><td>CGLIB subclass</td><td>None (plain class)</td></tr><tr><td>Inter-bean calls</td><td>Container-managed</td><td>Direct Java calls</td></tr><tr><td>Singleton guarantee</td><td>Yes</td><td>Only for external calls</td></tr><tr><td>Startup time</td><td>Slower</td><td>Faster</td></tr><tr><td>Memory usage</td><td>Higher</td><td>Lower</td></tr><tr><td>Use case</td><td>Inter-bean dependencies</td><td>Independent beans</td></tr></tbody></table>
+<p><strong>When to Use <code>false</code>:</strong>
+</p>
+<ul>
+<li>All <code>@Bean</code> methods are independent (no inter-method calls)</li>
+<li>Configuration only creates beans, doesn't wire them together</li>
+<li>Performance-critical applications (microservices)</li>
+<li>Using Spring Boot auto-configuration (most already use <code>false</code>)</li>
+</ul>
+<p><strong>Example Problem with <code>false</code>:</strong>
+</p>
+<pre><code>@Configuration(proxyBeanMethods = false)
+<p>public class ProblematicConfig &#123;
+</p>
+<p>@Bean
+    public DataSource dataSource() &#123;
+        return new HikariDataSource(...);
+    &#125;
+</p>
+<p>@Bean
+    public JdbcTemplate jdbcTemplate() &#123;
+        // Creates NEW DataSource instead of using the bean!
+        return new JdbcTemplate(dataSource());
+    &#125;
+</p>
+<p>@Bean
+    public TransactionManager txManager() &#123;
+        // Another NEW DataSource instance!
+        return new DataSourceTransactionManager(dataSource());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Correct Solution with <code>false</code>:</strong>
+</p>
+<pre><code>@Configuration(proxyBeanMethods = false)
+<p>public class CorrectConfig &#123;
+</p>
+<p>@Bean
+    public DataSource dataSource() &#123;
+        return new HikariDataSource(...);
+    &#125;
+</p>
+<p>@Bean
+    public JdbcTemplate jdbcTemplate(DataSource dataSource) &#123;
+        return new JdbcTemplate(dataSource); // Injected by Spring
+    &#125;
+</p>
+<p>@Bean
+    public TransactionManager txManager(DataSource dataSource) &#123;
+        return new DataSourceTransactionManager(dataSource); // Same instance
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Performance Impact:</strong>
+</p>
+<ul>
+<li>Proxy creation adds ~50-100ms per configuration class</li>
+<li>For large applications with hundreds of <code>@Configuration</code> classes, this adds up</li>
+<li>Spring Boot 2.2+ uses <code>proxyBeanMethods = false</code> for most auto-configurations</li>
+</ul>
+<hr>
+<h2>2️⃣ Aspect-Oriented Programming (AOP)</h2>
+<h3>Q31: Describe Spring's proxy-creation strategy: when does it pick JDK dynamic proxies vs. CGLIB?</h3>
+<p><strong>Simple Answer:</strong>
+Spring uses JDK proxies when the target bean implements interfaces, and CGLIB proxies when the bean is a concrete class without interfaces.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>Decision Tree:</strong>
+</p>
+<pre><code>Target Bean
+<p>│
+    ├─ Implements interface(s)?
+    │   ├─ Yes → JDK Dynamic Proxy (default)
+    │   └─ No → CGLIB Proxy
+    │
+    └─ proxyTargetClass = true?
+        └─ Yes → CGLIB Proxy (forced)
+</p>
+</code></pre>
+<p><strong>JDK Dynamic Proxy:</strong>
+</p>
+<ul>
+<li>Uses <code>java.lang.reflect.Proxy</code></li>
+<li>Creates a proxy that implements the same interfaces</li>
+<li>Delegates to <code>InvocationHandler</code></li>
+<li><strong>Cannot</strong> proxy classes, only interfaces</li>
+<li>Faster proxy creation</li>
+<li>Smaller bytecode footprint</li>
+</ul>
+<pre><code>public interface UserService &#123;
+<p>User findById(Long id);
+&#125;
+</p>
+<p>@Service
+public class UserServiceImpl implements UserService &#123;
+    @Override
+    public User findById(Long id) &#123; &#125;
+&#125;
+</p>
+<p>// Spring creates:
+// Proxy implements UserService
+// Proxy delegates to UserServiceImpl
+</p>
+</code></pre>
+<p><strong>CGLIB Proxy:</strong>
+</p>
+<ul>
+<li>Uses Code Generation Library (CGLIB)</li>
+<li>Creates a <strong>subclass</strong> of the target class</li>
+<li>Overrides all non-final methods</li>
+<li>Uses <code>MethodInterceptor</code> callback</li>
+<li>Can proxy concrete classes</li>
+<li>Slower proxy creation (bytecode generation)</li>
+<li>Larger memory footprint</li>
+</ul>
+<pre><code>@Service
+<p>public class UserService &#123; // No interface
+    public User findById(Long id) &#123; &#125;
+&#125;
+</p>
+<p>// Spring creates:
+// UserService$$EnhancerBySpringCGLIB extends UserService
+// Overrides findById() to add advice
+</p>
+</code></pre>
+<p><strong>Forcing CGLIB:</strong>
+</p>
+<pre><code>@EnableAspectJAutoProxy(proxyTargetClass = true)
+<p>@Configuration
+public class AppConfig &#123; &#125;
+</p>
+<p>// Or in Spring Boot
+spring.aop.proxy-target-class=true
+</p>
+</code></pre>
+<p><strong>Limitations:</strong>
+</p>
+<p><strong>JDK Proxy Limitations:</strong>
+</p>
+<ul>
+<li>Can only proxy interface methods</li>
+<li>Cannot proxy concrete class methods</li>
+<li>Cannot inject the concrete class type</li>
+</ul>
+<pre><code>@Autowired
+<p>private UserServiceImpl service; // FAILS with JDK proxy
+// Use interface type instead:
+@Autowired
+private UserService service; // WORKS
+</p>
+</code></pre>
+<p><strong>CGLIB Proxy Limitations:</strong>
+</p>
+<ul>
+<li>Cannot override <code>final</code> methods</li>
+<li>Cannot override <code>private</code> methods</li>
+<li>Cannot proxy <code>final</code> classes</li>
+<li>Requires no-arg constructor (in older versions)</li>
+</ul>
+<pre><code>@Service
+<p>public class UserService &#123;
+    public final User findById(Long id) &#123; &#125; // NOT PROXIED
+    private void helper() &#123; &#125; // NOT PROXIED
+&#125;
+</p>
+</code></pre>
+<p><strong>Performance Comparison:</strong>
+</p>
+<ul>
+<li>JDK: ~5-10x faster proxy creation</li>
+<li>CGLIB: ~10-15% slower method invocation</li>
+<li>For most apps: Negligible difference</li>
+</ul>
+<p><strong>Best Practices:</strong>
+</p>
+<ol>
+<li><strong>Prefer interfaces</strong> for better testability and loose coupling</li>
+<li>Use CGLIB only when necessary (concrete classes, framework requirements)</li>
+<li>Be aware of final method limitations with CGLIB</li>
+<li>Spring Boot defaults to CGLIB since 2.0</li>
+</ol>
+<hr>
+<h3>Q34: What is the self-invocation problem and solutions?</h3>
+<p><strong>Simple Answer:</strong>
+When a Spring bean calls its own method, the call bypasses the proxy, so AOP advice (like <code>@Transactional</code>) doesn't apply. Solutions include injecting the bean's own proxy or refactoring.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>The Problem:</strong>
+</p>
+<pre><code>@Service
+<p>public class UserService &#123;
+</p>
+<p>@Transactional
+    public void updateUser(User user) &#123;
+        // Save user
+        sendNotification(user); // Self-invocation!
+    &#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendNotification(User user) &#123;
+        // This transaction advice is IGNORED!
+        // Called directly, not through proxy
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Why It Happens:</strong>
+</p>
+<pre><code>Client → Proxy → Target Object
+<p>↓
+         Advice Applied
+</p>
+<p>Internal call: Target Object → Target Object
+                            ↑
+                      No Proxy, No Advice!
+</p>
+</code></pre>
+<p>When <code>updateUser()</code> calls <code>sendNotification()</code>:
+</p>
+<ol>
+<li>Call goes directly from <code>updateUser</code> to <code>sendNotification</code></li>
+<li>Doesn't pass through the proxy</li>
+<li>Transaction advice on <code>sendNotification</code> never executes</li>
+<li>Both methods run in the same transaction</li>
+</ol>
+<p><strong>Solution 1: Inject Self-Proxy</strong>
+</p>
+<pre><code>@Service
+<p>public class UserService &#123;
+</p>
+<p>@Autowired
+    @Lazy // Prevents circular dependency
+    private UserService self;
+</p>
+<p>@Transactional
+    public void updateUser(User user) &#123;
+        // Save user
+        self.sendNotification(user); // Goes through proxy!
+    &#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendNotification(User user) &#123;
+        // NEW transaction created
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Solution 2: <code>AopContext.currentProxy()</code></strong>
+</p>
+<pre><code>@EnableAspectJAutoProxy(exposeProxy = true)
+<p>@Configuration
+public class AppConfig &#123; &#125;
+</p>
+<p>@Service
+public class UserService &#123;
+</p>
+<p>@Transactional
+    public void updateUser(User user) &#123;
+        UserService proxy = (UserService) AopContext.currentProxy();
+        proxy.sendNotification(user); // Through proxy
+    &#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendNotification(User user) &#123; &#125;
+&#125;
+</p>
+</code></pre>
+<p>Drawbacks:
+</p>
+<ul>
+<li>Couples code to Spring AOP</li>
+<li><code>exposeProxy = true</code> has performance overhead (ThreadLocal)</li>
+<li>Can throw <code>IllegalStateException</code> if no proxy available</li>
+</ul>
+<p><strong>Solution 3: Refactor to Separate Service</strong> (Best Practice)
+</p>
+<pre><code>@Service
+<p>public class UserService &#123;
+    @Autowired
+    private NotificationService notificationService;
+</p>
+<p>@Transactional
+    public void updateUser(User user) &#123;
+        // Save user
+        notificationService.sendNotification(user); // Different bean
+    &#125;
+&#125;
+</p>
+<p>@Service
+public class NotificationService &#123;
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendNotification(User user) &#123;
+        // NEW transaction in separate service
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p>Benefits:
+</p>
+<ul>
+<li>Clear separation of concerns</li>
+<li>No coupling to Spring AOP</li>
+<li>Easier to test</li>
+<li>Follows Single Responsibility Principle</li>
+</ul>
+<p><strong>Solution 4: AspectJ Load-Time Weaving</strong>
+</p>
+<pre><code>@EnableLoadTimeWeaving
+<p>@Configuration
+public class AppConfig &#123; &#125;
+</p>
+<p>// Run with: -javaagent:path/to/spring-instrument.jar
+</p>
+<p>@Service
+public class UserService &#123;
+    @Transactional
+    public void updateUser(User user) &#123;
+        sendNotification(user); // Works! AspectJ weaves bytecode
+    &#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendNotification(User user) &#123; &#125;
+&#125;
+</p>
+</code></pre>
+<p>How it works:
+</p>
+<ul>
+<li>AspectJ modifies bytecode at load time</li>
+<li>Weaves advice directly into class</li>
+<li>No proxy needed</li>
+<li>Works for private methods, final classes</li>
+</ul>
+<p>Drawbacks:
+</p>
+<ul>
+<li>Requires JVM agent</li>
+<li>More complex setup</li>
+<li>Longer startup time</li>
+</ul>
+<p><strong>Debugging Self-Invocation:</strong>
+</p>
+<pre><code>@Aspect
+<p>@Component
+public class TransactionDebugAspect &#123;
+    @Before(&quot;@annotation(transactional)&quot;)
+    public void logTransaction(JoinPoint jp, Transactional transactional) &#123;
+        System.out.println(&quot;Transaction started: &quot; + jp.getSignature());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p>If this doesn't print for internal calls, you have self-invocation issue.
+</p>
+<p><strong>Performance Comparison:</strong>
+</p>
+<ul>
+<li>Self-injection: Minimal overhead</li>
+<li><code>AopContext</code>: ThreadLocal lookup overhead (~5-10ns)</li>
+<li>Separate service: No overhead, cleanest</li>
+<li>AspectJ LTW: No runtime overhead, bytecode weaving cost at startup</li>
+</ul>
+<hr>
+<h2>3️⃣ Transaction Management</h2>
+<h3>Q51: List all transaction propagation types with a REQUIRES_NEW use case.</h3>
+<p><strong>Simple Answer:</strong>
+Spring has 7 propagation types: REQUIRED (default), REQUIRES_NEW, SUPPORTS, NOT_SUPPORTED, MANDATORY, NEVER, and NESTED. <code>REQUIRES_NEW</code> is used when you need a completely independent transaction that commits regardless of the outer transaction's outcome.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>All Propagation Types:</strong>
+</p>
+<p><strong>1. REQUIRED (Default)</strong>
+</p>
+<ul>
+<li>Joins existing transaction if present</li>
+<li>Creates new transaction if none exists</li>
+<li>Most common setting</li>
+</ul>
+<pre><code>@Transactional(propagation = Propagation.REQUIRED)
+<p>public void method() &#123;
+    // If transaction exists: join it
+    // If no transaction: create new one
+&#125;
+</p>
+</code></pre>
+<p><strong>2. REQUIRES_NEW</strong>
+</p>
+<ul>
+<li><strong>Always</strong> creates a new transaction</li>
+<li>Suspends current transaction if exists</li>
+<li>Inner transaction commits/rolls back independently</li>
+</ul>
+<pre><code>@Transactional(propagation = Propagation.REQUIRES_NEW)
+<p>public void method() &#123;
+    // Always creates new transaction
+    // Outer transaction suspended temporarily
+&#125;
+</p>
+</code></pre>
+<p><strong>3. SUPPORTS</strong>
+</p>
+<ul>
+<li>Runs within transaction if one exists</li>
+<li>Runs non-transactionally if none exists</li>
+<li>Use for read-only operations</li>
+</ul>
+<pre><code>@Transactional(propagation = Propagation.SUPPORTS)
+<p>public void method() &#123;
+    // Transaction optional
+&#125;
+</p>
+</code></pre>
+<p><strong>4. NOT_SUPPORTED</strong>
+</p>
+<ul>
+<li>Suspends current transaction</li>
+<li>Always runs non-transactionally</li>
+</ul>
+<pre><code>@Transactional(propagation = Propagation.NOT_SUPPORTED)
+<p>public void method() &#123;
+    // No transaction even if caller has one
+&#125;
+</p>
+</code></pre>
+<p><strong>5. MANDATORY</strong>
+</p>
+<ul>
+<li><strong>Requires</strong> existing transaction</li>
+<li>Throws exception if no transaction exists</li>
+</ul>
+<pre><code>@Transactional(propagation = Propagation.MANDATORY)
+<p>public void method() &#123;
+    // Must be called within transaction
+    // Throws IllegalTransactionStateException otherwise
+&#125;
+</p>
+</code></pre>
+<p><strong>6. NEVER</strong>
+</p>
+<ul>
+<li><strong>Cannot</strong> run within transaction</li>
+<li>Throws exception if transaction exists</li>
+</ul>
+<pre><code>@Transactional(propagation = Propagation.NEVER)
+<p>public void method() &#123;
+    // Must NOT be called within transaction
+&#125;
+</p>
+</code></pre>
+<p><strong>7. NESTED</strong>
+</p>
+<ul>
+<li>Creates nested transaction (savepoint)</li>
+<li>Rolls back to savepoint on failure</li>
+<li>Only works with JDBC, not JTA</li>
+</ul>
+<pre><code>@Transactional(propagation = Propagation.NESTED)
+<p>public void method() &#123;
+    // Creates savepoint
+    // Can rollback partially
+&#125;
+</p>
+</code></pre>
+<p><strong>REQUIRES_NEW Use Case: Audit Logging</strong>
+</p>
+<p><strong>Problem:</strong> You want to log all actions even if the main business transaction fails.
+</p>
+<pre><code>@Service
+<p>public class OrderService &#123;
+    @Autowired
+    private AuditService auditService;
+</p>
+<p>@Transactional
+    public void processOrder(Order order) &#123;
+        try &#123;
+            // Log attempt - should ALWAYS be saved
+            auditService.logOrderAttempt(order);
+</p>
+<p>// Process order
+            validateOrder(order);
+            saveOrder(order);
+            sendConfirmation(order);
+</p>
+<p>// Log success
+            auditService.logOrderSuccess(order);
+</p>
+<p>&#125; catch (Exception e) &#123;
+            // Log failure - should STILL be saved
+            auditService.logOrderFailure(order, e);
+            throw e; // Rollback main transaction
+        &#125;
+    &#125;
+&#125;
+</p>
+<p>@Service
+public class AuditService &#123;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logOrderAttempt(Order order) &#123;
+        AuditLog log = new AuditLog();
+        log.setAction(&quot;ORDER_ATTEMPT&quot;);
+        log.setOrderId(order.getId());
+        auditRepository.save(log); // Commits in separate transaction
+    &#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logOrderSuccess(Order order) &#123;
+        AuditLog log = new AuditLog();
+        log.setAction(&quot;ORDER_SUCCESS&quot;);
+        log.setOrderId(order.getId());
+        auditRepository.save(log); // Commits independently
+    &#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logOrderFailure(Order order, Exception e) &#123;
+        AuditLog log = new AuditLog();
+        log.setAction(&quot;ORDER_FAILURE&quot;);
+        log.setOrderId(order.getId());
+        log.setError(e.getMessage());
+        auditRepository.save(log); // Commits even if order transaction rolls back
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Execution Flow:</strong>
+</p>
+<pre><code>1. processOrder() starts → Transaction A begins
+<ol>
+<li>logOrderAttempt() called → Transaction A suspended</li>
+</ol>
+<p>→ Transaction B begins
+                              → Audit logged
+                              → Transaction B commits
+                              → Transaction A resumed
+</p>
+<ol>
+<li>validateOrder() fails → Exception thrown</li>
+<li>logOrderFailure() called → Transaction A suspended</li>
+</ol>
+<p>→ Transaction C begins
+                              → Failure logged
+                              → Transaction C commits
+                              → Transaction A resumed
+</p>
+<ol>
+<li>Exception propagates → Transaction A rolls back</li>
+<li>Result: Order not saved, but audit logs ARE saved</li>
+</ol>
+</code></pre>
+<p><strong>Other REQUIRES_NEW Use Cases:</strong>
+</p>
+<p><strong>Background Job Processing:</strong>
+</p>
+<pre><code>@Transactional
+<p>public void processBatch(List&lt;Item&gt; items) &#123;
+    for (Item item : items) &#123;
+        try &#123;
+            processItem(item); // Each in separate transaction
+        &#125; catch (Exception e) &#123;
+            // Continue processing other items
+        &#125;
+    &#125;
+&#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void processItem(Item item) &#123;
+    // If this fails, only this item rolls back
+&#125;
+</p>
+</code></pre>
+<p><strong>Notification Sending:</strong>
+</p>
+<pre><code>@Transactional
+<p>public void registerUser(User user) &#123;
+    userRepository.save(user);
+    notificationService.sendWelcomeEmail(user); // Should not fail registration
+&#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void sendWelcomeEmail(User user) &#123;
+    // Email sending failure won't rollback user registration
+&#125;
+</p>
+</code></pre>
+<p><strong>Performance Considerations:</strong>
+</p>
+<ul>
+<li>REQUIRES_NEW has overhead (suspend/resume transactions)</li>
+<li>Creates additional database connections</li>
+<li>Can cause deadlocks if not careful</li>
+<li>Use sparingly, only when truly needed</li>
+</ul>
+<hr>
+<h3>Q58: How to programmatically mark a transaction for rollback without throwing?</h3>
+<p><strong>Simple Answer:</strong>
+Call <code>TransactionAspectSupport.currentTransactionStatus().setRollbackOnly()</code> to mark the current transaction for rollback without throwing an exception.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>Basic Usage:</strong>
+</p>
+<pre><code>@Service
+<p>public class PaymentService &#123;
+</p>
+<p>@Transactional
+    public void processPayment(Payment payment) &#123;
+        try &#123;
+            validatePayment(payment);
+            chargeCard(payment);
+</p>
+<p>if (fraudDetected(payment)) &#123;
+                // Mark for rollback without throwing
+                TransactionAspectSupport.currentTransactionStatus()
+                    .setRollbackOnly();
+                return; // Exit gracefully
+            &#125;
+</p>
+<p>confirmPayment(payment);
+        &#125; catch (Exception e) &#123;
+            // Transaction will rollback automatically
+            log.error(&quot;Payment failed&quot;, e);
+        &#125;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Why Use This:</strong>
+</p>
+<ol>
+<li><strong>Graceful Degradation</strong>: Return error response without exception</li>
+<li><strong>Conditional Rollback</strong>: Based on business logic, not exceptions</li>
+<li><strong>Partial Processing</strong>: Mark rollback after some operations complete</li>
+<li><strong>API Contracts</strong>: Methods that shouldn't throw exceptions</li>
+</ol>
+<p><strong>Complete Example with Status Checking:</strong>
+</p>
+<pre><code>@Service
+<p>public class OrderService &#123;
+</p>
+<p>@Transactional
+    public OrderResult processOrder(Order order) &#123;
+        TransactionStatus status = TransactionAspectSupport.currentTransactionStatus();
+</p>
+<p>try &#123;
+            // Step 1: Validate
+            if (!isValid(order)) &#123;
+                status.setRollbackOnly();
+                return OrderResult.validationFailed();
+            &#125;
+</p>
+<p>// Step 2: Check inventory
+            if (!hasInventory(order)) &#123;
+                status.setRollbackOnly();
+                return OrderResult.outOfStock();
+            &#125;
+</p>
+<p>// Step 3: Process payment
+            PaymentResult paymentResult = processPayment(order);
+            if (!paymentResult.isSuccessful()) &#123;
+                status.setRollbackOnly();
+                return OrderResult.paymentFailed();
+            &#125;
+</p>
+<p>// Step 4: Save order
+            saveOrder(order);
+</p>
+<p>// Check if still good to commit
+            if (status.isRollbackOnly()) &#123;
+                return OrderResult.failed();
+            &#125;
+</p>
+<p>return OrderResult.success();
+</p>
+<p>&#125; catch (Exception e) &#123;
+            status.setRollbackOnly();
+            return OrderResult.error(e);
+        &#125;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Checking Rollback Status:</strong>
+</p>
+<pre><code>@Transactional
+<p>public void complexOperation() &#123;
+    TransactionStatus status = TransactionAspectSupport.currentTransactionStatus();
+</p>
+<p>// Check if already marked for rollback
+    if (status.isRollbackOnly()) &#123;
+        log.warn(&quot;Transaction already marked for rollback&quot;);
+        return;
+    &#125;
+</p>
+<p>// Do work...
+</p>
+<p>// Check again before proceeding
+    if (!status.isRollbackOnly()) &#123;
+        proceedWithMoreWork();
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Alternative: Using TransactionTemplate</strong>
+</p>
+<pre><code>@Service
+<p>public class AlternativeService &#123;
+</p>
+<p>@Autowired
+    private TransactionTemplate transactionTemplate;
+</p>
+<p>public Result doWork() &#123;
+        return transactionTemplate.execute(status -&gt; &#123;
+            try &#123;
+                performWork();
+</p>
+<p>if (shouldRollback()) &#123;
+                    status.setRollbackOnly();
+                    return Result.failed();
+                &#125;
+</p>
+<p>return Result.success();
+</p>
+<p>&#125; catch (Exception e) &#123;
+                status.setRollbackOnly();
+                return Result.error(e);
+            &#125;
+        &#125;);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Nested Transactions:</strong>
+</p>
+<pre><code>@Transactional
+<p>public void outerMethod() &#123;
+    TransactionStatus outerStatus = TransactionAspectSupport.currentTransactionStatus();
+</p>
+<p>innerMethod();
+</p>
+<p>// Inner method can't force outer to rollback with REQUIRES_NEW
+    // But with REQUIRED, it will
+    if (outerStatus.isRollbackOnly()) &#123;
+        log.warn(&quot;Inner method marked transaction for rollback&quot;);
+    &#125;
+&#125;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRED)
+public void innerMethod() &#123;
+    if (someCondition()) &#123;
+        TransactionAspectSupport.currentTransactionStatus()
+            .setRollbackOnly(); // Marks OUTER transaction too
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Exception Handling:</strong>
+</p>
+<pre><code>@Transactional
+<p>public void handleRollback() &#123;
+    try &#123;
+        TransactionAspectSupport.currentTransactionStatus()
+            .setRollbackOnly();
+    &#125; catch (NoTransactionException e) &#123;
+        // Called outside transaction context
+        log.error(&quot;No active transaction&quot;, e);
+    &#125; catch (IllegalTransactionStateException e) &#123;
+        // Transaction in invalid state
+        log.error(&quot;Invalid transaction state&quot;, e);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Testing:</strong>
+</p>
+<pre><code>@SpringBootTest
+<p>class TransactionTest &#123;
+</p>
+<p>@Autowired
+    private OrderService orderService;
+</p>
+<p>@Autowired
+    private OrderRepository orderRepository;
+</p>
+<p>@Test
+    @Transactional
+    void testRollbackOnly() &#123;
+        Order order = new Order();
+        order.setInvalid(true);
+</p>
+<p>OrderResult result = orderService.processOrder(order);
+</p>
+<p>assertFalse(result.isSuccess());
+</p>
+<p>// Verify nothing was saved
+        entityManager.flush();
+        assertEquals(0, orderRepository.count());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Best Practices:</strong>
+</p>
+<ol>
+<li><strong>Document clearly</strong> when methods set rollback without throwing</li>
+<li><strong>Return status objects</strong> instead of throwing exceptions</li>
+<li><strong>Check rollback status</strong> before proceeding with expensive operations</li>
+<li><strong>Use sparingly</strong> - exceptions are clearer in most cases</li>
+<li><strong>Test thoroughly</strong> - rollback behavior can be subtle</li>
+</ol>
+<p><strong>Common Pitfalls:</strong>
+</p>
+<pre><code>// WRONG: Trying to commit after setRollbackOnly
+<p>@Transactional
+public void wrong() &#123;
+    TransactionStatus status = TransactionAspectSupport.currentTransactionStatus();
+    status.setRollbackOnly();
+    // Transaction WILL rollback, you cannot change this
+&#125;
+</p>
+<p>// WRONG: Setting rollback in wrong propagation
+@Transactional(propagation = Propagation.NEVER)
+public void alsoWrong() &#123;
+    // NoTransactionException - no transaction exists!
+    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>4️⃣ Spring Boot</h2>
+<h3>Q76: What three meta-annotations compose <code>@SpringBootApplication</code>?</h3>
+<p><strong>Simple Answer:</strong>
+</p>
+<code>@SpringBootApplication</code> combines three annotations: <code>@Configuration</code> (for Java configuration), <code>@EnableAutoConfiguration</code> (for automatic bean registration), and <code>@ComponentScan</code> (for scanning components in the package).
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>The Composition:</strong>
+</p>
+<pre><code>@Target(ElementType.TYPE)
+<p>@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+@SpringBootConfiguration  // Which is itself @Configuration
+@EnableAutoConfiguration
+@ComponentScan(excludeFilters = &#123;
+    @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
+    @Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class)
+&#125;)
+public @interface SpringBootApplication &#123;
+    // Customization options...
+&#125;
+</p>
+</code></pre>
+<p><strong>1. <code>@Configuration</code> (via <code>@SpringBootConfiguration</code>)</strong>
+</p>
+<ul>
+<li>Marks the class as a source of bean definitions</li>
+<li>Allows <code>@Bean</code> methods</li>
+<li>Subject to CGLIB proxying for inter-bean calls</li>
+</ul>
+<pre><code>@SpringBootApplication
+<p>public class MyApp &#123;
+    @Bean
+    public MyService myService() &#123;
+        return new MyServiceImpl();
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>2. <code>@EnableAutoConfiguration</code></strong>
+</p>
+<ul>
+<li>Triggers Spring Boot's auto-configuration mechanism</li>
+<li>Reads <code>META-INF/spring.factories</code> and <code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code></li>
+<li>Conditionally registers beans based on classpath and existing beans</li>
+</ul>
+<p><strong>How it works:</strong>
+</p>
+<pre><code>@EnableAutoConfiguration
+<p>↓
+@Import(AutoConfigurationImportSelector.class)
+    ↓
+Reads: META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+    ↓
+Loads all auto-configuration classes
+    ↓
+Evaluates @Conditional annotations
+    ↓
+Registers matching beans
+</p>
+</code></pre>
+<p><strong>Example auto-configurations activated:</strong>
+</p>
+<ul>
+<li><code>DataSourceAutoConfiguration</code> (if JDBC on classpath)</li>
+<li><code>JpaRepositoriesAutoConfiguration</code> (if Spring Data JPA on classpath)</li>
+<li><code>WebMvcAutoConfiguration</code> (if Spring MVC on classpath)</li>
+<li><code>SecurityAutoConfiguration</code> (if Spring Security on classpath)</li>
+</ul>
+<p><strong>3. <code>@ComponentScan</code></strong>
+</p>
+<ul>
+<li>Scans for <code>@Component</code>, <code>@Service</code>, <code>@Repository</code>, <code>@Controller</code> annotated classes</li>
+<li>Default: Scans the package of the <code>@SpringBootApplication</code> class and all sub-packages</li>
+<li>Discovers and registers beans automatically</li>
+</ul>
+<p><strong>Scan behavior:</strong>
+</p>
+<pre><code>com.example.myapp
+<p>↓ @SpringBootApplication here
+    ├── MyApp.java
+    ├── controller/     ✅ Scanned
+    ├── service/        ✅ Scanned
+    ├── repository/     ✅ Scanned
+    └── config/         ✅ Scanned
+</p>
+<p>com.example.other/      ❌ NOT scanned (outside package)
+</p>
+</code></pre>
+<p><strong>Customizing the Annotations:</strong>
+</p>
+<p><strong>Exclude auto-configurations:</strong>
+</p>
+<pre><code>@SpringBootApplication(exclude = &#123;
+<p>DataSourceAutoConfiguration.class,
+    SecurityAutoConfiguration.class
+&#125;)
+public class MyApp &#123; &#125;
+</p>
+</code></pre>
+<p><strong>Custom component scan:</strong>
+</p>
+<pre><code>@SpringBootApplication(scanBasePackages = &#123;
+<p>&quot;com.example.myapp&quot;,
+    &quot;com.example.shared&quot;
+&#125;)
+public class MyApp &#123; &#125;
+</p>
+<p>// Or exclude specific packages
+@SpringBootApplication(
+    scanBasePackageClasses = &#123;MyApp.class, OtherPackage.class&#125;,
+    excludeFilters = @Filter(
+        type = FilterType.REGEX,
+        pattern = &quot;com.example.myapp.test.<em>&quot;
+    )
+)
+public class MyApp &#123; &#125;
+</p>
+</code></pre>
+<p><strong>Disable auto-configuration entirely:</strong>
+</p>
+<pre><code>@Configuration
+<p>@ComponentScan
+public class MyApp &#123;
+    // No auto-configuration, full manual control
+&#125;
+</p>
+</code></pre>
+<p><strong>Equivalent Expanded Form:</strong>
+</p>
+<pre><code>// Instead of @SpringBootApplication
+<p>@Configuration
+@EnableAutoConfiguration
+@ComponentScan
+public class MyApp &#123;
+    public static void main(String[] args) &#123;
+        SpringApplication.run(MyApp.class, args);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Processing Order:</strong>
+</p>
+<ol>
+<li><code>@ComponentScan</code> runs first → discovers user-defined beans</li>
+<li><code>@EnableAutoConfiguration</code> runs second → registers auto-configured beans</li>
+<li>User beans take precedence over auto-configured beans (due to <code>@ConditionalOnMissingBean</code>)</li>
+</ol>
+<p><strong>Common Patterns:</strong>
+</p>
+<p><strong>Multiple packages:</strong>
+</p>
+<pre><code>@SpringBootApplication
+<p>@ComponentScan(basePackages = &#123;
+    &quot;com.example.core&quot;,
+    &quot;com.example.web&quot;,
+    &quot;com.example.data&quot;
+&#125;)
+public class MyApp &#123; &#125;
+</p>
+</code></pre>
+<p><strong>Excluding test components:</strong>
+</p>
+<pre><code>@SpringBootApplication(excludeFilters = &#123;
+<p>@Filter(type = FilterType.REGEX, pattern = &quot;.</em>Test.<em>&quot;)
+&#125;)
+public class MyApp &#123; &#125;
+</p>
+</code></pre>
+<hr>
+<h3>Q77: How does auto-configuration discover candidate classes?</h3>
+<p><strong>Simple Answer:</strong>
+Spring Boot reads configuration files (<code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code> in Spring Boot 3.x, or <code>META-INF/spring.factories</code> in older versions) that list auto-configuration classes, then evaluates their <code>@Conditional</code> annotations to decide which to activate.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>Discovery Process (Spring Boot 3.x):</strong>
+</p>
+<p><strong>Step 1: Load Auto-Configuration Imports</strong>
+</p>
+<pre><code>// Spring Boot reads this file from all JARs on classpath
+<p>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+</p>
+<p>// Example contents:
+org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration
+</p>
+</code></pre>
+<p><strong>Step 2: <code>AutoConfigurationImportSelector</code> Processing</strong>
+</p>
+<pre><code>@EnableAutoConfiguration
+<p>↓
+@Import(AutoConfigurationImportSelector.class)
+    ↓
+AutoConfigurationImportSelector.selectImports() is called
+    ↓
+Reads META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+    ↓
+Returns array of configuration class names
+</p>
+</code></pre>
+<p><strong>Step 3: Conditional Evaluation</strong>
+Each auto-configuration class has <code>@Conditional</code> annotations:
+</p>
+<pre><code>@Configuration
+<p>@ConditionalOnClass(DataSource.class)  // Only if DataSource on classpath
+@ConditionalOnMissingBean(DataSource.class)  // Only if no DataSource bean exists
+@EnableConfigurationProperties(DataSourceProperties.class)
+public class DataSourceAutoConfiguration &#123;
+</p>
+<p>@Bean
+    @ConditionalOnProperty(name = &quot;spring.datasource.type&quot;)
+    public DataSource dataSource(DataSourceProperties properties) &#123;
+        // Create DataSource
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Step 4: Ordering</strong>
+Auto-configurations are ordered using <code>@AutoConfigureAfter</code>, <code>@AutoConfigureBefore</code>, <code>@AutoConfigureOrder</code>:
+</p>
+<pre><code>@Configuration
+<p>@AutoConfigureAfter(DataSourceAutoConfiguration.class)
+public class JpaAutoConfiguration &#123;
+    // Runs after DataSource is configured
+&#125;
+</p>
+</code></pre>
+<p><strong>Complete Flow Diagram:</strong>
+</p>
+<pre><code>Application Starts
+<p>↓
+@EnableAutoConfiguration detected
+    ↓
+AutoConfigurationImportSelector invoked
+    ↓
+Read AutoConfiguration.imports from ALL JARs
+    ↓
+Load class metadata (doesn't instantiate yet)
+    ↓
+Evaluate @Conditional annotations:
+</p>
+<ul>
+<li>@ConditionalOnClass → Check classpath</li>
+<li>@ConditionalOnBean → Check existing beans</li>
+<li>@ConditionalOnProperty → Check properties</li>
+<li>@ConditionalOnMissingBean → Check bean doesn't exist</li>
+</ul>
+<p>↓
+Filter out non-matching configurations
+    ↓
+Sort by @AutoConfigureOrder
+    ↓
+Process remaining configurations
+    ↓
+Register beans in ApplicationContext
+</p>
+</code></pre>
+<p><strong>Example Auto-Configuration:</strong>
+</p>
+<pre><code>@Configuration(proxyBeanMethods = false)
+<p>@ConditionalOnClass(&#123; ServletRequest.class, StandardServletEnvironment.class &#125;)
+@ConditionalOnWebApplication(type = Type.SERVLET)
+@EnableConfigurationProperties(ServerProperties.class)
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+public class WebMvcAutoConfiguration &#123;
+</p>
+<p>@Bean
+    @ConditionalOnMissingBean
+    public RequestMappingHandlerMapping requestMappingHandlerMapping() &#123;
+        // Only created if user hasn't defined one
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Conditional Annotations Deep Dive:</strong>
+</p>
+<p><strong>1. <code>@ConditionalOnClass</code></strong>
+</p>
+<pre><code>@ConditionalOnClass(name = &quot;javax.sql.DataSource&quot;)
+<p>// Checks if class exists on classpath WITHOUT loading it
+// Uses ASM to read class metadata
+</p>
+</code></pre>
+<p><strong>2. <code>@ConditionalOnBean</code></strong>
+</p>
+<pre><code>@ConditionalOnBean(DataSource.class)
+<p>// Checks if bean of type DataSource exists
+// Evaluated AFTER all user-defined beans are registered
+</p>
+</code></pre>
+<p><strong>3. <code>@ConditionalOnMissingBean</code></strong>
+</p>
+<pre><code>@ConditionalOnMissingBean(DataSource.class)
+<p>// Only if NO DataSource bean exists
+// Allows user beans to override auto-configuration
+</p>
+</code></pre>
+<p><strong>4. <code>@ConditionalOnProperty</code></strong>
+</p>
+<pre><code>@ConditionalOnProperty(
+<p>name = &quot;spring.datasource.enabled&quot;,
+    havingValue = &quot;true&quot;,
+    matchIfMissing = true
+)
+// Checks application.properties/yml
+</p>
+</code></pre>
+<p><strong>5. <code>@ConditionalOnWebApplication</code></strong>
+</p>
+<pre><code>@ConditionalOnWebApplication(type = Type.SERVLET)
+<p>// Only if servlet-based web app
+</p>
+</code></pre>
+<p><strong>Creating Custom Auto-Configuration:</strong>
+</p>
+<p><strong>Step 1: Create Configuration Class</strong>
+</p>
+<pre><code>package com.example.autoconfigure;
+<p>@Configuration
+@ConditionalOnClass(MyService.class)
+@ConditionalOnMissingBean(MyService.class)
+@EnableConfigurationProperties(MyServiceProperties.class)
+public class MyServiceAutoConfiguration &#123;
+</p>
+<p>@Bean
+    public MyService myService(MyServiceProperties properties) &#123;
+        return new MyServiceImpl(properties);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Step 2: Create Properties Class</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;myservice&quot;)
+<p>public class MyServiceProperties &#123;
+    private boolean enabled = true;
+    private String endpoint;
+    // getters/setters
+&#125;
+</p>
+</code></pre>
+<p><strong>Step 3: Register Auto-Configuration</strong>
+Create file: <code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code>
+</p>
+<pre><code>com.example.autoconfigure.MyServiceAutoConfiguration
+</code></pre>
+<p><strong>Step 4: Package as Starter</strong>
+</p>
+<pre><code>&lt;dependency&gt;
+<p>&lt;groupId&gt;com.example&lt;/groupId&gt;
+    &lt;artifactId&gt;myservice-spring-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;
+</p>
+</code></pre>
+<p><strong>Debugging Auto-Configuration:</strong>
+</p>
+<p><strong>Enable debug logging:</strong>
+</p>
+<pre><code># application.properties
+<p>debug=true
+</p>
+</code></pre>
+<p>Output shows:
+</p>
+<pre><code>Positive matches:
+<p>DataSourceAutoConfiguration matched:
+</p>
+<ul>
+<li>@ConditionalOnClass found required class 'javax.sql.DataSource'</li>
+</ul>
+<p>Negative matches:
+   RedisAutoConfiguration:
+      Did not match:
+</p>
+<ul>
+<li>@ConditionalOnClass did not find required class 'redis.clients.jedis.Jedis'</li>
+</ul>
+</code></pre>
+<p><strong>Programmatic access:</strong>
+</p>
+<pre><code>@SpringBootApplication
+<p>public class MyApp &#123;
+    public static void main(String[] args) &#123;
+        ConfigurableApplicationContext context = 
+            SpringApplication.run(MyApp.class, args);
+</p>
+<p>// Get auto-configuration report
+        ConditionEvaluationReport report = 
+            context.getBean(ConditionEvaluationReport.class);
+</p>
+<p>report.getConditionAndOutcomesBySource().forEach((source, outcomes) -&gt; &#123;
+            System.out.println(source + &quot; -&gt; &quot; + outcomes);
+        &#125;);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Excluding Auto-Configurations:</strong>
+</p>
+<pre><code>// Method 1: Annotation
+<p>@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+</p>
+<p>// Method 2: Properties
+spring.autoconfigure.exclude=\
+  org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+</p>
+</code></pre>
+<p><strong>Performance Optimization:</strong>
+</p>
+<pre><code>// Disable expensive auto-configurations
+<p>@Configuration(proxyBeanMethods = false)  // Faster startup
+@ConditionalOnClass(value = MyService.class, classLoader = MyClassLoader.class)
+</p>
+</code></pre>
+<hr>
+<h3>Q83: When to use <code>@ConfigurationProperties</code> vs <code>@Value</code>?</h3>
+<p><strong>Simple Answer:</strong>
+Use <code>@ConfigurationProperties</code> for grouping related properties into a type-safe bean with validation. Use <code>@Value</code> for injecting individual properties or when you need SpEL expressions.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong><code>@ConfigurationProperties</code> - Type-Safe Property Binding</strong>
+</p>
+<p><strong>Basic Usage:</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;app.mail&quot;)
+<p>@Component
+public class MailProperties &#123;
+    private String host;
+    private int port = 587;
+    private String username;
+    private String password;
+    private Map&lt;String, String&gt; headers = new HashMap&lt;&gt;();
+    private List&lt;String&gt; recipients = new ArrayList&lt;&gt;();
+</p>
+<p>// Getters and setters required for binding
+&#125;
+</p>
+</code></pre>
+<p><strong>application.yml:</strong>
+</p>
+<pre><code>app:
+<p>mail:
+    host: smtp.gmail.com
+    port: 587
+    username: user@example.com
+    password: secret
+    headers:
+      X-Priority: 1
+      X-Mailer: MyApp
+    recipients:
+</p>
+<ul>
+<li>admin@example.com</li>
+<li>support@example.com</li>
+</ul>
+</code></pre>
+<p><strong>Enabling ConfigurationProperties:</strong>
+</p>
+<pre><code>// Method 1: Component scanning
+<p>@ConfigurationProperties(prefix = &quot;app.mail&quot;)
+@Component
+public class MailProperties &#123; &#125;
+</p>
+<p>// Method 2: @EnableConfigurationProperties
+@Configuration
+@EnableConfigurationProperties(MailProperties.class)
+public class AppConfig &#123; &#125;
+</p>
+<p>// Method 3: @ConfigurationPropertiesScan (Spring Boot 2.2+)
+@SpringBootApplication
+@ConfigurationPropertiesScan(&quot;com.example.config&quot;)
+public class MyApp &#123; &#125;
+</p>
+</code></pre>
+<p><strong>Advanced Features:</strong>
+</p>
+<p><strong>1. Nested Properties:</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;app&quot;)
+<p>public class AppProperties &#123;
+    private Database database = new Database();
+    private Security security = new Security();
+</p>
+<p>public static class Database &#123;
+        private String url;
+        private String username;
+        private String password;
+        private Pool pool = new Pool();
+</p>
+<p>public static class Pool &#123;
+            private int maxSize = 10;
+            private int minIdle = 2;
+        &#125;
+    &#125;
+</p>
+<p>public static class Security &#123;
+        private boolean enabled = true;
+        private List&lt;String&gt; allowedOrigins;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<pre><code>app:
+<p>database:
+    url: jdbc:postgresql://localhost/mydb
+    username: user
+    password: pass
+    pool:
+      max-size: 20
+      min-idle: 5
+  security:
+    enabled: true
+    allowed-origins:
+</p>
+<ul>
+<li>https://example.com</li>
+<li>https://api.example.com</li>
+</ul>
+</code></pre>
+<p><strong>2. Validation:</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;app&quot;)
+<p>@Validated
+public class AppProperties &#123;
+</p>
+<p>@NotBlank
+    private String name;
+</p>
+<p>@Min(1)
+    @Max(65535)
+    private int port;
+</p>
+<p>@Email
+    private String adminEmail;
+</p>
+<p>@Pattern(regexp = &quot;^https?://.</em>&quot;)
+    private String apiUrl;
+</p>
+<p>@Valid
+    private Database database;
+</p>
+<p>public static class Database &#123;
+        @NotNull
+        private String url;
+</p>
+<p>@Size(min = 3, max = 50)
+        private String username;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>3. Duration and DataSize Support:</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;app&quot;)
+<p>public class AppProperties &#123;
+    @DurationUnit(ChronoUnit.SECONDS)
+    private Duration timeout = Duration.ofSeconds(30);
+</p>
+<p>@DataSizeUnit(DataUnit.MEGABYTES)
+    private DataSize maxFileSize = DataSize.ofMegabytes(10);
+&#125;
+</p>
+</code></pre>
+<pre><code>app:
+<p>timeout: 30s  # or 30, 30ms, 30m, 30h
+  max-file-size: 10MB  # or 10, 10KB, 10GB
+</p>
+</code></pre>
+<p><strong>4. Constructor Binding (Immutable Configuration):</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;app&quot;)
+<p>@ConstructorBinding
+public class AppProperties &#123;
+    private final String name;
+    private final int port;
+    private final Database database;
+</p>
+<p>public AppProperties(String name, int port, Database database) &#123;
+        this.name = name;
+        this.port = port;
+        this.database = database;
+    &#125;
+</p>
+<p>// Only getters, no setters
+</p>
+<p>public record Database(String url, String username) &#123; &#125;
+&#125;
+</p>
+<p>// Enable constructor binding
+@EnableConfigurationProperties(AppProperties.class)
+</p>
+</code></pre>
+<p><strong><code>@Value</code> - Individual Property Injection</strong>
+</p>
+<p><strong>Basic Usage:</strong>
+</p>
+<pre><code>@Service
+<p>public class MyService &#123;
+</p>
+<p>@Value(&quot;$&#123;app.name&#125;&quot;)
+    private String appName;
+</p>
+<p>@Value(&quot;$&#123;app.port:8080&#125;&quot;)  // Default value
+    private int port;
+</p>
+<p>@Value(&quot;$&#123;app.enabled:true&#125;&quot;)
+    private boolean enabled;
+&#125;
+</p>
+</code></pre>
+<p><strong>SpEL Expressions:</strong>
+</p>
+<pre><code>@Component
+<p>public class AdvancedConfig &#123;
+</p>
+<p>// Property access
+    @Value(&quot;$&#123;app.name&#125;&quot;)
+    private String name;
+</p>
+<p>// Expression
+    @Value(&quot;#&#123;systemProperties['user.home']&#125;&quot;)
+    private String userHome;
+</p>
+<p>// Bean property access
+    @Value(&quot;#&#123;@myBean.someProperty&#125;&quot;)
+    private String beanProperty;
+</p>
+<p>// Conditional
+    @Value(&quot;#&#123;$&#123;app.enabled&#125; ? '$&#123;app.name&#125;' : 'default'&#125;&quot;)
+    private String conditionalValue;
+</p>
+<p>// Math operations
+    @Value(&quot;#&#123;$&#123;app.timeout&#125; <em> 1000&#125;&quot;)
+    private long timeoutMillis;
+</p>
+<p>// String concatenation
+    @Value(&quot;#&#123;T(java.lang.Math).random() </em> 100&#125;&quot;)
+    private double randomValue;
+&#125;
+</p>
+</code></pre>
+<p><strong>Lists and Maps with @Value:</strong>
+</p>
+<pre><code>@Component
+<p>public class ListConfig &#123;
+</p>
+<p>@Value(&quot;$&#123;app.servers&#125;&quot;)  // comma-separated
+    private List&lt;String&gt; servers;
+</p>
+<p>@Value(&quot;#&#123;$&#123;app.config&#125;&#125;&quot;)  // Map from SpEL
+    private Map&lt;String, String&gt; config;
+&#125;
+</p>
+</code></pre>
+<pre><code>app.servers=server1,server2,server3
+<p>app.config=&#123;'key1':'value1','key2':'value2'&#125;
+</p>
+</code></pre>
+<p><strong>Comparison Table:</strong>
+</p>
+<table><thead><tr><th>Feature</th><th>@ConfigurationProperties</th><th>@Value</th></tr></thead><tbody><tr><td><strong>Use Case</strong></td><td>Group of related properties</td><td>Single property</td></tr><tr><td><strong>Type Safety</strong></td><td>✅ Full IDE support</td><td>❌ String-based</td></tr><tr><td><strong>Validation</strong></td><td>✅ JSR-303 support</td><td>❌ Manual</td></tr><tr><td><strong>Complex Types</strong></td><td>✅ Nested objects, collections</td><td>⚠️ Limited</td></tr><tr><td><strong>Default Values</strong></td><td>✅ Field initialization</td><td>✅ $&#123;prop:default&#125;</td></tr><tr><td><strong>SpEL</strong></td><td>❌ Not supported</td><td>✅ Full support</td></tr><tr><td><strong>Relaxed Binding</strong></td><td>✅ kebab-case, camelCase</td><td>❌ Exact match</td></tr><tr><td><strong>Metadata</strong></td><td>✅ IDE autocomplete</td><td>❌ No metadata</td></tr><tr><td><strong>Immutability</strong></td><td>✅ Constructor binding</td><td>❌ Field injection</td></tr><tr><td><strong>Testing</strong></td><td>✅ Easy to mock</td><td>⚠️ Harder to mock</td></tr></tbody></table>
+<p><strong>Relaxed Binding (ConfigurationProperties only):</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;app&quot;)
+<p>public class AppProperties &#123;
+    private String firstName;  // Binds to any of:
+&#125;
+</p>
+</code></pre>
+<p>All these work:
+</p>
+<pre><code>app.firstName: John
+<p>app.first-name: John  # kebab-case (recommended)
+app.first_name: John  # underscore
+app.FIRST_NAME: John  # uppercase
+</p>
+</code></pre>
+<p><strong>When to Use Each:</strong>
+</p>
+<p><strong>Use <code>@ConfigurationProperties</code> when:</strong>
+</p>
+<ul>
+<li>Multiple related properties (database config, mail settings, etc.)</li>
+<li>Need validation</li>
+<li>Need type safety and IDE support</li>
+<li>Configuration might grow over time</li>
+<li>Sharing configuration across modules</li>
+<li>Need immutable configuration</li>
+</ul>
+<p><strong>Use <code>@Value</code> when:</strong>
+</p>
+<ul>
+<li>Single, unrelated property</li>
+<li>Need SpEL expression</li>
+<li>Simple configuration</li>
+<li>Property used in one place only</li>
+<li>Need system properties or environment variables</li>
+</ul>
+<p><strong>Best Practices:</strong>
+</p>
+<p><strong>Good - Using ConfigurationProperties:</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;app.datasource&quot;)
+<p>public class DataSourceProperties &#123;
+    private String url;
+    private String username;
+    private String password;
+    private int maxPoolSize = 10;
+&#125;
+</p>
+<p>@Configuration
+public class DataSourceConfig &#123;
+    @Bean
+    public DataSource dataSource(DataSourceProperties props) &#123;
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(props.getUrl());
+        config.setUsername(props.getUsername());
+        config.setPassword(props.getPassword());
+        config.setMaximumPoolSize(props.getMaxPoolSize());
+        return new HikariDataSource(config);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Bad - Using @Value for related properties:</strong>
+</p>
+<pre><code>@Configuration
+<p>public class DataSourceConfig &#123;
+    @Value(&quot;$&#123;app.datasource.url&#125;&quot;)
+    private String url;
+</p>
+<p>@Value(&quot;$&#123;app.datasource.username&#125;&quot;)
+    private String username;
+</p>
+<p>@Value(&quot;$&#123;app.datasource.password&#125;&quot;)
+    private String password;
+</p>
+<p>@Value(&quot;$&#123;app.datasource.max-pool-size:10&#125;&quot;)
+    private int maxPoolSize;
+</p>
+<p>@Bean
+    public DataSource dataSource() &#123;
+        // Harder to test, no validation
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Combining Both:</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;app&quot;)
+<p>public class AppProperties &#123;
+    private String name;
+    private int port;
+    // Complex configuration
+&#125;
+</p>
+<p>@Service
+public class MyService &#123;
+    @Autowired
+    private AppProperties appProperties;  // Complex config
+</p>
+<p>@Value(&quot;$&#123;simple.flag:false&#125;&quot;)  // Simple flag
+    private boolean simpleFlag;
+</p>
+<p>@Value(&quot;#&#123;T(java.lang.Runtime).getRuntime().availableProcessors()&#125;&quot;)
+    private int processors;  // SpEL expression
+&#125;
+</p>
+</code></pre>
+<p><strong>Testing:</strong>
+</p>
+<pre><code>// Easy with ConfigurationProperties
+<p>@Test
+void testWithConfigProperties() &#123;
+    AppProperties props = new AppProperties();
+    props.setName(&quot;test&quot;);
+    props.setPort(8080);
+    MyService service = new MyService(props);
+&#125;
+</p>
+<p>// Harder with @Value
+@SpringBootTest
+@TestPropertySource(properties = &#123;
+    &quot;app.name=test&quot;,
+    &quot;app.port=8080&quot;
+&#125;)
+class MyServiceTest &#123;
+    @Autowired
+    private MyService service;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>5️⃣ Spring Data & Persistence</h2>
+<h3>Q121: How does Spring Data generate repository implementations from method names?</h3>
+<p><strong>Simple Answer:</strong>
+Spring Data parses repository method names into parts (find/By/Property/Operator), builds a query from those parts, and generates an implementation that executes the query against the database.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>Method Name Query Creation Process:</strong>
+</p>
+<p><strong>Step 1: Method Name Parsing</strong>
+</p>
+<pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; &#123;
+<p>// Method name: findByLastnameAndAgeGreaterThan
+    List&lt;User&gt; findByLastnameAndAgeGreaterThan(String lastname, int age);
+&#125;
+</p>
+</code></pre>
+<p><strong>Parsing breakdown:</strong>
+</p>
+<pre><code>findByLastnameAndAgeGreaterThan
+<p>↓
+find           → Query type (find, read, get, query, stream, count, exists, delete)
+By             → Separator
+Lastname       → Property name (User.lastname)
+And            → Logical operator
+Age            → Property name (User.age)
+GreaterThan    → Comparison operator
+</p>
+</code></pre>
+<p><strong>Step 2: Query Creation</strong>
+Spring Data generates JPQL:
+</p>
+<pre><code>SELECT u FROM User u 
+<p>WHERE u.lastname = ?1
+  AND u.age &gt; ?2
+</p>
+</code></pre>
+<p><strong>Complete Method Name Keywords:</strong>
+</p>
+<p><strong>Query Types:</strong>
+</p>
+<pre><code>// Retrieve data
+<p>List&lt;User&gt; findBy...()
+List&lt;User&gt; readBy...()
+List&lt;User&gt; getBy...()
+List&lt;User&gt; queryBy...()
+Stream&lt;User&gt; streamBy...()
+</p>
+<p>// Count
+long countBy...()
+</p>
+<p>// Exists check
+boolean existsBy...()
+</p>
+<p>// Delete
+void deleteBy...()
+long removeBy...()
+</p>
+<p>// First/Top results
+User findFirstBy...()
+List&lt;User&gt; findTop3By...()
+List&lt;User&gt; findFirst10By...()
+</p>
+</code></pre>
+<p><strong>Property Expressions:</strong>
+</p>
+<pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; &#123;
+<p>// Simple property
+    User findByEmail(String email);
+</p>
+<p>// Nested property
+    List&lt;User&gt; findByAddressCity(String city);
+</p>
+<p>// Multiple properties with AND
+    User findByFirstnameAndLastname(String firstname, String lastname);
+</p>
+<p>// Multiple properties with OR
+    List&lt;User&gt; findByFirstnameOrLastname(String name);
+&#125;
+</p>
+</code></pre>
+<p><strong>Comparison Operators:</strong>
+</p>
+<pre><code>// Equality
+<p>User findByAge(int age);                    // age = ?
+</p>
+<p>// Comparison
+List&lt;User&gt; findByAgeGreaterThan(int age);   // age &gt; ?
+List&lt;User&gt; findByAgeLessThan(int age);      // age &lt; ?
+List&lt;User&gt; findByAgeGreaterThanEqual(int age);  // age &gt;= ?
+List&lt;User&gt; findByAgeLessThanEqual(int age); // age &lt;= ?
+List&lt;User&gt; findByAgeBetween(int start, int end);  // age BETWEEN ? AND ?
+</p>
+<p>// String operations
+List&lt;User&gt; findByFirstnameContaining(String str);  // LIKE %str%
+List&lt;User&gt; findByFirstnameStartingWith(String prefix);  // LIKE prefix%
+List&lt;User&gt; findByFirstnameEndingWith(String suffix);  // LIKE %suffix
+List&lt;User&gt; findByFirstnameLike(String pattern);  // LIKE pattern
+</p>
+<p>// Case insensitive
+List&lt;User&gt; findByFirstnameIgnoreCase(String firstname);
+List&lt;User&gt; findByFirstnameContainingIgnoreCase(String str);
+</p>
+<p>// NULL checks
+List&lt;User&gt; findByAgeIsNull();
+List&lt;User&gt; findByAgeIsNotNull();
+</p>
+<p>// Boolean
+List&lt;User&gt; findByActiveTrue();
+List&lt;User&gt; findByActiveFalse();
+</p>
+<p>// Collection operations
+List&lt;User&gt; findByAgeIn(Collection&lt;Integer&gt; ages);
+List&lt;User&gt; findByAgeNotIn(Collection&lt;Integer&gt; ages);
+</p>
+</code></pre>
+<p><strong>Logical Operators:</strong>
+</p>
+<pre><code>// AND
+<p>User findByFirstnameAndLastname(String firstname, String lastname);
+</p>
+<p>// OR
+List&lt;User&gt; findByFirstnameOrLastname(String name);
+</p>
+<p>// Combination
+List&lt;User&gt; findByFirstnameAndLastnameOrEmail(
+    String firstname, String lastname, String email);
+// WHERE (firstname = ? AND lastname = ?) OR email = ?
+</p>
+</code></pre>
+<p><strong>Ordering:</strong>
+</p>
+<pre><code>// Ascending
+<p>List&lt;User&gt; findByLastnameOrderByFirstnameAsc(String lastname);
+</p>
+<p>// Descending
+List&lt;User&gt; findByLastnameOrderByFirstnameDesc(String lastname);
+</p>
+<p>// Multiple sort fields
+List&lt;User&gt; findByLastnameOrderByFirstnameAscAgeDesc(String lastname);
+</p>
+<p>// With Sort parameter
+List&lt;User&gt; findByLastname(String lastname, Sort sort);
+// Usage: repository.findByLastname(&quot;Smith&quot;, Sort.by(&quot;firstname&quot;).ascending())
+</p>
+</code></pre>
+<p><strong>Pagination:</strong>
+</p>
+<pre><code>// Page results
+<p>Page&lt;User&gt; findByLastname(String lastname, Pageable pageable);
+// Usage: repository.findByLastname(&quot;Smith&quot;, PageRequest.of(0, 10))
+</p>
+<p>// Slice results (lighter than Page)
+Slice&lt;User&gt; findByLastname(String lastname, Pageable pageable);
+</p>
+<p>// List with Pageable
+List&lt;User&gt; findByLastname(String lastname, Pageable pageable);
+</p>
+</code></pre>
+<p><strong>Limiting Results:</strong>
+</p>
+<pre><code>// First result
+<p>User findFirstByOrderByAgeDesc();
+</p>
+<p>// Top N results
+List&lt;User&gt; findTop3ByOrderByAgeDesc();
+List&lt;User&gt; findFirst10ByLastname(String lastname);
+</p>
+<p>// With Pageable
+List&lt;User&gt; findTop3ByLastname(String lastname, Pageable pageable);
+</p>
+</code></pre>
+<p><strong>Internal Implementation Process:</strong>
+</p>
+<p><strong>Step 1: Repository Proxy Creation</strong>
+</p>
+<pre><code>@EnableJpaRepositories
+<p>@Configuration
+public class JpaConfig &#123; &#125;
+</p>
+<p>// At runtime:
+JpaRepositoryFactoryBean creates proxy
+    ↓
+SimpleJpaRepository (default implementation)
+    ↓
+PartTreeJpaQuery (for method-name queries)
+</p>
+</code></pre>
+<p><strong>Step 2: Query Generation</strong>
+</p>
+<pre><code>// Simplified internal process
+<p>public class PartTreeJpaQuery extends AbstractJpaQuery &#123;
+</p>
+<p>public PartTree tree; // Parsed method name
+</p>
+<p>@Override
+    protected Query createQuery(Object[] parameters) &#123;
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery&lt;T&gt; query = builder.createQuery(domainClass);
+        Root&lt;T&gt; root = query.from(domainClass);
+</p>
+<p>// Build predicates from parsed tree
+        Predicate predicate = tree.toPredicate(root, query, builder);
+        query.where(predicate);
+</p>
+<p>return entityManager.createQuery(query);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Step 3: Parameter Binding</strong>
+</p>
+<pre><code>User findByFirstnameAndAge(String firstname, int age);
+<p>// Spring Data binds:
+// Parameter 0 → firstname
+// Parameter 1 → age
+</p>
+<p>// Generates:
+SELECT u FROM User u WHERE u.firstname = ?1 AND u.age = ?2
+</p>
+</code></pre>
+<p><strong>Complex Examples:</strong>
+</p>
+<p><strong>Nested Properties:</strong>
+</p>
+<pre><code>@Entity
+<p>public class User &#123;
+    private Address address;
+&#125;
+</p>
+<p>@Entity
+public class Address &#123;
+    private String city;
+    private String zipCode;
+&#125;
+</p>
+<p>public interface UserRepository extends JpaRepository&lt;User, Long&gt; &#123;
+    List&lt;User&gt; findByAddressCity(String city);
+    // SELECT u FROM User u WHERE u.address.city = ?1
+</p>
+<p>List&lt;User&gt; findByAddressCityAndAddressZipCode(String city, String zip);
+    // SELECT u FROM User u 
+    // WHERE u.address.city = ?1 AND u.address.zipCode = ?2
+&#125;
+</p>
+</code></pre>
+<p><strong>Collections:</strong>
+</p>
+<pre><code>@Entity
+<p>public class User &#123;
+    @ManyToMany
+    private Set&lt;Role&gt; roles;
+&#125;
+</p>
+<p>public interface UserRepository extends JpaRepository&lt;User, Long&gt; &#123;
+    List&lt;User&gt; findByRolesName(String roleName);
+    // SELECT DISTINCT u FROM User u 
+    // INNER JOIN u.roles r WHERE r.name = ?1
+&#125;
+</p>
+</code></pre>
+<p><strong>Alternative: @Query for Complex Queries</strong>
+</p>
+<pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; &#123;
+<p>// Method name query - simple
+    List&lt;User&gt; findByAgeGreaterThan(int age);
+</p>
+<p>// @Query - complex logic
+    @Query(&quot;SELECT u FROM User u WHERE u.age &gt; :age AND u.active = true &quot; +
+           &quot;AND u.createdDate &gt; :date ORDER BY u.lastname&quot;)
+    List&lt;User&gt; findActiveUsersOlderThan(@Param(&quot;age&quot;) int age, 
+                                        @Param(&quot;date&quot;) LocalDate date);
+</p>
+<p>// Native query
+    @Query(value = &quot;SELECT <em> FROM users u WHERE u.age &gt; ?1 &quot; +
+                   &quot;AND EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)&quot;,
+           nativeQuery = true)
+    List&lt;User&gt; findUsersWithOrders(int age);
+&#125;
+</p>
+</code></pre>
+<p><strong>Performance Considerations:</strong>
+</p>
+<pre><code>// GOOD - Specific query
+<p>User findByEmail(String email);
+</p>
+<p>// BAD - Fetches all users then filters in memory
+List&lt;User&gt; findAll().stream()
+    .filter(u -&gt; u.getEmail().equals(email))
+    .findFirst();
+</p>
+<p>// GOOD - Database-level pagination
+Page&lt;User&gt; findByActive(boolean active, Pageable pageable);
+</p>
+<p>// BAD - Loads all then paginates in memory
+List&lt;User&gt; findByActive(boolean active);
+</p>
+</code></pre>
+<p><strong>Limitations and When to Use @Query:</strong>
+</p>
+<pre><code>// Method names become unwieldy
+<p>List&lt;User&gt; findByFirstnameAndLastnameAndAgeGreaterThanAndActiveTrueOrderByCreatedDateDesc(
+    String firstname, String lastname, int age);
+</p>
+<p>// Better with @Query:
+@Query(&quot;SELECT u FROM User u WHERE u.firstname = :first AND u.lastname = :last &quot; +
+       &quot;AND u.age &gt; :age AND u.active = true ORDER BY u.createdDate DESC&quot;)
+List&lt;User&gt; findActiveUsers(@Param(&quot;first&quot;) String firstname,
+                           @Param(&quot;last&quot;) String lastname,
+                           @Param(&quot;age&quot;) int age);
+</p>
+</code></pre>
+<hr>
+<h3>Q122: Explain <code>@EntityGraph</code> and solving the N+1 problem.</h3>
+<p><strong>Simple Answer:</strong>
+</p>
+<code>@EntityGraph</code> tells JPA to fetch specified associations eagerly in a single query using JOINs, eliminating the N+1 select problem where lazy-loaded associations cause multiple database queries.
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>The N+1 Problem:</strong>
+</p>
+<p><strong>Problem Example:</strong>
+</p>
+<pre><code>@Entity
+<p>public class User &#123;
+    @Id
+    private Long id;
+    private String name;
+</p>
+<p>@OneToMany(mappedBy = &quot;user&quot;, fetch = FetchType.LAZY)
+    private List&lt;Order&gt; orders;
+</p>
+<p>@ManyToOne(fetch = FetchType.LAZY)
+    private Address address;
+&#125;
+</p>
+<p>// Code that triggers N+1:
+List&lt;User&gt; users = userRepository.findAll();  // 1 query
+for (User user : users) &#123;
+    System.out.println(user.getOrders());  // N queries (one per user!)
+&#125;
+</p>
+</code></pre>
+<p><strong>What happens:</strong>
+</p>
+<pre><code>-- Query 1: Fetch users
+<p>SELECT </em> FROM users;  -- Returns 100 users
+</p>
+<p>-- Query 2-101: Fetch orders for each user (N queries!)
+SELECT <em> FROM orders WHERE user_id = 1;
+SELECT </em> FROM orders WHERE user_id = 2;
+SELECT <em> FROM orders WHERE user_id = 3;
+...
+SELECT </em> FROM orders WHERE user_id = 100;
+</p>
+<p>-- Total: 101 queries instead of 1!
+</p>
+</code></pre>
+<p><strong>Solution 1: <code>@EntityGraph</code> Annotation</strong>
+</p>
+<p><strong>Basic Usage:</strong>
+</p>
+<pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; &#123;
+<p>@EntityGraph(attributePaths = &#123;&quot;orders&quot;, &quot;address&quot;&#125;)
+    List&lt;User&gt; findAll();
+&#125;
+</p>
+</code></pre>
+<p><strong>Generated SQL:</strong>
+</p>
+<pre><code>SELECT u.<em>, o.</em>, a.<em>
+<p>FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+LEFT JOIN address a ON u.address_id = a.id
+</p>
+</code></pre>
+<p><strong>Result:</strong> Single query fetches users, orders, and addresses together!
+</p>
+<p><strong>EntityGraph Types:</strong>
+</p>
+<p><strong>1. FETCH Type (Default) - Only fetch specified paths:</strong>
+</p>
+<pre><code>@EntityGraph(attributePaths = &#123;&quot;orders&quot;&#125;, type = EntityGraph.EntityGraphType.FETCH)
+<p>List&lt;User&gt; findAll();
+</p>
+</code></pre>
+<ul>
+<li>Fetches only <code>orders</code> eagerly</li>
+<li>All other LAZY associations remain lazy</li>
+<li>Other EAGER associations still fetched</li>
+</ul>
+<p><strong>2. LOAD Type - Fetch specified + all EAGER:</strong>
+</p>
+<pre><code>@EntityGraph(attributePaths = &#123;&quot;orders&quot;&#125;, type = EntityGraph.EntityGraphType.LOAD)
+<p>List&lt;User&gt; findAll();
+</p>
+</code></pre>
+<ul>
+<li>Fetches <code>orders</code> eagerly</li>
+<li>Also fetches all associations marked <code>FetchType.EAGER</code></li>
+</ul>
+<p><strong>Named Entity Graphs:</strong>
+</p>
+<p><strong>Define in Entity:</strong>
+</p>
+<pre><code>@Entity
+<p>@NamedEntityGraph(
+    name = &quot;User.withOrdersAndAddress&quot;,
+    attributeNodes = &#123;
+        @NamedAttributeNode(&quot;orders&quot;),
+        @NamedAttributeNode(&quot;address&quot;)
+    &#125;
+)
+public class User &#123;
+    @Id
+    private Long id;
+</p>
+<p>@OneToMany(mappedBy = &quot;user&quot;)
+    private List&lt;Order&gt; orders;
+</p>
+<p>@ManyToOne
+    private Address address;
+&#125;
+</p>
+</code></pre>
+<p><strong>Use in Repository:</strong>
+</p>
+<pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; &#123;
+<p>@EntityGraph(value = &quot;User.withOrdersAndAddress&quot;)
+    List&lt;User&gt; findAll();
+</p>
+<p>@EntityGraph(value = &quot;User.withOrdersAndAddress&quot;)
+    Optional&lt;User&gt; findById(Long id);
+&#125;
+</p>
+</code></pre>
+<p><strong>Nested Entity Graphs:</strong>
+</p>
+<p><strong>Complex associations:</strong>
+</p>
+<pre><code>@Entity
+<p>public class User &#123;
+    @OneToMany
+    private List&lt;Order&gt; orders;
+&#125;
+</p>
+<p>@Entity
+public class Order &#123;
+    @OneToMany
+    private List&lt;OrderItem&gt; items;
+</p>
+<p>@ManyToOne
+    private Product product;
+&#125;
+</p>
+</code></pre>
+<p><strong>Fetch nested associations:</strong>
+</p>
+<pre><code>@Entity
+<p>@NamedEntityGraph(
+    name = &quot;User.detailed&quot;,
+    attributeNodes = &#123;
+        @NamedAttributeNode(
+            value = &quot;orders&quot;,
+            subgraph = &quot;orders-subgraph&quot;
+        )
+    &#125;,
+    subgraphs = &#123;
+        @NamedSubgraph(
+            name = &quot;orders-subgraph&quot;,
+            attributeNodes = &#123;
+                @NamedAttributeNode(&quot;items&quot;),
+                @NamedAttributeNode(&quot;product&quot;)
+            &#125;
+        )
+    &#125;
+)
+public class User &#123; &#125;
+</p>
+<p>// Usage
+@EntityGraph(&quot;User.detailed&quot;)
+List&lt;User&gt; findAll();
+</p>
+</code></pre>
+<p><strong>Generated SQL:</strong>
+</p>
+<pre><code>SELECT u.</em>, o.<em>, oi.</em>, p.<em>
+<p>FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+LEFT JOIN order_items oi ON o.id = oi.order_id
+LEFT JOIN products p ON o.product_id = p.id
+</p>
+</code></pre>
+<p><strong>Dynamic Entity Graphs:</strong>
+</p>
+<p><strong>Ad-hoc entity graph:</strong>
+</p>
+<pre><code>@Repository
+<p>public class CustomUserRepository &#123;
+</p>
+<p>@PersistenceContext
+    private EntityManager em;
+</p>
+<p>public List&lt;User&gt; findUsersWithOrders() &#123;
+        EntityGraph&lt;User&gt; graph = em.createEntityGraph(User.class);
+        graph.addAttributeNodes(&quot;orders&quot;);
+</p>
+<p>return em.createQuery(&quot;SELECT u FROM User u&quot;, User.class)
+                 .setHint(&quot;javax.persistence.fetchgraph&quot;, graph)
+                 .getResultList();
+    &#125;
+</p>
+<p>public List&lt;User&gt; findUsersComplete() &#123;
+        EntityGraph&lt;User&gt; graph = em.createEntityGraph(User.class);
+        graph.addAttributeNodes(&quot;orders&quot;, &quot;address&quot;, &quot;roles&quot;);
+</p>
+<p>Subgraph&lt;Order&gt; orderSubgraph = graph.addSubgraph(&quot;orders&quot;);
+        orderSubgraph.addAttributeNodes(&quot;items&quot;, &quot;payment&quot;);
+</p>
+<p>return em.createQuery(&quot;SELECT u FROM User u&quot;, User.class)
+                 .setHint(&quot;javax.persistence.loadgraph&quot;, graph)
+                 .getResultList();
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Multiple Entity Graphs:</strong>
+</p>
+<p><strong>Different graphs for different queries:</strong>
+</p>
+<pre><code>@Entity
+<p>@NamedEntityGraphs(&#123;
+    @NamedEntityGraph(
+        name = &quot;User.summary&quot;,
+        attributeNodes = @NamedAttributeNode(&quot;address&quot;)
+    ),
+    @NamedEntityGraph(
+        name = &quot;User.detailed&quot;,
+        attributeNodes = &#123;
+            @NamedAttributeNode(&quot;address&quot;),
+            @NamedAttributeNode(&quot;orders&quot;),
+            @NamedAttributeNode(&quot;roles&quot;)
+        &#125;
+    )
+&#125;)
+public class User &#123; &#125;
+</p>
+<p>public interface UserRepository extends JpaRepository&lt;User, Long&gt; &#123;
+</p>
+<p>@EntityGraph(&quot;User.summary&quot;)
+    List&lt;User&gt; findAllSummary();
+</p>
+<p>@EntityGraph(&quot;User.detailed&quot;)
+    List&lt;User&gt; findAllDetailed();
+</p>
+<p>@EntityGraph(&quot;User.detailed&quot;)
+    Optional&lt;User&gt; findDetailedById(Long id);
+&#125;
+</p>
+</code></pre>
+<p><strong>Cartesian Product Problem:</strong>
+</p>
+<p><strong>Problem with multiple collections:</strong>
+</p>
+<pre><code>@Entity
+<p>public class User &#123;
+    @OneToMany
+    private List&lt;Order&gt; orders;      // 10 orders
+</p>
+<p>@OneToMany
+    private List&lt;Address&gt; addresses;  // 3 addresses
+&#125;
+</p>
+<p>@EntityGraph(attributePaths = &#123;&quot;orders&quot;, &quot;addresses&quot;&#125;)
+List&lt;User&gt; findAll();
+</p>
+</code></pre>
+<p><strong>Generated SQL creates Cartesian product:</strong>
+</p>
+<pre><code>SELECT u.</em>, o.<em>, a.</em>
+<p>FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+LEFT JOIN addresses a ON u.id = a.user_id
+</p>
+<p>-- Returns 10 × 3 = 30 rows for 1 user!
+</p>
+</code></pre>
+<p><strong>Solution: Use separate queries or subselects:</strong>
+</p>
+<pre><code>// Option 1: Multiple queries
+<p>@EntityGraph(attributePaths = &quot;orders&quot;)
+List&lt;User&gt; findAll();
+</p>
+<p>// Then in service:
+users.forEach(user -&gt; &#123;
+    Hibernate.initialize(user.getAddresses());
+&#125;);
+</p>
+<p>// Option 2: Batch fetching
+@Entity
+public class User &#123;
+    @OneToMany
+    @BatchSize(size = 10)
+    private List&lt;Order&gt; orders;
+&#125;
+</p>
+</code></pre>
+<p><strong>Testing N+1 Prevention:</strong>
+</p>
+<p><strong>Enable query logging:</strong>
+</p>
+<pre><code>spring.jpa.show-sql=true
+<p>spring.jpa.properties.hibernate.format_sql=true
+</p>
+<h1>Count queries</h1>
+<p>logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+</p>
+</code></pre>
+<p><strong>Unit test:</strong>
+</p>
+<pre><code>@SpringBootTest
+<p>@Transactional
+class EntityGraphTest &#123;
+</p>
+<p>@Autowired
+    private UserRepository userRepository;
+</p>
+<p>@PersistenceContext
+    private EntityManager em;
+</p>
+<p>@Test
+    void testNoNPlusOne() &#123;
+        // Arrange: Create test data
+        User user1 = new User();
+        user1.setOrders(Arrays.asList(new Order(), new Order()));
+        em.persist(user1);
+</p>
+<p>User user2 = new User();
+        user2.setOrders(Arrays.asList(new Order()));
+        em.persist(user2);
+</p>
+<p>em.flush();
+        em.clear();
+</p>
+<p>// Act: Fetch with EntityGraph
+        List&lt;User&gt; users = userRepository.findAll();
+</p>
+<p>// Access lazy collection - should not trigger queries
+        users.forEach(user -&gt; &#123;
+            user.getOrders().size();  // No additional queries!
+        &#125;);
+</p>
+<p>// Assert: Verify query count using Hibernate statistics
+        Statistics stats = em.getEntityManagerFactory()
+                             .unwrap(SessionFactory.class)
+                             .getStatistics();
+</p>
+<p>assertEquals(1, stats.getQueryExecutionCount());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Performance Comparison:</strong>
+</p>
+<pre><code>// WITHOUT EntityGraph - 101 queries for 100 users
+<p>List&lt;User&gt; users = userRepository.findAll();
+users.forEach(u -&gt; u.getOrders().size());
+</p>
+<p>// WITH EntityGraph - 1 query
+@EntityGraph(attributePaths = &quot;orders&quot;)
+List&lt;User&gt; findAll();
+</p>
+</code></pre>
+<p><strong>Best Practices:</strong>
+</p>
+<ol>
+<li><strong>Use for read-heavy operations:</strong> Don't eagerly fetch for write operations</li>
+<li><strong>Profile first:</strong> Confirm N+1 exists before optimizing</li>
+<li><strong>Avoid multiple collections:</strong> Causes Cartesian products</li>
+<li><strong>Consider projections:</strong> Sometimes DTOs are better than entity graphs</li>
+<li><strong>Use @BatchSize as alternative:</strong> For simpler cases</li>
+</ol>
+<pre><code>@Entity
+<p>public class User &#123;
+    @OneToMany
+    @BatchSize(size = 25)  // Fetches 25 collections in one query
+    private List&lt;Order&gt; orders;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>6️⃣ Spring Security</h2>
+<h3>Q154: Implement stateless JWT authentication in Spring Security 6.</h3>
+<p><strong>Simple Answer:</strong>
+Configure Spring Security to validate JWT tokens on each request without using sessions, by creating a filter that extracts the token, validates it, and sets the authentication in the SecurityContext.
+</p>
+<p><strong>Deep Dive:</strong>
+</p>
+<p><strong>Complete Implementation:</strong>
+</p>
+<p><strong>Step 1: Dependencies</strong>
+</p>
+<pre><code>&lt;dependencies&gt;
+<p>&lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-oauth2-resource-server&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+</p>
+</code></pre>
+<p><strong>Step 2: JWT Properties Configuration</strong>
+</p>
+<pre><code>@ConfigurationProperties(prefix = &quot;jwt&quot;)
+<p>public class JwtProperties &#123;
+    private String secretKey;
+    private long expirationMs = 86400000; // 24 hours
+    private String issuer;
+</p>
+<p>// Getters and setters
+&#125;
+</p>
+</code></pre>
+<pre><code>jwt:
+<p>secret-key: your-256-bit-secret-key-here-make-it-long-and-random
+  expiration-ms: 86400000
+  issuer: myapp
+</p>
+</code></pre>
+<p><strong>Step 3: JWT Service</strong>
+</p>
+<pre><code>@Service
+<p>public class JwtService &#123;
+</p>
+<p>private final Key key;
+    private final JwtProperties jwtProperties;
+</p>
+<p>public JwtService(JwtProperties jwtProperties) &#123;
+        this.jwtProperties = jwtProperties;
+        byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecretKey());
+        this.key = Keys.hmacShaKeyFor(keyBytes);
+    &#125;
+</p>
+<p>public String generateToken(UserDetails userDetails) &#123;
+        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();
+        claims.put(&quot;roles&quot;, userDetails.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList()));
+</p>
+<p>return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(userDetails.getUsername())
+            .setIssuer(jwtProperties.getIssuer())
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs()))
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
+    &#125;
+</p>
+<p>public String extractUsername(String token) &#123;
+        return extractClaim(token, Claims::getSubject);
+    &#125;
+</p>
+<p>public &lt;T&gt; T extractClaim(String token, Function&lt;Claims, T&gt; claimsResolver) &#123;
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    &#125;
+</p>
+<p>private Claims extractAllClaims(String token) &#123;
+        return Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+    &#125;
+</p>
+<p>public boolean isTokenValid(String token, UserDetails userDetails) &#123;
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) &amp;&amp; !isTokenExpired(token));
+    &#125;
+</p>
+<p>private boolean isTokenExpired(String token) &#123;
+        return extractExpiration(token).before(new Date());
+    &#125;
+</p>
+<p>private Date extractExpiration(String token) &#123;
+        return extractClaim(token, Claims::getExpiration);
+    &#125;
+</p>
+<p>public List&lt;String&gt; extractRoles(String token) &#123;
+        Claims claims = extractAllClaims(token);
+        return (List&lt;String&gt;) claims.get(&quot;roles&quot;);
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Step 4: JWT Authentication Filter</strong>
+</p>
+<pre><code>@Component
+<p>public class JwtAuthenticationFilter extends OncePerRequestFilter &#123;
+</p>
+<p>private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
+</p>
+<p>public JwtAuthenticationFilter(JwtService jwtService,
+                                   UserDetailsService userDetailsService) &#123;
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+    &#125;
+</p>
+<p>@Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException &#123;
+</p>
+<p>// Extract JWT from Authorization header
+        final String authHeader = request.getHeader(&quot;Authorization&quot;);
+</p>
+<p>if (authHeader == null || !authHeader.startsWith(&quot;Bearer &quot;)) &#123;
+            filterChain.doFilter(request, response);
+            return;
+        &#125;
+</p>
+<p>try &#123;
+            final String jwt = authHeader.substring(7);
+            final String username = jwtService.extractUsername(jwt);
+</p>
+<p>// If username is extracted and no authentication exists
+            if (username != null &amp;&amp; SecurityContextHolder.getContext().getAuthentication() == null) &#123;
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+</p>
+<p>// Validate token
+                if (jwtService.isTokenValid(jwt, userDetails)) &#123;
+                    // Extract roles from token
+                    List&lt;String&gt; roles = jwtService.extractRoles(jwt);
+                    List&lt;GrantedAuthority&gt; authorities = roles.stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+</p>
+<p>// Create authentication token
+                    UsernamePasswordAuthenticationToken authToken = 
+                        new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            authorities
+                        );
+</p>
+<p>// Set additional details
+                    authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+</p>
+<p>// Set authentication in SecurityContext
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                &#125;
+            &#125;
+</p>
+<p>filterChain.doFilter(request, response);
+</p>
+<p>&#125; catch (ExpiredJwtException e) &#123;
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(&quot;Token expired&quot;);
+        &#125; catch (JwtException e) &#123;
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(&quot;Invalid token&quot;);
+        &#125;
+    &#125;
+&#125;
+</p>
+</code></pre>
+<p><strong>Step 5: Security Configuration</strong>
+</p>
+<pre><code>@Configuration
+<p>@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig &#123;
+</p>
+<p>private final JwtAuthenticationFilter jwtAuthFilter;
+    private final AuthenticationProvider authenticationProvider;
+</p>
+<p>public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter,
+                         AuthenticationProvider authenticationProvider) &#123;
+        this.jwtAuthFilter = jwtAuthFilter;
+        this.authenticationProvider = authenticationProvider;
+    &#125;
+</p>
+<p>@Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception &#123;
+        http
+            .csrf(csrf -&gt; csrf.disable())  // Disable CSRF for stateless JWT
+            .sessionManagement(session -&gt; 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -&gt; auth
+                .requestMatchers(&quot;/api/auth/<strong>&quot;).permitAll()  // Public endpoints
+                .requestMatchers(&quot;/api/admin/</strong>&quot;).hasRole(&quot;ADMIN&quot;)
+                .requestMatchers(&quot;/api/user/<strong>&quot;).hasAnyRole(&quot;USER&quot;, &quot;ADMIN&quot;)
+                .anyRequest().authenticated()
+            )
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(ex -&gt; ex
+                .authenticationEntryPoint(
+                    (request, response, authException) -&gt; &#123;
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write(&quot;Unauthorized&quot;);
+                    &#125;
+                )
+            );
+</p>
+<p>return http.build();
+    &#125;
+</p>
+<p>@Bean
+    public AuthenticationProvider authenticationProvider(
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) &#123;
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        return authProvider;
+    &#125;
+</p>
+<p>@Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) 
+            throws Exception &#123;
+        return config.getAuthenticationManager();
+    &#125;
+</p>
+<p>@Bean
+    public PasswordEncoder passwordEncoder() &#123;
+        return new BCryptPasswordEncoder();
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Step 6: Authentication Controller<strong>
+<pre><code>@RestController
+<p>@RequestMapping(&quot;/api/auth&quot;)
+public class AuthenticationController &#123;
+</p>
+<p>private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
+</p>
+<p>public AuthenticationController(AuthenticationManager authenticationManager,
+                                   JwtService jwtService,
+                                   UserDetailsService userDetailsService) &#123;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+    &#125;
+</p>
+<p>@PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;AuthenticationResponse&gt; login(
+            @RequestBody AuthenticationRequest request) &#123;
+</p>
+<p>// Authenticate user
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                request.getUsername(),
+                request.getPassword()
+            )
+        );
+</p>
+<p>// Load user details
+        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+</p>
+<p>// Generate JWT
+        String token = jwtService.generateToken(userDetails);
+</p>
+<p>return ResponseEntity.ok(new AuthenticationResponse(token));
+    &#125;
+</p>
+<p>@PostMapping(&quot;/register&quot;)
+    public ResponseEntity&lt;AuthenticationResponse&gt; register(
+            @RequestBody RegisterRequest request) &#123;
+        // Registration logic here
+        // ...
+</p>
+<p>UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+        String token = jwtService.generateToken(userDetails);
+</p>
+<p>return ResponseEntity.ok(new AuthenticationResponse(token));
+    &#125;
+&#125;
+</p>
+<p>record AuthenticationRequest(String username, String password) &#123;&#125;
+record RegisterRequest(String username, String password, String email) &#123;&#125;
+record AuthenticationResponse(String token) &#123;&#125;
+</p>
+</code></pre>
+</strong>Step 7: Protected Resource Example<strong>
+<pre><code>@RestController
+<p>@RequestMapping(&quot;/api/user&quot;)
+public class UserController &#123;
+</p>
+<p>@GetMapping(&quot;/profile&quot;)
+    public ResponseEntity&lt;UserProfile&gt; getProfile(@AuthenticationPrincipal UserDetails userDetails) &#123;
+        UserProfile profile = new UserProfile(
+            userDetails.getUsername(),
+            userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList())
+        );
+        return ResponseEntity.ok(profile);
+    &#125;
+</p>
+<p>@GetMapping(&quot;/dashboard&quot;)
+    @PreAuthorize(&quot;hasRole('USER')&quot;)
+    public ResponseEntity&lt;String&gt; getDashboard() &#123;
+        return ResponseEntity.ok(&quot;User dashboard&quot;);
+    &#125;
+&#125;
+</p>
+<p>@RestController
+@RequestMapping(&quot;/api/admin&quot;)
+@PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+public class AdminController &#123;
+</p>
+<p>@GetMapping(&quot;/users&quot;)
+    public ResponseEntity&lt;List&lt;User&gt;&gt; getAllUsers() &#123;
+        // Admin-only endpoint
+        return ResponseEntity.ok(List.of());
+    &#125;
+&#125;
+</p>
+<p>record UserProfile(String username, List&lt;String&gt; roles) &#123;&#125;
+</p>
+</code></pre>
+</strong>Usage Example:<strong>
+</strong>Login Request:<strong>
+<pre><code>curl -X POST http://localhost:8080/api/auth/login \
+<p>-H &quot;Content-Type: application/json&quot; \
+  -d '&#123;&quot;username&quot;:&quot;user@example.com&quot;,&quot;password&quot;:&quot;password123&quot;&#125;'
+</p>
+</code></pre>
+</strong>Response:<strong>
+<pre><code>&#123;
+<p>&quot;token&quot;: &quot;eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX1VTRVIiXSwic3ViIjoidXNlckBleGFtcGxlLmNvbSIsImlzcyI6Im15YXBwIiwiaWF0IjoxNzA2NzI0MDAwLCJleHAiOjE3MDY4MTA0MDB9.xxx&quot;
+&#125;
+</p>
+</code></pre>
+</strong>Authenticated Request:<strong>
+<pre><code>curl http://localhost:8080/api/user/profile \
+<p>-H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...&quot;
+</p>
+</code></pre>
+</strong>Advanced Features:<strong>
+</strong>1. Token Refresh:<strong>
+<pre><code>@PostMapping(&quot;/refresh&quot;)
+<p>public ResponseEntity&lt;AuthenticationResponse&gt; refresh(
+        @RequestHeader(&quot;Authorization&quot;) String authHeader) &#123;
+</p>
+<p>String token = authHeader.substring(7);
+    String username = jwtService.extractUsername(token);
+    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+</p>
+<p>if (jwtService.isTokenValid(token, userDetails)) &#123;
+        String newToken = jwtService.generateToken(userDetails);
+        return ResponseEntity.ok(new AuthenticationResponse(newToken));
+    &#125;
+</p>
+<p>return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+&#125;
+</p>
+</code></pre>
+</strong>2. Logout (Blacklist Token):<strong>
+<pre><code>@Service
+<p>public class TokenBlacklistService &#123;
+    private final Set&lt;String&gt; blacklist = ConcurrentHashMap.newKeySet();
+</p>
+<p>public void blacklistToken(String token) &#123;
+        blacklist.add(token);
+    &#125;
+</p>
+<p>public boolean isBlacklisted(String token) &#123;
+        return blacklist.contains(token);
+    &#125;
+&#125;
+</p>
+<p>// In JwtAuthenticationFilter:
+if (tokenBlacklistService.isBlacklisted(jwt)) &#123;
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    return;
+&#125;
+</p>
+</code></pre>
+</strong>3. Custom Claims:<strong>
+<pre><code>public String generateToken(UserDetails userDetails, Map&lt;String, Object&gt; extraClaims) &#123;
+<p>Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;(extraClaims);
+    claims.put(&quot;roles&quot;, userDetails.getAuthorities());
+    claims.put(&quot;userId&quot;, ((CustomUserDetails) userDetails).getId());
+    claims.put(&quot;email&quot;, ((CustomUserDetails) userDetails).getEmail());
+</p>
+<p>return Jwts.builder()
+        .setClaims(claims)
+        .setSubject(userDetails.getUsername())
+        // ...
+        .compact();
+&#125;
+</p>
+</code></pre>
+</strong>Testing:<strong>
+<pre><code>@SpringBootTest
+<p>@AutoConfigureMockMvc
+class JwtAuthenticationTest &#123;
+</p>
+<p>@Autowired
+    private MockMvc mockMvc;
+</p>
+<p>@Autowired
+    private JwtService jwtService;
+</p>
+<p>@Test
+    void testAuthenticatedRequest() throws Exception &#123;
+        UserDetails user = User.builder()
+            .username(&quot;test@example.com&quot;)
+            .password(&quot;password&quot;)
+            .roles(&quot;USER&quot;)
+            .build();
+</p>
+<p>String token = jwtService.generateToken(user);
+</p>
+<p>mockMvc.perform(get(&quot;/api/user/profile&quot;)
+                .header(&quot;Authorization&quot;, &quot;Bearer &quot; + token))
+            .andExpect(status().isOk());
+    &#125;
+</p>
+<p>@Test
+    void testUnauthorizedWithoutToken() throws Exception &#123;
+        mockMvc.perform(get(&quot;/api/user/profile&quot;))
+            .andExpect(status().isUnauthorized());
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>7️⃣ Spring Cloud & Microservices</h2>
+<h3>Q176: Difference between <code>@EnableDiscoveryClient</code> and <code>@EnableEurekaClient</code>.</h3>
+</strong>Simple Answer:<strong>
+<code>@EnableDiscoveryClient</code> is a generic annotation that works with any service discovery implementation (Eureka, Consul, Zookeeper). <code>@EnableEurekaClient</code> is specific to Netflix Eureka only.
+</strong>Deep Dive:<strong>
+</strong>Historical Context:<strong>
+<ul>
+<li><code>@EnableEurekaClient</code> was the original Eureka-specific annotation</li>
+<li><code>@EnableDiscoveryClient</code> was added to support multiple discovery clients</li>
+<li>Since Spring Cloud 2020+, both are optional (auto-configuration handles it)</li>
+</ul>
+</strong><code>@EnableDiscoveryClient</code> - Generic Approach<strong>
+<pre><code>@SpringBootApplication
+<p>@EnableDiscoveryClient  // Works with any implementation
+public class MyServiceApplication &#123;
+    public static void main(String[] args) &#123;
+        SpringApplication.run(MyServiceApplication.class, args);
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Supported Implementations:<strong>
+<ul>
+<li>Netflix Eureka</li>
+<li>HashiCorp Consul</li>
+<li>Apache Zookeeper</li>
+<li>Kubernetes</li>
+<li>Cloud Foundry</li>
+</ul>
+</strong><code>@EnableEurekaClient</code> - Eureka-Specific<strong>
+<pre><code>@SpringBootApplication
+<p>@EnableEurekaClient  // Only works with Eureka
+public class MyServiceApplication &#123;
+    public static void main(String[] args) &#123;
+        SpringApplication.run(MyServiceApplication.class, args);
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Comparison:<strong>
+<table><thead><tr><th>Aspect</th><th>@EnableDiscoveryClient</th><th>@EnableEurekaClient</th></tr></thead><tbody><tr><td></strong>Supported registries<strong></td><td>Any (Eureka, Consul, Zookeeper)</td><td>Eureka only</td></tr><tr><td></strong>Abstraction level<strong></td><td>High (generic)</td><td>Low (specific)</td></tr><tr><td></strong>Spring Cloud version<strong></td><td>All</td><td>All</td></tr><tr><td></strong>Recommended<strong></td><td>✅ Yes (flexible)</td><td>⚠️ Only if Eureka-only</td></tr><tr><td></strong>Auto-configuration<strong></td><td>Works automatically</td><td>Works automatically</td></tr></tbody></table>
+</strong>Modern Approach (Spring Cloud 2020+):<strong>
+<pre><code>@SpringBootApplication  // No annotation needed!
+<p>public class MyServiceApplication &#123;
+    // Discovery client auto-configured based on dependencies
+&#125;
+</p>
+</code></pre>
+</strong>Dependency determines implementation:<strong>
+<pre><code>&lt;!-- Eureka --&gt;
+<p>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-netflix-eureka-client&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</p>
+<p>&lt;!-- OR Consul --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-consul-discovery&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</p>
+</code></pre>
+</strong>Using Discovery Client:<strong>
+<pre><code>@Service
+<p>public class MyService &#123;
+</p>
+<p>@Autowired
+    private DiscoveryClient discoveryClient;  // Generic interface
+</p>
+<p>public List&lt;ServiceInstance&gt; getInstances(String serviceName) &#123;
+        return discoveryClient.getInstances(serviceName);
+    &#125;
+</p>
+<p>public List&lt;String&gt; getServices() &#123;
+        return discoveryClient.getServices();
+    &#125;
+&#125;
+</p>
+<p>// Works with ANY implementation!
+</p>
+</code></pre>
+</strong>Eureka-Specific Features:<strong>
+<pre><code>@Service
+<p>public class EurekaSpecificService &#123;
+</p>
+<p>@Autowired
+    private EurekaClient eurekaClient;  // Eureka-specific
+</p>
+<p>public InstanceInfo getInstanceInfo(String appName) &#123;
+        Application application = eurekaClient.getApplication(appName);
+        return application.getInstances().get(0);
+    &#125;
+</p>
+<p>// Eureka-only features like health checks, metadata, etc.
+&#125;
+</p>
+</code></pre>
+</strong>Configuration Examples:<strong>
+</strong>Eureka:<strong>
+<pre><code>eureka:
+<p>client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: $&#123;spring.application.name&#125;:$&#123;random.value&#125;
+</p>
+</code></pre>
+</strong>Consul:<strong>
+<pre><code>spring:
+<p>cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+</p>
+</code></pre>
+</strong>Best Practices:<strong>
+<ol>
+<li></strong>Use <code>@EnableDiscoveryClient</code><strong> for flexibility</li>
+<li></strong>Omit annotations<strong> in modern Spring Cloud (auto-configured)</li>
+<li></strong>Use generic <code>DiscoveryClient</code> interface<strong> in code</li>
+<li></strong>Only use <code>EurekaClient</code><strong> if you need Eureka-specific features</li>
+</ol>
+<hr>
+<h3>Q180: <code>@LoadBalanced</code> RestTemplate vs WebClient – how do they resolve service names?</h3>
+</strong>Simple Answer:<strong>
+<p>Both use Spring Cloud LoadBalancer (or legacy Ribbon) to intercept HTTP requests, resolve service names to actual instance URLs from the discovery client, and distribute requests across available instances.
+</p>
+</strong>Deep Dive:<strong>
+</strong><code>@LoadBalanced</code> RestTemplate:<strong>
+</strong>Configuration:<strong>
+<pre><code>@Configuration
+<p>public class RestTemplateConfig &#123;
+</p>
+<p>@Bean
+    @LoadBalanced  // Enables client-side load balancing
+    public RestTemplate restTemplate() &#123;
+        return new RestTemplate();
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Usage:<strong>
+<pre><code>@Service
+<p>public class OrderService &#123;
+</p>
+<p>@Autowired
+    @LoadBalanced
+    private RestTemplate restTemplate;
+</p>
+<p>public Product getProduct(Long productId) &#123;
+        // &quot;product-service&quot; is logical service name
+        String url = &quot;http://product-service/api/products/&quot; + productId;
+        return restTemplate.getForObject(url, Product.class);
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>How It Works:<strong>
+<pre><code>1. Request: http://product-service/api/products/123
+<p>↓
+</p>
+<ol>
+<li>LoadBalancerInterceptor intercepts</li>
+</ol>
+<p>↓
+</p>
+<ol>
+<li>Query DiscoveryClient for &quot;product-service&quot; instances</li>
+</ol>
+<p>↓
+</p>
+<ol>
+<li>Receives: [192.168.1.10:8081, 192.168.1.11:8081, 192.168.1.12:8081]</li>
+</ol>
+<p>↓
+</p>
+<ol>
+<li>LoadBalancer selects instance (round-robin, random, etc.)</li>
+</ol>
+<p>↓
+</p>
+<ol>
+<li>Rewrites URL: http://192.168.1.10:8081/api/products/123</li>
+</ol>
+<p>↓
+</p>
+<ol>
+<li>Executes actual HTTP request</li>
+</ol>
+<p>↓
+</p>
+<ol>
+<li>Returns response</li>
+</ol>
+</code></pre>
+</strong><code>@LoadBalanced</code> WebClient:<strong>
+</strong>Configuration:<strong>
+<pre><code>@Configuration
+<p>public class WebClientConfig &#123;
+</p>
+<p>@Bean
+    @LoadBalanced
+    public WebClient.Builder webClientBuilder() &#123;
+        return WebClient.builder();
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Usage:<strong>
+<pre><code>@Service
+<p>public class OrderService &#123;
+</p>
+<p>private final WebClient webClient;
+</p>
+<p>public OrderService(@LoadBalanced WebClient.Builder builder) &#123;
+        this.webClient = builder.build();
+    &#125;
+</p>
+<p>public Mono&lt;Product&gt; getProduct(Long productId) &#123;
+        return webClient.get()
+            .uri(&quot;http://product-service/api/products/&#123;id&#125;&quot;, productId)
+            .retrieve()
+            .bodyToMono(Product.class);
+    &#125;
+</p>
+<p>public Flux&lt;Product&gt; getAllProducts() &#123;
+        return webClient.get()
+            .uri(&quot;http://product-service/api/products&quot;)
+            .retrieve()
+            .bodyToFlux(Product.class);
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Internal Resolution Process:<strong>
+</strong>Step 1: Service Discovery<strong>
+<pre><code>// Spring Cloud LoadBalancer queries discovery client
+<p>DiscoveryClient discoveryClient;
+List&lt;ServiceInstance&gt; instances = discoveryClient.getInstances(&quot;product-service&quot;);
+</p>
+<p>// Returns instances:
+[
+  ServiceInstance&#123;host=&quot;192.168.1.10&quot;, port=8081&#125;,
+  ServiceInstance&#123;host=&quot;192.168.1.11&quot;, port=8081&#125;,
+  ServiceInstance&#123;host=&quot;192.168.1.12&quot;, port=8081&#125;
+]
+</p>
+</code></pre>
+</strong>Step 2: Load Balancing<strong>
+<pre><code>// Default: Round-robin load balancer
+<p>ReactorLoadBalancer&lt;ServiceInstance&gt; loadBalancer;
+Response&lt;ServiceInstance&gt; response = loadBalancer.choose();
+ServiceInstance instance = response.getServer();
+</p>
+<p>// Selected: 192.168.1.10:8081
+</p>
+</code></pre>
+</strong>Step 3: URL Reconstruction<strong>
+<pre><code>// Original: http://product-service/api/products/123
+<p>// Becomes:  http://192.168.1.10:8081/api/products/123
+</p>
+</code></pre>
+</strong>Load Balancing Strategies:<strong>
+</strong>1. Round-Robin (Default):<strong>
+<pre><code>@Configuration
+<p>public class LoadBalancerConfig &#123;
+</p>
+<p>@Bean
+    public ReactorLoadBalancer&lt;ServiceInstance&gt; reactorServiceInstanceLoadBalancer(
+            Environment environment,
+            LoadBalancerClientFactory loadBalancerClientFactory) &#123;
+</p>
+<p>String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
+        return new RoundRobinLoadBalancer(
+            loadBalancerClientFactory.getLazyProvider(name, ServiceInstanceListSupplier.class),
+            name
+        );
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>2. Random:<strong>
+<pre><code>@Configuration
+<p>public class RandomLoadBalancerConfig &#123;
+</p>
+<p>@Bean
+    public ReactorLoadBalancer&lt;ServiceInstance&gt; randomLoadBalancer(
+            Environment environment,
+            LoadBalancerClientFactory loadBalancerClientFactory) &#123;
+</p>
+<p>String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
+        return new RandomLoadBalancer(
+            loadBalancerClientFactory.getLazyProvider(name, ServiceInstanceListSupplier.class),
+            name
+        );
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>3. Weighted Response Time:<strong>
+<pre><code>@Configuration
+<p>public class WeightedLoadBalancerConfig &#123;
+</p>
+<p>@Bean
+    public ReactorLoadBalancer&lt;ServiceInstance&gt; weightedLoadBalancer() &#123;
+        return new WeightedResponseTimeLoadBalancer();
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Comparison: RestTemplate vs WebClient:<strong>
+<table><thead><tr><th>Aspect</th><th>RestTemplate</th><th>WebClient</th></tr></thead><tbody><tr><td></strong>Paradigm<strong></td><td>Synchronous/Blocking</td><td>Reactive/Non-blocking</td></tr><tr><td></strong>Return Type<strong></td><td><code>Product</code></td><td><code>Mono<Product></code>, <code>Flux<Product></code></td></tr><tr><td></strong>Performance<strong></td><td>One thread per request</td><td>Fewer threads, higher throughput</td></tr><tr><td></strong>Spring Version<strong></td><td>All</td><td>Spring 5+</td></tr><tr><td></strong>Status<strong></td><td>Maintenance mode</td><td>Recommended</td></tr><tr><td></strong>Backpressure<strong></td><td>❌ No</td><td>✅ Yes</td></tr><tr><td></strong>Memory<strong></td><td>Higher (thread per request)</td><td>Lower (event loop)</td></tr></tbody></table>
+</strong>Advanced Configuration:<strong>
+</strong>Retry Logic:<strong>
+<pre><code>@Bean
+<p>@LoadBalanced
+public WebClient.Builder webClientBuilder() &#123;
+    return WebClient.builder()
+        .filter((request, next) -&gt; next.exchange(request)
+            .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))
+                .filter(throwable -&gt; throwable instanceof WebClientResponseException.ServiceUnavailable))
+        );
+&#125;
+</p>
+</code></pre>
+</strong>Timeout Configuration:<strong>
+<pre><code>@Bean
+<p>@LoadBalanced
+public RestTemplate restTemplate(RestTemplateBuilder builder) &#123;
+    return builder
+        .setConnectTimeout(Duration.ofSeconds(5))
+        .setReadTimeout(Duration.ofSeconds(10))
+        .build();
+&#125;
+</p>
+</code></pre>
+</strong>Circuit Breaker Integration:<strong>
+<pre><code>@Service
+<p>public class ResilientOrderService &#123;
+</p>
+<p>private final WebClient webClient;
+    private final CircuitBreakerFactory circuitBreakerFactory;
+</p>
+<p>public Mono&lt;Product&gt; getProduct(Long productId) &#123;
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create(&quot;product-service&quot;);
+</p>
+<p>return webClient.get()
+            .uri(&quot;http://product-service/api/products/&#123;id&#125;&quot;, productId)
+            .retrieve()
+            .bodyToMono(Product.class)
+            .transform(it -&gt; circuitBreaker.run(it, throwable -&gt; 
+                Mono.just(getFallbackProduct(productId))
+            ));
+    &#125;
+</p>
+<p>private Product getFallbackProduct(Long productId) &#123;
+        return new Product(productId, &quot;Fallback Product&quot;);
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Health-Aware Load Balancing:<strong>
+<pre><code>spring:
+<p>cloud:
+    loadbalancer:
+      health-check:
+        enabled: true
+        interval: 5s
+</p>
+</code></pre>
+</strong>Custom Load Balancer:<strong>
+<pre><code>public class CustomLoadBalancer implements ReactorServiceInstanceLoadBalancer &#123;
+<p>private final ServiceInstanceListSupplier serviceInstanceListSupplier;
+</p>
+<p>@Override
+    public Mono&lt;Response&lt;ServiceInstance&gt;&gt; choose(Request request) &#123;
+        return serviceInstanceListSupplier.get()
+            .next()
+            .map(instances -&gt; &#123;
+                // Custom selection logic
+                ServiceInstance instance = selectInstance(instances, request);
+                return new DefaultResponse(instance);
+            &#125;);
+    &#125;
+</p>
+<p>private ServiceInstance selectInstance(List&lt;ServiceInstance&gt; instances, Request request) &#123;
+        // Example: Select based on custom header
+        String zone = request.getContext().get(&quot;zone&quot;);
+        return instances.stream()
+            .filter(i -&gt; i.getMetadata().get(&quot;zone&quot;).equals(zone))
+            .findFirst()
+            .orElse(instances.get(0));
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Monitoring & Debugging:<strong>
+<pre><code>logging:
+<p>level:
+    org.springframework.cloud.client.loadbalancer: DEBUG
+    org.springframework.web.reactive.function.client: DEBUG
+</p>
+</code></pre>
+</strong>Best Practices:<strong>
+<ol>
+<li></strong>Use WebClient<strong> for new applications (reactive, better performance)</li>
+<li></strong>Configure timeouts<strong> to prevent hanging requests</li>
+<li></strong>Add retry logic<strong> for transient failures</li>
+<li></strong>Implement circuit breakers<strong> for fault tolerance</li>
+<li></strong>Enable health checks<strong> for load balancer awareness</li>
+<li></strong>Monitor metrics<strong> (request count, latency, errors)</li>
+</ol>
+<hr>
+<h2>8️⃣ Testing</h2>
+<h3>Q196: Difference between <code>@SpringBootTest</code> (full) and <code>@WebMvcTest</code> (slice).</h3>
+</strong>Simple Answer:<strong>
+<code>@SpringBootTest</code> loads the complete application context with all beans and configurations. <code>@WebMvcTest</code> loads only the web layer (controllers, filters, advice) and mocks everything else, making tests faster.
+</strong>Deep Dive:<strong>
+</strong><code>@SpringBootTest</code> - Full Integration Test:<strong>
+</strong>Basic Usage:<strong>
+<pre><code>@SpringBootTest
+<p>class FullApplicationTest &#123;
+</p>
+<p>@Autowired
+    private UserService userService;
+</p>
+<p>@Autowired
+    private UserRepository userRepository;
+</p>
+<p>@Test
+    void testCompleteFlow() &#123;
+        User user = new User(&quot;test@example.com&quot;, &quot;password&quot;);
+        User saved = userService.createUser(user);
+</p>
+<p>assertNotNull(saved.getId());
+        assertTrue(userRepository.existsById(saved.getId()));
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>What Gets Loaded:<strong>
+<ul>
+<li>✅ All <code>@Component</code>, <code>@Service</code>, <code>@Repository</code>, <code>@Controller</code> beans</li>
+<li>✅ All <code>@Configuration</code> classes</li>
+<li>✅ All auto-configurations</li>
+<li>✅ Embedded database (if configured)</li>
+<li>✅ Embedded web server (optional)</li>
+<li>✅ Security filters</li>
+<li>✅ JPA entities and repositories</li>
+<li>✅ Message converters</li>
+<li>✅ Validation</li>
+<li>❌ External dependencies (unless configured)</li>
+</ul>
+</strong>Web Environment Options:<strong>
+<pre><code>// Option 1: MOCK (default) - MockMvc, no server
+<p>@SpringBootTest(webEnvironment = WebEnvironment.MOCK)
+@AutoConfigureMockMvc
+class MockWebTest &#123;
+    @Autowired
+    private MockMvc mockMvc;
+&#125;
+</p>
+<p>// Option 2: RANDOM_PORT - Real server on random port
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+class RandomPortTest &#123;
+    @LocalServerPort
+    private int port;
+</p>
+<p>@Autowired
+    private TestRestTemplate restTemplate;
+&#125;
+</p>
+<p>// Option 3: DEFINED_PORT - Real server on configured port
+@SpringBootTest(webEnvironment = WebEnvironment.DEFINED_PORT)
+class DefinedPortTest &#123;
+    // Uses server.port from application.properties
+&#125;
+</p>
+<p>// Option 4: NONE - No web environment
+@SpringBootTest(webEnvironment = WebEnvironment.NONE)
+class NoWebTest &#123;
+    // For testing non-web components
+&#125;
+</p>
+</code></pre>
+</strong><code>@WebMvcTest</code> - Web Layer Slice Test:<strong>
+</strong>Basic Usage:<strong>
+<pre><code>@WebMvcTest(UserController.class)  // Only load UserController
+<p>class UserControllerTest &#123;
+</p>
+<p>@Autowired
+    private MockMvc mockMvc;
+</p>
+<p>@MockBean  // Mock the service layer
+    private UserService userService;
+</p>
+<p>@Test
+    void testGetUser() throws Exception &#123;
+        User user = new User(1L, &quot;test@example.com&quot;);
+        when(userService.findById(1L)).thenReturn(Optional.of(user));
+</p>
+<p>mockMvc.perform(get(&quot;/api/users/1&quot;))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath(&quot;$.email&quot;).value(&quot;test@example.com&quot;));
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>What Gets Loaded:<strong>
+<ul>
+<li>✅ <code>@Controller</code>, <code>@RestController</code>, <code>@ControllerAdvice</code></li>
+<li>✅ <code>@JsonComponent</code></li>
+<li>✅ Jackson converters</li>
+<li>✅ Spring Security (if present)</li>
+<li>✅ MockMvc</li>
+<li>✅ Validation</li>
+<li>❌ <code>@Service</code>, <code>@Repository</code>, <code>@Component</code> (must be mocked)</li>
+<li>❌ Database</li>
+<li>❌ JPA</li>
+<li>❌ Embedded server</li>
+</ul>
+</strong>Comparison Table:<strong>
+<table><thead><tr><th>Aspect</th><th>@SpringBootTest</th><th>@WebMvcTest</th></tr></thead><tbody><tr><td></strong>Context<strong></td><td>Full application</td><td>Web layer only</td></tr><tr><td></strong>Beans loaded<strong></td><td>All</td><td>Controllers + web infrastructure</td></tr><tr><td></strong>Test speed<strong></td><td>Slower (3-10s)</td><td>Faster (1-3s)</td></tr><tr><td></strong>Database<strong></td><td>Real (embedded)</td><td>Not loaded</td></tr><tr><td></strong>Services<strong></td><td>Real beans</td><td>Must mock</td></tr><tr><td></strong>Use case<strong></td><td>Integration tests</td><td>Controller unit tests</td></tr><tr><td></strong>MockMvc<strong></td><td>Optional (needs <code>@AutoConfigureMockMvc</code>)</td><td>Included</td></tr><tr><td></strong>Server<strong></td><td>Optional (real server)</td><td>Mock only</td></tr></tbody></table>
+</strong>Other Test Slices:<strong>
+</strong>1. <code>@DataJpaTest</code> - JPA Layer:<strong>
+<pre><code>@DataJpaTest
+<p>class UserRepositoryTest &#123;
+</p>
+<p>@Autowired
+    private UserRepository userRepository;
+</p>
+<p>@Autowired
+    private TestEntityManager entityManager;
+</p>
+<p>@Test
+    void testFindByEmail() &#123;
+        User user = new User(&quot;test@example.com&quot;, &quot;password&quot;);
+        entityManager.persist(user);
+        entityManager.flush();
+</p>
+<p>Optional&lt;User&gt; found = userRepository.findByEmail(&quot;test@example.com&quot;);
+</p>
+<p>assertTrue(found.isPresent());
+        assertEquals(user.getEmail(), found.get().getEmail());
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>What Gets Loaded:<strong>
+<ul>
+<li>✅ JPA repositories</li>
+<li>✅ <code>TestEntityManager</code></li>
+<li>✅ Embedded database (H2 by default)</li>
+<li>✅ JPA configuration</li>
+<li>❌ Services, Controllers</li>
+<li>❌ Full auto-configuration</li>
+</ul>
+</strong>2. <code>@RestClientTest</code> - RestTemplate/WebClient:<strong>
+<pre><code>@RestClientTest(ProductClient.class)
+<p>class ProductClientTest &#123;
+</p>
+<p>@Autowired
+    private ProductClient productClient;
+</p>
+<p>@Autowired
+    private MockRestServiceServer server;
+</p>
+<p>@Test
+    void testGetProduct() &#123;
+        server.expect(requestTo(&quot;/products/1&quot;))
+            .andRespond(withSuccess('&#123;&quot;id&quot;:1,&quot;name&quot;:&quot;Product&quot;&#125;', MediaType.APPLICATION_JSON));
+</p>
+<p>Product product = productClient.getProduct(1L);
+</p>
+<p>assertEquals(&quot;Product&quot;, product.getName());
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>3. <code>@JsonTest</code> - JSON Serialization:<strong>
+<pre><code>@JsonTest
+<p>class UserJsonTest &#123;
+</p>
+<p>@Autowired
+    private JacksonTester&lt;User&gt; json;
+</p>
+<p>@Test
+    void testSerialize() throws Exception &#123;
+        User user = new User(1L, &quot;test@example.com&quot;);
+</p>
+<p>assertThat(json.write(user))
+            .extractingJsonPathStringValue(&quot;$.email&quot;)
+            .isEqualTo(&quot;test@example.com&quot;);
+    &#125;
+</p>
+<p>@Test
+    void testDeserialize() throws Exception &#123;
+        String content = &quot;&#123;\&quot;id\&quot;:1,\&quot;email\&quot;:\&quot;test@example.com\&quot;&#125;&quot;;
+</p>
+<p>assertThat(json.parse(content))
+            .isEqualTo(new User(1L, &quot;test@example.com&quot;));
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Complete Testing Strategy:<strong>
+</strong>Unit Tests (Fast, Isolated):<strong>
+<pre><code>class UserServiceUnitTest &#123;
+<p>private UserService userService;
+    private UserRepository userRepository;
+</p>
+<p>@BeforeEach
+    void setUp() &#123;
+        userRepository = mock(UserRepository.class);
+        userService = new UserService(userRepository);
+    &#125;
+</p>
+<p>@Test
+    void testCreateUser() &#123;
+        User user = new User(&quot;test@example.com&quot;, &quot;password&quot;);
+        when(userRepository.save(any())).thenReturn(user);
+</p>
+<p>User created = userService.createUser(user);
+</p>
+<p>assertNotNull(created);
+        verify(userRepository).save(user);
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Slice Tests (Fast, Focused):<strong>
+<pre><code>@WebMvcTest(UserController.class)
+<p>class UserControllerSliceTest &#123;
+    @Autowired private MockMvc mockMvc;
+    @MockBean private UserService userService;
+    // Test controller layer only
+&#125;
+</p>
+<p>@DataJpaTest
+class UserRepositorySliceTest &#123;
+    @Autowired private UserRepository userRepository;
+    // Test repository layer only
+&#125;
+</p>
+</code></pre>
+</strong>Integration Tests (Slower, Comprehensive):<strong>
+<pre><code>@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+<p>class UserIntegrationTest &#123;
+    @Autowired private TestRestTemplate restTemplate;
+    @Autowired private UserRepository userRepository;
+</p>
+<p>@Test
+    void testEndToEnd() &#123;
+        // Test complete flow
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Best Practices:<strong>
+</strong>Test Pyramid:<strong>
+<pre><code>        /\
+<p>/  \      Few Integration Tests (@SpringBootTest)
+      /    \
+     /      \
+    /        \   More Slice Tests (@WebMvcTest, @DataJpaTest)
+   /          \
+  /            \
+ /______________\ Many Unit Tests (plain JUnit)
+</p>
+</code></pre>
+</strong>Example Test Suite:<strong>
+<pre><code>// 1. Unit Test - Fast, No Spring
+<p>class UserServiceTest &#123;
+    // Pure unit tests with mocks
+&#125;
+</p>
+<p>// 2. Slice Test - Fast, Partial Spring Context
+@WebMvcTest(UserController.class)
+class UserControllerTest &#123;
+    // Controller tests with MockMvc
+&#125;
+</p>
+<p>@DataJpaTest
+class UserRepositoryTest &#123;
+    // Repository tests with embedded DB
+&#125;
+</p>
+<p>// 3. Integration Test - Slow, Full Context
+@SpringBootTest
+class UserIntegrationTest &#123;
+    // End-to-end tests
+&#125;
+</p>
+</code></pre>
+</strong>Performance Optimization:<strong>
+<pre><code>// Reuse context across tests
+<p>@SpringBootTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class FastIntegrationTest &#123;
+    // Context created once for all tests
+&#125;
+</p>
+<p>// Exclude heavy auto-configurations
+@SpringBootTest(
+    properties = &quot;spring.autoconfigure.exclude=&quot; +
+        &quot;org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration&quot;
+)
+class LightweightTest &#123;
+    // Faster startup
+&#125;
+</p>
+</code></pre>
+</strong>Common Mistakes:<strong>
+</strong>❌ Bad - Using @SpringBootTest for everything:<strong>
+<pre><code>@SpringBootTest  // Loads entire context unnecessarily
+<p>class UserControllerTest &#123;
+    @Autowired private UserController controller;
+    // Just testing controller logic
+&#125;
+</p>
+</code></pre>
+</strong>✅ Good - Use appropriate slice:<strong>
+<pre><code>@WebMvcTest(UserController.class)  // Only loads web layer
+<p>class UserControllerTest &#123;
+    @Autowired private MockMvc mockMvc;
+    @MockBean private UserService userService;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h3>Q199: Test a <code>@Transactional</code> service method without committing any data.</h3>
+</strong>Simple Answer:<strong>
+<p>Annotate your test class or method with <code>@Transactional</code>, and Spring will automatically roll back the transaction after each test, leaving the database clean.
+</p>
+</strong>Deep Dive:<strong>
+</strong>Basic Approach:<strong>
+</strong>Test with Auto-Rollback:<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional  // Automatically rolls back after each test
+class UserServiceTest &#123;
+</p>
+<p>@Autowired
+    private UserService userService;
+</p>
+<p>@Autowired
+    private UserRepository userRepository;
+</p>
+<p>@Test
+    void testCreateUser() &#123;
+        // Arrange
+        User user = new User(&quot;test@example.com&quot;, &quot;password&quot;);
+</p>
+<p>// Act
+        User created = userService.createUser(user);
+</p>
+<p>// Assert
+        assertNotNull(created.getId());
+        assertTrue(userRepository.existsById(created.getId()));
+</p>
+<p>// Database will be rolled back after this test
+    &#125;
+</p>
+<p>@Test
+    void testFindUser() &#123;
+        // Database is clean - previous test was rolled back
+        User user = new User(&quot;another@example.com&quot;, &quot;password&quot;);
+        userRepository.save(user);
+</p>
+<p>Optional&lt;User&gt; found = userService.findByEmail(&quot;another@example.com&quot;);
+</p>
+<p>assertTrue(found.isPresent());
+        // Rolled back again
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>How It Works:<strong>
+<pre><code>Test starts
+<p>↓
+@Transactional creates transaction
+    ↓
+Test method executes
+    ↓
+Database changes made
+    ↓
+Test method completes
+    ↓
+@Transactional rolls back transaction
+    ↓
+Database returns to original state
+    ↓
+Next test starts with clean database
+</p>
+</code></pre>
+</strong>Controlling Rollback Behavior:<strong>
+</strong>1. Force Commit (Override Default):<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional
+class UserServiceTest &#123;
+</p>
+<p>@Test
+    @Commit  // Don't rollback this test
+    void testDataThatShouldPersist() &#123;
+        User user = new User(&quot;persist@example.com&quot;, &quot;password&quot;);
+        userRepository.save(user);
+        // Data WILL persist after test
+    &#125;
+</p>
+<p>@Test
+    @Rollback  // Explicit rollback (default behavior)
+    void testDataThatShouldRollback() &#123;
+        User user = new User(&quot;rollback@example.com&quot;, &quot;password&quot;);
+        userRepository.save(user);
+        // Data will NOT persist
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>2. Conditional Rollback:<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional
+class ConditionalRollbackTest &#123;
+</p>
+<p>@Test
+    @Rollback(value = false)  // Same as @Commit
+    void testWithCommit() &#123;
+        // Data persists
+    &#125;
+</p>
+<p>@Test
+    @Rollback(value = true)  // Explicit rollback
+    void testWithRollback() &#123;
+        // Data rolled back
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Testing Transactional Behavior:<strong>
+</strong>Test Transaction Propagation:<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional
+class TransactionPropagationTest &#123;
+</p>
+<p>@Autowired
+    private UserService userService;
+</p>
+<p>@Autowired
+    private AuditService auditService;
+</p>
+<p>@Test
+    void testRequiresNew() &#123;
+        User user = new User(&quot;test@example.com&quot;, &quot;password&quot;);
+</p>
+<p>// This throws exception
+        assertThrows(ValidationException.class, () -&gt; &#123;
+            userService.createUserWithAudit(user);
+        &#125;);
+</p>
+<p>// User creation rolled back
+        assertFalse(userRepository.existsById(user.getId()));
+</p>
+<p>// But audit log was committed (REQUIRES_NEW)
+        assertTrue(auditRepository.existsByAction(&quot;USER_CREATE_ATTEMPT&quot;));
+    &#125;
+&#125;
+</p>
+<p>@Service
+class UserService &#123;
+</p>
+<p>@Transactional
+    public void createUserWithAudit(User user) &#123;
+        auditService.logAttempt(&quot;USER_CREATE_ATTEMPT&quot;);  // REQUIRES_NEW
+</p>
+<p>if (!isValid(user)) &#123;
+            throw new ValidationException();  // Rolls back user creation
+        &#125;
+</p>
+<p>userRepository.save(user);
+    &#125;
+&#125;
+</p>
+<p>@Service
+class AuditService &#123;
+</p>
+<p>@Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logAttempt(String action) &#123;
+        auditRepository.save(new AuditLog(action));
+        // Commits independently
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Advanced Testing Patterns:<strong>
+</strong>1. Testing Rollback on Exception:<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional
+class RollbackOnExceptionTest &#123;
+</p>
+<p>@Test
+    void testRollbackOnRuntimeException() &#123;
+        assertThrows(RuntimeException.class, () -&gt; &#123;
+            userService.createUserThatFails();
+        &#125;);
+</p>
+<p>// Verify nothing was saved
+        assertEquals(0, userRepository.count());
+    &#125;
+</p>
+<p>@Test
+    void testNoRollbackOnCheckedException() &#123;
+        assertThrows(Exception.class, () -&gt; &#123;
+            userService.createUserWithCheckedException();
+        &#125;);
+</p>
+<p>// Checked exceptions don't rollback by default
+        assertEquals(1, userRepository.count());
+    &#125;
+&#125;
+</p>
+<p>@Service
+class UserService &#123;
+</p>
+<p>@Transactional
+    public void createUserThatFails() &#123;
+        userRepository.save(new User(&quot;test@example.com&quot;));
+        throw new RuntimeException(&quot;Rollback!&quot;);  // Triggers rollback
+    &#125;
+</p>
+<p>@Transactional
+    public void createUserWithCheckedException() throws Exception &#123;
+        userRepository.save(new User(&quot;test@example.com&quot;));
+        throw new Exception(&quot;No rollback&quot;);  // NO rollback
+    &#125;
+</p>
+<p>@Transactional(rollbackFor = Exception.class)
+    public void createUserWithRollbackOnChecked() throws Exception &#123;
+        userRepository.save(new User(&quot;test@example.com&quot;));
+        throw new Exception(&quot;Rollback!&quot;);  // NOW it rolls back
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>2. Programmatic Rollback:<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional
+class ProgrammaticRollbackTest &#123;
+</p>
+<p>@Autowired
+    private TransactionTemplate transactionTemplate;
+</p>
+<p>@Test
+    void testManualRollback() &#123;
+        User user = transactionTemplate.execute(status -&gt; &#123;
+            User u = userRepository.save(new User(&quot;test@example.com&quot;));
+</p>
+<p>if (someCondition()) &#123;
+                status.setRollbackOnly();  // Mark for rollback
+            &#125;
+</p>
+<p>return u;
+        &#125;);
+</p>
+<p>// Verify rollback occurred
+        assertNull(user);  // Transaction returned null due to rollback
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>3. Nested Transactions:<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional
+class NestedTransactionTest &#123;
+</p>
+<p>@Test
+    void testNestedRollback() &#123;
+        User user1 = userRepository.save(new User(&quot;user1@example.com&quot;));
+</p>
+<p>try &#123;
+            userService.createUserNested();  // NESTED propagation
+        &#125; catch (Exception e) &#123;
+            // Nested transaction rolled back
+        &#125;
+</p>
+<p>// Outer transaction still has user1
+        assertEquals(1, userRepository.count());
+        assertTrue(userRepository.existsById(user1.getId()));
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Testing with Different Isolation Levels:<strong>
+<pre><code>@SpringBootTest
+<p>class IsolationLevelTest &#123;
+</p>
+<p>@Test
+    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
+    void testReadUncommitted() &#123;
+        // Can read uncommitted data from other transactions
+    &#125;
+</p>
+<p>@Test
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    void testSerializable() &#123;
+        // Highest isolation, prevents phantom reads
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Using TestEntityManager (JPA-specific):<strong>
+<pre><code>@DataJpaTest
+<p>class UserRepositoryTest &#123;
+</p>
+<p>@Autowired
+    private TestEntityManager entityManager;
+</p>
+<p>@Autowired
+    private UserRepository userRepository;
+</p>
+<p>@Test
+    void testFindByEmail() &#123;
+        // Arrange
+        User user = new User(&quot;test@example.com&quot;, &quot;password&quot;);
+        entityManager.persist(user);
+        entityManager.flush();  // Force write to DB
+</p>
+<p>// Act
+        Optional&lt;User&gt; found = userRepository.findByEmail(&quot;test@example.com&quot;);
+</p>
+<p>// Assert
+        assertTrue(found.isPresent());
+        assertEquals(user.getId(), found.get().getId());
+</p>
+<p>// Automatically rolled back
+    &#125;
+</p>
+<p>@Test
+    void testFlushAndClear() &#123;
+        User user = new User(&quot;test@example.com&quot;, &quot;password&quot;);
+        entityManager.persist(user);
+        entityManager.flush();  // Write to DB
+        entityManager.clear();  // Clear persistence context
+</p>
+<p>// Now fetch from DB, not cache
+        User fetched = entityManager.find(User.class, user.getId());
+        assertNotSame(user, fetched);  // Different instances
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Preventing Accidental Commits:<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional
+@ActiveProfiles(&quot;test&quot;)
+class SafeIntegrationTest &#123;
+</p>
+<p>@BeforeEach
+    void setUp() &#123;
+        // Verify we're in test mode
+        assertTrue(TransactionSynchronizationManager.isActualTransactionActive());
+        assertTrue(TransactionSynchronizationManager.isCurrentTransactionReadOnly() == false);
+    &#125;
+</p>
+<p>@AfterEach
+    void tearDown() &#123;
+        // Verify transaction will rollback
+        assertTrue(TransactionSynchronizationManager.isCurrentTransactionRollbackOnly());
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>Best Practices:<strong>
+<ol>
+<li></strong>Always use <code>@Transactional</code> on test classes<strong> that modify data</li>
+<li></strong>Use <code>@DataJpaTest</code><strong> for repository tests (includes <code>@Transactional</code>)</li>
+<li></strong>Explicitly <code>@Commit</code><strong> only when necessary (setup data)</li>
+<li></strong>Test both success and failure<strong> scenarios</li>
+<li></strong>Verify rollback behavior<strong> with assertions</li>
+<li></strong>Use <code>TestEntityManager.flush()</code><strong> to force writes and catch constraint violations</li>
+<li></strong>Clear persistence context<strong> when testing cache behavior</li>
+</ol>
+</strong>Common Pitfalls:<strong>
+</strong>❌ Bad - No transaction, data persists:<strong>
+<pre><code>@SpringBootTest  // Missing @Transactional
+<p>class LeakyTest &#123;
+    @Test
+    void test1() &#123;
+        userRepository.save(new User(&quot;test@example.com&quot;));
+        // Data PERSISTS to next test!
+    &#125;
+</p>
+<p>@Test
+    void test2() &#123;
+        assertEquals(1, userRepository.count());  // Fails intermittently
+    &#125;
+&#125;
+</p>
+</code></pre>
+</strong>✅ Good - Transactional, clean between tests:<strong>
+<pre><code>@SpringBootTest
+<p>@Transactional  // Each test isolated
+class CleanTest &#123;
+    @Test
+    void test1() &#123;
+        userRepository.save(new User(&quot;test@example.com&quot;));
+        // Rolled back
+    &#125;
+</p>
+<p>@Test
+    void test2() &#123;
+        assertEquals(0, userRepository.count());  // Always passes
+    &#125;
+&#125;
+</p>
+</code></pre>
+<hr>
+<h2>Summary</h2>
+<p>This comprehensive guide covers the most critical Spring Framework concepts with both simple explanations and deep technical details:
+</p>
+<ol>
+<li></strong>Core Container<strong>: Bean lifecycle, dependency injection, scoping, circular dependencies</li>
+<li></strong>AOP<strong>: Proxy mechanisms, self-invocation, advice ordering</li>
+<li></strong>Transactions<strong>: Propagation types, rollback rules, programmatic control</li>
+<li></strong>Spring Boot<strong>: Auto-configuration, properties binding, configuration classes</li>
+<li></strong>Spring Data<strong>: Query methods, EntityGraph, N+1 problem solutions</li>
+<li></strong>Security<strong>: JWT authentication, stateless sessions, filter chains</li>
+<li></strong>Cloud<strong>: Service discovery, load balancing, distributed patterns</li>
+<li></strong>Testing**: Test slices, transactional tests, integration strategies</li>
+</ol>
+<p>Each section provides:
+</p>
+<ul>
+<li>Clear, concise simple answers</li>
+<li>In-depth technical explanations</li>
+<li>Working code examples</li>
+<li>Best practices and anti-patterns</li>
+<li>Performance considerations</li>
+<li>Common pitfalls and solutions</li>
+</ul>
+<p>Use this as a reference guide for interviews, troubleshooting, or deepening your Spring Framework knowledge.
+</p>
+        </article>
+    </div>
+</body>
+</html>

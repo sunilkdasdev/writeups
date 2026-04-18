@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Wait Events: The Complete Diagnostic Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Wait Events: The Complete Diagnostic Guide</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: Every Performance Problem Has a Wait</h2>
+<p>In my decades of Oracle consulting, I've learned that performance is simply about wait time. A query that's slow is waiting for something—whether it's disk I/O, CPU, locks, or network. Understanding wait events is the key to diagnosing any performance problem.
+</p>
+<p>At Manhattan Associates, when a client says "the system is slow," the first thing I check is wait events. 95% of the time, the wait event points directly to the problem.
+</p>
+<hr>
+<h2>Chapter 1: Understanding Wait Events</h2>
+<h3>The Wait Event Model</h3>
+<pre><code>-- Get current wait events for your session
+<p>SELECT
+    sid,
+    serial#,
+    username,
+    program,
+    event,
+    state,
+    wait_time,
+    seconds_in_wait
+FROM v$session 
+WHERE sid = (SELECT sid FROM v$mystat WHERE ROWNUM = 1);
+</p>
+</code></pre>
+<p><strong>The State Machine:</strong>
+</p>
+<ul>
+<li><strong>WAITING</strong>: Currently waiting</li>
+<li><strong>WAITED KNOWN TIME</strong>: Waited for known duration</li>
+<li><strong>WAITED SHORT TIME</strong>: Waited briefly</li>
+</ul>
+<h3>System-Wide Wait Analysis</h3>
+<pre><code>-- Top wait events in the database
+<p>SELECT
+    event,
+    wait_class,
+    total_waits,
+    time_waited,
+    ROUND(time_waited / 1000, 2) AS secs_waited,
+    ROUND(average_wait / 100, 2) AS avg_wait_ms
+FROM v$system_event
+WHERE wait_class != 'Idle'
+ORDER BY time_waited DESC;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 2: The Top Wait Events Explained</h2>
+<h3>1. db file sequential read</h3>
+<p><strong>What it is</strong>: Single block index or table access (most common)
+<strong>When it's normal</strong>: Reading index root/branch blocks, small tables
+<strong>When it's a problem</strong>: Thousands of sequential reads per query
+</p>
+<pre><code>-- Find queries doing sequential reads
+<p>SELECT
+    sql_id,
+    sql_text,
+    executions,
+    rows_processed,
+    buffer_gets,
+    ROUND(buffer_gets / NULLIF(executions, 0)) AS gets_per_exec
+FROM v$sqlarea
+WHERE sql_id IN (
+    SELECT sql_id 
+    FROM v$active_session_history 
+    WHERE event = 'db file sequential read'
+);
+</p>
+</code></pre>
+<p><strong>Solution</strong>: Add indexes, reduce index depth, use covering indexes
+</p>
+<h3>2. db file scattered read</h3>
+<p><strong>What it is</strong>: Multi-block full table scan reads
+<strong>When it's normal</strong>: Large table scans, data warehouse queries
+<strong>When it's a problem</strong>: In OLTP, this usually means missing index
+</p>
+<pre><code>-- Full table scans consuming time
+<p>SELECT
+    sql_id,
+    sql_text,
+    executions,
+    buffer_gets,
+    ROUND(buffer_gets / NULLIF(executions, 0)) AS gets_per_exec
+FROM v$sqlarea
+WHERE sql_text LIKE '%' || 'wms_orders' || '%'
+  AND sql_text LIKE '%FTS%'
+ORDER BY buffer_gets DESC;
+</p>
+</code></pre>
+<h3>3. log file sync</h3>
+<p><strong>What it is</strong>: Waiting for redo log write to complete
+<strong>Cause</strong>: Transaction commit, LGWR writing to disk
+</p>
+<pre><code>-- Check log sync times
+<p>SELECT
+    SUBSTR(to_char(sample_time, 'HH24:MI:SS'), 1, 8) AS time,
+    event,
+    wait_time,
+    p1 AS &quot;Log (file#)&quot;,
+    p2 AS &quot;Block#&quot;
+FROM v$active_session_history
+WHERE event = 'log file sync'
+  AND sample_time &gt; SYSDATE - INTERVAL '30' MINUTE;
+</p>
+</code></pre>
+<p><strong>Solutions:</strong>
+</p>
+<ul>
+<li>Commit less frequently (batch commits)</li>
+<li>Use COMMIT NOWAIT</li>
+<li>More/faster redo logs</li>
+<li>Use COMMIT WRITE BATCH</li>
+</ul>
+<h3>4. enq: TX - row lock contention</h3>
+<p><strong>What it is</strong>: Two sessions trying to modify the same row
+<strong>Classic case</strong>: Same order being updated by two processes
+</p>
+<pre><code>-- Find blocking sessions
+<p>SELECT
+    s1.sid AS waiting_sid,
+    s1.username AS waiting_user,
+    s1.lockwait AS wait_event,
+    s2.sid AS blocking_sid,
+    s2.username AS blocking_user
+FROM v$session s1
+JOIN v$session s2 ON s1.blocking_session = s2.sid;
+</p>
+</code></pre>
+<p><strong>Solutions:</strong>
+</p>
+<ul>
+<li>Application redesign (serialize access)</li>
+<li>Use optimistic locking</li>
+<li>Identify and resolve long transactions</li>
+</ul>
+<h3>5. buffer busy waits</h3>
+<p><strong>What it is</strong>: Waiting for a buffer to become available
+</p>
+<pre><code>-- What's causing buffer busy waits?
+<p>SELECT
+    p1 AS file_id,
+    p2 AS block_id,
+    p3 AS class_code,
+    COUNT(<em>) AS wait_count
+FROM v$session_wait
+WHERE event = 'buffer busy waits'
+GROUP BY p1, p2, p3;
+</p>
+<p>-- Find the object
+SELECT 
+    relative_fno,
+    owner,
+    segment_name,
+    segment_type
+FROM dba_extents
+WHERE file_id = &amp;file_id
+  AND &amp;block_id BETWEEN block_id AND block_id + blocks - 1;
+</p>
+</code></pre>
+<p><strong>Solutions:</strong>
+</p>
+<ul>
+<li>Increase FREELISTS</li>
+<li>Use ASSM (automatic segment space management)</li>
+<li>Reduce contention on hot blocks</li>
+</ul>
+<hr>
+<h2>Chapter 3: Wait Event Analysis in Practice</h2>
+<h3>Real Case: WMS Inventory Update Taking 30 Minutes</h3>
+<p><strong>Problem</strong>: Inventory update process was taking 30+ minutes
+</p>
+<p><strong>ASH Analysis:</strong>
+</p>
+<pre><code>SELECT 
+<p>event,
+    COUNT(</em>) AS waits,
+    AVG(wait_time) AS avg_wait_ms
+FROM v$active_session_history
+WHERE sample_time &gt; SYSDATE - INTERVAL '30' MINUTE
+  AND session_type = 'FOREGROUND'
+GROUP BY event
+ORDER BY COUNT(<em>) DESC;
+</p>
+</code></pre>
+<p><strong>Result:</strong>
+</p>
+<pre><code>EVENT                          WAYS    AVG_WAIT_MS
+<p>------------------------- ---------- ------------
+db file sequential read      45000          15
+enq: TX - row lock            32000          100
+log file sync                  8000          200
+</p>
+</code></pre>
+<p><strong>Analysis:</strong>
+</p>
+<ol>
+<li>45,000 sequential reads = missing index!</li>
+<li>32,000 row locks = concurrent updates fighting!</li>
+<li>8,000 log syncs = too many commits!</li>
+</ol>
+<p><strong>Solutions:</strong>
+</p>
+<ol>
+<li>Added composite index on (location_id, sku_id, quantity)</li>
+<li>Changed to batch update instead of row-by-row</li>
+<li>Changed COMMIT frequency from per-row to per-1000</li>
+</ol>
+<p><strong>Result</strong>: 30 minutes → 3 minutes!
+</p>
+<hr>
+<h2>Chapter 4: Interpreting Wait Event Patterns</h2>
+<h3>Pattern 1: I/O Bound</h3>
+<pre><code>Top events: db file sequential read, db file scattered read
+</code></pre>
+<p><strong>Diagnosis</strong>: Slow disk or missing indexes
+<strong>Fix</strong>: Add indexes, tune I/O subsystem, use SSD
+</p>
+<h3>Pattern 2: Lock Contention</h3>
+<pre><code>Top events: enq: TX - row lock contention, enq: TM - contention
+</code></pre>
+<p><strong>Diagnosis</strong>: Concurrent access to same rows
+<strong>Fix</strong>: Redesign application, use optimistic locking
+</p>
+<h3>Pattern 3: CPU Bound</h3>
+<pre><code>Top events: None (or very short waits), high CPU usage
+</code></pre>
+<p><strong>Diagnosis</strong>: Complex queries, missing statistics, bad plans
+<strong>Fix</strong>: Tune SQL, gather stats, use hints
+</p>
+<h3>Pattern 4: Redo Log Bottleneck</h3>
+<pre><code>Top events: log file sync, log file parallel write
+</code></pre>
+<p><strong>Diagnosis</strong>: Too many commits, slow disk for redo
+<strong>Fix</strong>: Batch commits, faster redo disks, increase log buffers
+</p>
+<hr>
+<h2>Chapter 5: Advanced Wait Event Analysis</h2>
+<h3>ASH for Historical Analysis</h3>
+<pre><code>-- What ran during the problem period?
+<p>SELECT
+    sql_id,
+    event,
+    COUNT(</em>) AS wait_count,
+    AVG(wait_time) AS avg_wait
+FROM v$active_session_history
+WHERE sample_time BETWEEN 
+    TO_DATE('2024-03-15 14:00', 'YYYY-MM-DD HH24:MI') AND
+    TO_DATE('2024-03-15 14:30', 'YYYY-MM-DD HH24:MI')
+GROUP BY sql_id, event
+ORDER BY COUNT(<em>) DESC;
+</p>
+</code></pre>
+<h3>Finding SQL with Most Waits</h3>
+<pre><code>-- Top SQL by wait time
+<p>SELECT
+    h.sql_id,
+    s.sql_text,
+    h.event,
+    COUNT(</em>) AS wait_count,
+    SUM(h.wait_time) AS total_wait_ms
+FROM v$active_session_history h
+JOIN v$sqlarea s ON h.sql_id = s.sql_id
+WHERE h.sample_time &gt; SYSDATE - INTERVAL '1' HOUR
+GROUP BY h.sql_id, s.sql_text, h.event
+ORDER BY SUM(h.wait_time) DESC;
+</p>
+</code></pre>
+<h3>Identifying Wait Cascades</h3>
+<pre><code>-- Find queries that wait for other queries
+<p>SELECT
+    blocking_session AS blocker_sid,
+    blocked_session AS waiter_sid,
+    COUNT(<em>) AS wait_count
+FROM v$active_session_history
+WHERE blocking_session IS NOT NULL
+  AND sample_time &gt; SYSDATE - INTERVAL '30' MINUTE
+GROUP BY blocking_session, blocked_session
+ORDER BY COUNT(</em>) DESC;
+</p>
+</code></pre>
+<hr>
+<h2>Conclusion: Waits Tell the Story</h2>
+<p><strong>Donald Sez</strong>: "Every performance problem has a signature in the wait events. Learn to read that signature and you'll diagnose any problem in minutes."
+</p>
+<p>At Manhattan Associates:
+</p>
+<ol>
+<li><strong>Start with wait events</strong> - Never guess what's slow</li>
+<li><strong>Use ASH for history</strong> - v$system_event only shows current</li>
+<li><strong>Focus on top events</strong> - Fix the biggest wait first</li>
+<li><strong>Look for patterns</strong> - I/O, locks, CPU, redo</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "Oracle Automatic Workload Repository: Performance Baselining and Analysis" - How to use AWR for long-term performance analysis.
+</p>
+        </article>
+    </div>
+</body>
+</html>

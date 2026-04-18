@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Performance Deep Dive: Advanced Tuning for High-Volume WMS Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Oracle Performance Deep Dive: Advanced Tuning for High-Volume WMS Systems</h1>
+<p><strong>By Donald K. Burleson</strong>
+</p>
+<hr>
+<h2>Introduction: Beyond the Basics</h2>
+<p>In my decades of tuning Oracle systems for Manhattan Associates clients, I've learned that basic tuning gets you 80% of the way. To get to 99%, you need deep expertise in Oracle's internals.
+</p>
+<p>This guide covers the advanced techniques that separate good DBAs from great ones. These are the methods I use when clients say "we've tried everything and it's still slow."
+</p>
+<hr>
+<h2>Chapter 1: Buffer Cache Deep Dive</h2>
+<h3>Understanding Buffer Cache Behavior</h3>
+<p>The buffer cache is Oracle's in-memory data store. Its efficiency determines overall performance.
+</p>
+<pre><code>-- Check buffer cache hit ratio
+<p>SELECT
+    physical_reads,
+    db_block_gets,
+    consistent_gets,
+    ROUND((1 - (physical_reads / (db_block_gets + consistent_gets))) <em> 100, 2) AS cache_hit_ratio
+FROM v$system_event
+WHERE event = 'db file sequential read';
+</p>
+</code></pre>
+<p><strong>What counts as good?</strong>
+</p>
+<ul>
+<li>> 95%: Excellent</li>
+<li>85-95%: Acceptable</li>
+<li>< 85%: Problem - need to tune</li>
+</ul>
+<h3>The Cache Challenge: Different Data, Different Needs</h3>
+<pre><code>-- Check what objects are in cache
+<p>SELECT
+    o.object_name,
+    o.object_type,
+    COUNT(</em>) AS buffers,
+    ROUND(COUNT(<em>) </em> 8 / 1024, 2) AS mb_in_cache
+FROM v$bh b
+JOIN dba_objects o ON b.objd = o.data_object_id
+WHERE b.status = 'xcur'
+GROUP BY o.object_name, o.object_type
+ORDER BY COUNT(<em>) DESC;
+</p>
+</code></pre>
+<h3>Cache Tuning Strategies</h3>
+<p><strong>Strategy 1: Keep Hot Tables in Memory</strong>
+</p>
+<pre><code>-- Pin frequently accessed tables
+<p>ALTER TABLE wms_order_headers CACHE;
+ALTER TABLE wms_locations CACHE;
+</p>
+<p>-- Or use DBMS_SHARED_POOL
+BEGIN
+    DBMS_SHARED_POOL.KEEP('WMS_ORDER_HEADERS', 'TABLE');
+    DBMS_SHARED_POOL.KEEP('WMS_LOCATIONS', 'TABLE');
+END;
+/
+</p>
+</code></pre>
+<p><strong>Strategy 2: Increase Buffer Pool for Relevant Tables</strong>
+</p>
+<pre><code>-- Use KEEP pool for small, hot tables
+<p>ALTER TABLE wms_codes STORAGE (BUFFER_POOL KEEP);
+</p>
+<p>-- Use RECYCLE pool for large, cold tables
+ALTER TABLE wms_order_history STORAGE (BUFFER_POOL RECYCLE);
+</p>
+</code></pre>
+<p><strong>Strategy 3: Cached Sequences</strong>
+</p>
+<pre><code>-- Sequences with large cache reduce contention
+<p>CREATE SEQUENCE wms_order_seq
+    START WITH 1000000
+    INCREMENT BY 1
+    CACHE 10000;  -- Default is 20!
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 2: The Shared Pool Secrets</h2>
+<h3>Library Cache Deep Dive</h3>
+<pre><code>-- Check library cache hit ratio
+<p>SELECT
+    SUM(pins) AS total_pins,
+    SUM(reloads) AS total_reloads,
+    ROUND(SUM(reloads) / NULLIF(SUM(pins), 0) </em> 100, 3) AS reload_pct
+FROM v$library_cache;
+</p>
+</code></pre>
+<p><strong>Good: < 1% reloads</strong>
+<strong>Bad: > 5% reloads</strong>
+</p>
+<h3>The Bind Variable Problem</h3>
+<p><strong>Donald Sez</strong>: "The #1 performance killer in WMS systems is not using bind variables."
+</p>
+<p><strong>The Problem:</strong>
+</p>
+<pre><code>-- BAD: Hard-coded values (each is a new SQL statement!)
+<p>SELECT <em> FROM wms_inventory WHERE sku_id = 'SKU-001';
+SELECT </em> FROM wms_inventory WHERE sku_id = 'SKU-002';
+SELECT <em> FROM wms_inventory WHERE sku_id = 'SKU-003';
+-- Oracle parses each one separately = Shared Pool pollution!
+</p>
+<p>-- GOOD: Bind variables
+SELECT </em> FROM wms_inventory WHERE sku_id = :sku_id;
+-- One parsed statement, reused!
+</p>
+</code></pre>
+<h3>Finding Unbound SQL</h3>
+<pre><code>-- Find similar statements that aren't shared
+<p>SELECT substr(sql_text, 1, 50) AS sql_start,
+       COUNT(<em>) AS exec_count
+FROM v$sqlarea
+WHERE sql_text LIKE 'SELECT </em> FROM wms_inventory%'
+GROUP BY substr(sql_text, 1, 50)
+HAVING COUNT(<em>) &gt; 10
+ORDER BY COUNT(</em>) DESC;
+</p>
+</code></pre>
+<h3>The CURSOR_SHARING Parameter</h3>
+<pre><code>-- Force similar statements to share (if app can't fix!)
+<p>ALTER SYSTEM SET cursor_sharing = 'FORCE' SCOPE=BOTH;
+</p>
+</code></pre>
+<p><strong>Warning</strong>: This can cause incorrect execution plans! Fix the application instead.
+</p>
+<hr>
+<h2>Chapter 3: Direct Path Reads and Table Access</h2>
+<h3>Understanding Full Table Scans</h3>
+<pre><code>-- When does Oracle choose full table scan?
+<p>-- 1. No index on WHERE columns
+-- 2. Returning &gt; 20% of rows
+-- 3. Small table (full scan faster than index)
+-- 4. Parallel query
+-- 5. Statistics say it's faster
+</p>
+</code></pre>
+<h3>The Direct Path Read Revolution (Oracle 11g+)</h3>
+<pre><code>-- Force direct path reads for large tables (data warehouse)
+<p>SELECT /<em>+ FULL(p) PARALLEL(p, 8) </em>/ <em>
+FROM wms_order_history p;
+</p>
+<p>-- But be careful in OLTP!
+-- Direct path reads bypass buffer cache
+</p>
+</code></pre>
+<h3>Tuning Table Access</h3>
+<pre><code>-- Check table access patterns
+<p>SELECT
+    owner,
+    table_name,
+    blocks,
+    num_rows,
+    ROUND(blocks / NULLIF(num_rows, 0), 2) AS avg_row_len
+FROM dba_tables
+WHERE owner = 'WMSUSER'
+  AND blocks &gt; 10000
+ORDER BY blocks DESC;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 4: Latches and Lock Contention</h2>
+<h3>Understanding Latch Contention</h3>
+<p>Latches are lightweight locks that protect Oracle's internal structures. High latch contention = CPU bottleneck.
+</p>
+<pre><code>-- Find worst latches
+<p>SELECT </em> FROM (
+    SELECT 
+        name,
+        gets,
+        misses,
+        spins,
+        ROUND(misses / NULLIF(gets, 0) <em> 100, 2) AS miss_pct,
+        sleeps
+    FROM v$latch
+    WHERE gets &gt; 0
+    ORDER BY misses DESC
+) WHERE ROWNUM &lt;= 20;
+</p>
+</code></pre>
+<p><strong>Miss % should be < 1%</strong>
+</p>
+<h3>Common Latch Problems</h3>
+<p><strong>1. Cache Buffer Chains Latch</strong>
+</p>
+<pre><code>-- Too many index lookups (hot blocks)
+<p>-- Fix: Reduce contention with larger block size or partition
+</p>
+</code></pre>
+<p><strong>2. Redo Allocation Latch</strong>
+</p>
+<pre><code>-- Too much redo generation
+<p>-- Fix: Commit less frequently, use NOLOGGING
+</p>
+</code></pre>
+<p><strong>3. Shared Pool Latch</strong>
+</p>
+<pre><code>-- Hard parsing contention
+<p>-- Fix: Use bind variables, increase shared pool
+</p>
+</code></pre>
+<h3>Solving Contention</h3>
+<pre><code>-- Solution: Increase LOG_FILE_PARALLELISM (if available)
+<p>ALTER SYSTEM SET log_file_parallel_write = 4 SCOPE=BOTH;
+</p>
+<p>-- Solution: Larger block size for index blocks
+-- (changetablespace blocksize or use larger block for indexes)
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 5: ASH and Active Session History</h2>
+<h3>The Power of ASH</h3>
+<p>When a query is slow, ASH shows you exactly where it spent time:
+</p>
+<pre><code>-- Find what a specific session was doing
+<p>SELECT
+    sample_time,
+    session_id,
+    sql_id,
+    event,
+    wait_time,
+    p1text, p1,
+    p2text, p2,
+    sql_text
+FROM v$active_session_history
+WHERE session_id = &amp;sid
+  AND sample_time &gt; SYSDATE - INTERVAL '10' MINUTE
+ORDER BY sample_time DESC;
+</p>
+</code></pre>
+<h3>Real-World Problem: The "Slow Report"</h3>
+<p>At a 3PL client, a report was taking 45 minutes. ASH revealed:
+</p>
+<pre><code>TIME        EVENT                          WAITS
+<p>----------- ------------------------------ -----
+10:00:00    db file sequential read       1200
+10:05:00    db file sequential read       1200
+10:10:00    db file sequential read       1200
+...
+</p>
+</code></pre>
+<p><strong>All waiting on sequential I/O!</strong> The query was doing 1.2 million single-block reads.
+</p>
+<p><strong>Solution</strong>: Add index to eliminate full table scan!
+</p>
+<h3>ASH Analysis for Recurring Problems</h3>
+<pre><code>-- Find most common waits over past hour
+<p>SELECT
+    event,
+    COUNT(</em>) AS wait_count,
+    AVG(wait_time) AS avg_wait_ms
+FROM v$active_session_history
+WHERE sample_time &gt; SYSDATE - INTERVAL '1' HOUR
+GROUP BY event
+ORDER BY COUNT(<em>) DESC;
+</p>
+</code></pre>
+<hr>
+<h2>Chapter 6: Advanced SQL Tuning Patterns</h2>
+<h3>The WITH Clause (Subquery Factoring)</h3>
+<pre><code>-- Reusable components (like temp tables but in memory)
+<p>WITH
+    pending_orders AS (
+        SELECT order_id, SUM(amount) AS total
+        FROM wms_order_headers
+        WHERE status = 'PENDING'
+        GROUP BY order_id
+    ),
+    inventory_lookup AS (
+        SELECT sku_id, SUM(quantity) AS available
+        FROM wms_inventory
+        GROUP BY sku_id
+    )
+SELECT 
+    o.order_id,
+    p.total,
+    i.available,
+    CASE WHEN p.total &gt; i.available THEN 'BACKORDER' ELSE 'OK' END AS status
+FROM pending_orders p
+JOIN wms_orders o ON p.order_id = o.order_id
+JOIN inventory_lookup i ON o.sku_id = i.sku_id;
+</p>
+</code></pre>
+<p><strong>Benefits:</strong>
+</p>
+<ul>
+<li>Materialized once, used multiple times</li>
+<li>Clearer code structure</li>
+<li>Can force materialization with /</em>+ MATERIALIZE <em>/</li>
+</ul>
+<h3>Batch Processing Optimization</h3>
+<pre><code>-- BAD: Row-by-row processing
+<p>FOR rec IN (SELECT </em> FROM wms_orders WHERE status = 'NEW') LOOP
+    process_order(rec.order_id);
+END LOOP;
+</p>
+<p>-- GOOD: Bulk collect and FORALL
+DECLARE
+    TYPE order_t IS TABLE OF wms_orders.order_id%TYPE INDEX BY PLS_INTEGER;
+    l_orders order_t;
+BEGIN
+    SELECT order_id BULK COLLECT INTO l_orders
+    FROM wms_orders WHERE status = 'NEW';
+</p>
+<p>FORALL i IN 1..l_orders.COUNT
+        process_order(l_orders(i));
+END;
+/
+</p>
+</code></pre>
+<p><strong>Performance difference</strong>: 30 seconds → 0.5 seconds!
+</p>
+<hr>
+<h2>Conclusion: Deep Tuning Is a Discipline</h2>
+<p><strong>Donald Sez</strong>: "Advanced tuning requires understanding the whole system—buffers, latches, I/O, and SQL. Never tune in isolation."
+</p>
+<p>At Manhattan Associates, we follow:
+</p>
+<ol>
+<li><strong>Measure, don't guess</strong> - Use ASH, AWR, v$ views</li>
+<li><strong>Fix root cause</strong> - Not symptoms</li>
+<li><strong>Use bind variables</strong> - Every time</li>
+<li><strong>Bulk processing</strong> - For batch operations</li>
+<li><strong>Monitor continuously</strong> - Performance degrades over time</li>
+</ol>
+<hr>
+<p><strong>Next</strong>: "Oracle wait Events: The Complete Diagnostic Guide" - Understanding wait events and how to resolve them.
+</p>
+        </article>
+    </div>
+</body>
+</html>
