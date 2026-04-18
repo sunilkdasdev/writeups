@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Knowledge Base - Index</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333; background: #f5f5f5;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        article {
+            background: white; padding: 40px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px;
+        }
+        h1 { font-size: 2.5em; color: #1a1a1a; margin-bottom: 10px; padding-bottom: 15px; border-bottom: 3px solid #0066cc; }
+        h2 { font-size: 1.6em; color: #1a1a1a; margin-top: 35px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e0e0e0; }
+        h3 { font-size: 1.2em; color: #2a2a2a; margin-top: 20px; margin-bottom: 10px; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        ul { list-style: none; margin-left: 0; }
+        li { padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+        li:last-child { border-bottom: none; }
+        .section { margin-bottom: 30px; }
+        .category { background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0; }
+        .external-link { color: #28a745; }
+        .local-link { color: #0066cc; }
+        .badge { display: inline-block; padding: 2px 8px; font-size: 0.75em; border-radius: 3px; margin-left: 8px; }
+        .badge-local { background: #e3f2fd; color: #0066cc; }
+        .badge-external { background: #e8f5e9; color: #28a745; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+        th { background: #0066cc; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+            <h1>Technical Knowledge Base</h1>
+            <p>A comprehensive collection of technical articles covering enterprise technologies, distributed systems, databases, and system design.</p>
+        </article>
+
+        <!-- Local Articles -->
+        <article>
+            <h2>📚 Our Articles</h2>
+            
+            <div class="category">
+                <h3>Oracle Database Tuning</h3>
+                <ul>
+                    <li><a href="oracle-tunning/01-oracle-sql-tuning-guide.html">Oracle SQL Tuning Guide</a></li>
+                    <li><a href="oracle-tunning/02-oracle-indexing-complete-guide.html">Oracle Indexing Complete Guide</a></li>
+                    <li><a href="oracle-tunning/03-oracle-execution-plans-demystified.html">Oracle Execution Plans Demystified</a></li>
+                    <li><a href="oracle-tunning/04-oracle-statistics-hidden-driver.html">Oracle Statistics - The Hidden Driver</a></li>
+                    <li><a href="oracle-tunning/05-oracle-query-rewrite-techniques.html">Oracle Query Rewrite Techniques</a></li>
+                    <li><a href="oracle-tunning/06-oracle-analytic-functions-complete.html">Oracle Analytic Functions Complete Guide</a></li>
+                    <li><a href="oracle-tunning/07-advanced-analytic-functions-window-frames.html">Advanced Analytic Functions & Window Frames</a></li>
+                    <li><a href="oracle-tunning/08-oracle-performance-deep-dive.html">Oracle Performance Deep Dive</a></li>
+                    <li><a href="oracle-tunning/09-oracle-wait-events-diagnostic-guide.html">Oracle Wait Events Diagnostic Guide</a></li>
+                    <li><a href="oracle-tunning/10-oracle-awr-baselining-analysis.html">Oracle AWR Baselining & Analysis</a></li>
+                    <li><a href="oracle-tunning/11-oracle-hints-complete-guide.html">Oracle Hints Complete Guide</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Distributed Systems</h3>
+                <ul>
+                    <li><a href="distributed-systems/01-distributed-transactions.html">Distributed Transactions (2PC, 3PC, SAGA)</a></li>
+                    <li><a href="distributed-systems/02-consensus-algorithms-paxos-raft.html">Consensus Algorithms (Paxos & Raft)</a></li>
+                    <li><a href="distributed-systems/03-consistency-models.html">Consistency Models (ACID to CRDTs)</a></li>
+                    <li><a href="distributed-systems/04-distributed-locking.html">Distributed Locking</a></li>
+                    <li><a href="distributed-systems/05-service-mesh-istio-linkerd.html">Service Mesh Architecture (Istio & Linkerd)</a></li>
+                    <li><a href="distributed-systems/06-distributed-tracing.html">Distributed Tracing</a></li>
+                    <li><a href="distributed-systems/07-message-queue-patterns.html">Message Queue Patterns (Kafka, RabbitMQ, Pulsar)</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>JVM & Performance</h3>
+                <ul>
+                    <li><a href="jvm-tuning/01-jvm-internals-deep-dive.html">JVM Internals Deep Dive</a></li>
+                    <li><a href="jvm-tuning/02-caching-systems-deep-dive.html">Caching Systems Deep Dive</a></li>
+                    <li><a href="jvm-deep-dive/01-jvm-internals-deep-dive.html">JVM Internals (Alternative)</a></li>
+                    <li><a href="jvm-deep-dive/02-jvm-heap-deep-dive.html">JVM Heap Deep Dive</a></li>
+                    <li><a href="gc.html">Garbage Collection</a></li>
+                    <li><a href="hashmap.html">HashMap Internals</a></li>
+                    <li><a href="happensbefore.html">Happens-Before</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Message Systems</h3>
+                <ul>
+                    <li><a href="rabbitmq/01-rabbitmq-advanced-internals.html">RabbitMQ Advanced Internals</a></li>
+                    <li><a href="kafka/01-kafka-architecture-deep-dive.html">Kafka Architecture Deep Dive</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Search & Storage</h3>
+                <ul>
+                    <li><a href="elasticsearch/01-elasticsearch-internals-deep-dive.html">Elasticsearch Internals Deep Dive</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Java & Spring</h3>
+                <ul>
+                    <li><a href="java.html">Java Complete Guide</a></li>
+                    <li><a href="SpringFAQs.html">Spring Framework FAQs</a></li>
+                    <li><a href="inteview1.html">Java Interview Questions</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Security</h3>
+                <ul>
+                    <li><a href="Authentication&Authorization.html">Authentication & Authorization</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Other Topics</h3>
+                <ul>
+                    <li><a href="README.html">README</a></li>
+                    <li><a href="Retrograde-Clock-Handling.html">Retrograde Clock Handling</a></li>
+                    <li><a href="tuing.html">Tuning Guide</a></li>
+                    <li><a href="newfile.html">General</a></li>
+                    <li><a href="trips/Guaetamala.html">Travel - Guatemala</a></li>
+                </ul>
+            </div>
+        </article>
+
+        <!-- External References -->
+        <article>
+            <h2>🔗 External References (awesome-scalability)</h2>
+            <p>Curated collection of articles from prominent engineers and tech companies.</p>
+
+            <div class="category">
+                <h3>Principles</h3>
+                <ul>
+                    <li><a href="https://people.eecs.berkeley.edu/~brewer/papers/GiantScale-IEEE.pdf" target="_blank">Lessons from Giant-Scale Services - Eric Brewer</a> <span class="badge badge-external">PDF</span></li>
+                    <li><a href="https://www.cs.cornell.edu/projects/ladis2009/talks/dean-keynote-ladis2009.pdf" target="_blank">Designs, Lessons and Advice from Building Large Distributed Systems - Jeff Dean</a> <span class="badge badge-external">PDF</span></li>
+                    <li><a href="https://12factor.net/" target="_blank">The Twelve-Factor App</a></li>
+                    <li><a href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html" target="_blank">Clean Architecture</a></li>
+                    <li><a href="http://robertgreiner.com/2014/08/cap-theorem-revisited/" target="_blank">CAP Theorem and Trade-offs</a></li>
+                    <li><a href="https://neo4j.com/blog/acid-vs-base-consistency-models-explained/" target="_blank">ACID and BASE</a></li>
+                    <li><a href="http://www.tom-e-white.com/2007/11/consistent-hashing.html" target="_blank">Consistent Hashing</a></li>
+                    <li><a href="https://www.allthingsdistributed.com/2008/12/eventually_consistent.html" target="_blank">Eventually Consistent - Werner Vogels</a></li>
+                    <li><a href="http://norvig.com/21-days.html#answers" target="_blank">Latency Numbers Every Programmer Should Know</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Microservices</h3>
+                <ul>
+                    <li><a href="https://martinfowler.com/microservices/" target="_blank">Microservices - Martin Fowler</a></li>
+                    <li><a href="https://eng.uber.com/microservice-architecture/" target="_blank">Domain-Oriented Microservice Architecture at Uber</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/netflix-conductor-a-microservices-orchestrator-2e8d4771bf40" target="_blank">Conductor: Microservices Orchestrator at Netflix</a></li>
+                    <li><a href="https://medium.com/tinder-engineering/tinders-move-to-kubernetes-cda2a6372f44" target="_blank">Kubernetes at Tinder</a></li>
+                    <li><a href="https://medium.com/tinder-engineering/tinders-move-to-kubernetes-cda2a6372f44" target="_blank">Kubernetes at Quora</a></li>
+                    <li><a href="https://tech.ebayinc.com/engineering/grit-a-protocol-for-distributed-transactions-across-microservices/" target="_blank">GRIT: Protocol for Distributed Transactions at eBay</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Distributed Caching</h3>
+                <ul>
+                    <li><a href="https://www.wix.engineering/post/scaling-to-100m-to-cache-or-not-to-cache" target="_blank">Scaling to 100M - Cache or Not to Cache</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/caching-for-a-global-netflix-7bcc457012f1" target="_blank">EVCache: Distributed In-memory Caching at Netflix</a></li>
+                    <li><a href="https://codeascraft.com/2017/11/30/how-etsy-caches/" target="_blank">Caching with Consistent Hashing at Etsy</a></li>
+                    <li><a href="http://highscalability.com/blog/2014/9/8/how-twitter-uses-redis-to-scale-105tb-ram-39mm-qps-10000-ins.html" target="_blank">Scaling Redis at Twitter</a></li>
+                    <li><a href="https://engineering.instagram.com/storing-hundreds-of-millions-of-simple-key-value-pairs-in-redis-1091ae80f74c" target="_blank">Redis at Instagram</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Distributed Locking</h3>
+                <ul>
+                    <li><a href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html" target="_blank">How to do Distributed Locking - Martin Kleppmann</a></li>
+                    <li><a href="https://blog.twitter.com/engineering/en_us/topics/infrastructure/2018/zookeeper-at-twitter.html" target="_blank">ZooKeeper at Twitter</a></li>
+                    <li><a href="https://engineering.gosquared.com/distributed-locks-using-redis" target="_blank">Distributed Locks using Redis</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Distributed Tracing</h3>
+                <ul>
+                    <li><a href="https://blog.twitter.com/engineering/en_us/a/2012/distributed-systems-tracing-with-zipkin.html" target="_blank">Zipkin: Distributed Systems Tracing at Twitter</a></li>
+                    <li><a href="https://eng.uber.com/distributed-tracing/" target="_blank">Distributed Tracing at Uber</a></li>
+                    <li><a href="https://codeascraft.com/2011/02/15/measure-anything-measure-everything/" target="_blank">StatsD at Etsy</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Distributed Messaging</h3>
+                <ul>
+                    <li><a href="https://medium.com/netflix-techblog/netflix-conductor-a-microservices-orchestrator-2e8d4771bf40" target="_blank">Conductor at Netflix</a></li>
+                    <li><a href="https://yahooeng.tumblr.com/post/150078336821/open-sourcing-pulsar-pub-sub-messaging-at-scale" target="_blank">Pulsar at Yahoo</a></li>
+                    <li><a href="https://engineering.linkedin.com/kafka/running-kafka-scale" target="_blank">Kafka at LinkedIn</a></li>
+                    <li><a href="https://medium.com/pinterest-engineering/how-pinterest-runs-kafka-at-scale-ff9c6f735be" target="_blank">Kafka at Pinterest</a></li>
+                    <li><a href="https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/" target="_blank">Exactly-once Semantics with Kafka</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Database Scaling</h3>
+                <ul>
+                    <li><a href="https://www.uber.com/en-SG/blog/mysql-at-uber/" target="_blank">MySQL at Uber</a></li>
+                    <li><a href="https://medium.com/@Pinterest_Engineering/learn-to-stop-using-shiny-new-things-and-love-mysql-3e1613c2ce14" target="_blank">MySQL at Pinterest</a></li>
+                    <li><a href="https://blog.twitch.tv/en/2016/10/11/how-twitch-uses-postgresql-c34aa9e56f58" target="_blank">PostgreSQL at Twitch</a></li>
+                    <li><a href="https://engineering.instagram.com/handling-growth-with-postgres-5-tips-from-instagram-d5d7e7ffdfcb" target="_blank">Postgres at Instagram</a></li>
+                    <li><a href="https://eng.uber.com/scaling-hdfs/" target="_blank">Scaling HDFS at Uber</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Search</h3>
+                <ul>
+                    <li><a href="https://instagram-engineering.com/search-architecture-eeb34a936d3a" target="_blank">Search Architecture at Instagram</a></li>
+                    <li><a href="https://dropbox.tech/machine-learning/architecture-of-nautilus-the-new-dropbox-search-engine" target="_blank">Nautilus: Search Engine at Dropbox</a></li>
+                    <li><a href="https://eng.uber.com/elk/" target="_blank">ELK at Uber</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>SRE & Stability</h3>
+                <ul>
+                    <li><a href="https://www.usenix.org/conference/srecon17americas/program/presentation/rosenthal" target="_blank">Principles of Chaos Engineering</a></li>
+                    <li><a href="https://www.usenix.org/conference/srecon17americas/program/presentation/andrus" target="_blank">Breaking Things on Purpose</a></li>
+                    <li><a href="https://queue.acm.org/detail.cfm?id=3096459" target="_blank">The Calculus of Service Availability</a></li>
+                    <li><a href="http://highscalability.com/blog/2014/5/12/4-architecture-issues-when-scaling-web-applications-bottlene.html" target="_blank">Common Bottlenecks</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Case Studies</h3>
+                <ul>
+                    <li><a href="https://medium.com/netflix-techblog/the-evolution-of-container-usage-at-netflix-3abfc096781b" target="_blank">Container Usage at Netflix</a></li>
+                    <li><a href="https://medium.com/@Pinterest_Engineering/containerization-at-pinterest-92295347f2f3" target="_blank">Containerization at Pinterest</a></li>
+                    <li><a href="https://shopifyengineering.myshopify.com/blogs/engineering/docker-at-shopify-how-we-built-containers-that-power-over-100-000-online-shops" target="_blank">Docker at Shopify</a></li>
+                    <li><a href="https://dropbox.tech/infrastructure/inside-the-magic-pocket" target="_blank">Magic Pocket at Dropbox</a></li>
+                </ul>
+            </div>
+        </article>
+
+        <article style="text-align: center; color: #666;">
+            <p>Total: <strong>37 local articles</strong> + <strong>60+ external references</strong></p>
+            <p>Last Updated: April 2026</p>
+        </article>
+    </div>
+</body>
+</html>
