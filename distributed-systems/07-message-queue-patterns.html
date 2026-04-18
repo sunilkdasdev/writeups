@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Queue Patterns: Enterprise Integration with Kafka, RabbitMQ, and Pulsar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        article {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #1a1a1a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #2a2a2a;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 15px 20px;
+        }
+        
+        strong {
+            color: #1a1a1a;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article>
+<h1>Message Queue Patterns: Enterprise Integration with Kafka, RabbitMQ, and Pulsar</h1>
+
+<h2>Introduction</h2>
+
+<p>Message queues form the backbone of asynchronous communication in enterprise systems. They enable services to communicate without direct coupling, handle load spikes through buffering, and provide resilience against transient failures. Understanding message queue patterns is essential for building scalable, resilient distributed systems.</p>
+
+<p>This comprehensive exploration examines the theoretical foundations of messaging, practical implementation patterns, and the characteristics of leading message queue technologies. We analyze the trade-offs that determine which technology fits specific use cases and explore patterns that enable robust enterprise integration.</p>
+
+<h2>Messaging Fundamentals</h2>
+
+<p>Message queues implement asynchronous communication between producers and consumers. Rather than calling services directly, producers send messages to a queue or topic. Consumers retrieve messages at their own pace, processing them independently of producers. This decoupling enables numerous architectural benefits.</p>
+
+<p>Temporal decoupling separates the timing of producers and consumers. A producer can send messages faster than consumers can process them, with the queue absorbing the difference. Consumers can be shut down, upgraded, or restarted without affecting producers.</p>
+
+<p>Spatial decoupling removes direct network connections between services. Producers and consumers don't need to know each other's locations— they communicate only with the message broker. This simplifies deployment and enables dynamic scaling.</p>
+
+<p>Load leveling smooths traffic spikes. Rather than requiring all services to handle peak load, queues buffer messages and consumers process them at their natural rate. This approach reduces infrastructure costs while maintaining throughput.</p>
+
+<p>Failure isolation prevents cascading failures. When a consumer fails, messages remain in the queue for later processing. The failure doesn't affect producers or other consumers.</p>
+
+<h2>Point-to-Point versus Publish-Subscribe</h2>
+
+<p>Message queue systems support two fundamental communication patterns: point-to-point and publish-subscribe. Understanding when to use each pattern is fundamental to messaging architecture.</p>
+
+<h3>Point-to-Point (P2P)</h3>
+
+<p>In point-to-point messaging, each message is processed by exactly one consumer. The queue maintains message ordering (within a single queue) and ensures delivery to one consumer. This pattern is appropriate for task distribution, workflow processing, and any scenario where each message requires exactly one processing.</p>
+
+<p>Common use cases include order processing where each order must be processed exactly once, background job processing where work must be distributed across workers, and request-response scenarios where the response goes to a specific requestor.</p>
+
+<p>Point-to-point queues ensure exactly-once processing semantics when properly implemented, making them suitable for business-critical operations where message loss or duplication is unacceptable.</p>
+
+<h3>Publish-Subscribe (Pub/Sub)</h3>
+
+<p>In publish-subscribe messaging, each message is delivered to all subscribed consumers. The publisher has no knowledge of subscribers, and subscribers can join or leave without affecting publishers. This pattern is appropriate for event distribution, notifications, and scenarios where multiple services need to react to the same event.</p>
+
+<p>Common use cases include event-driven architectures where multiple services need to react to business events, audit logging where multiple systems need to record the same events, and analytics pipelines where the same event flows to different analysis systems.</p>
+
+<p>Pub/sub requires careful consideration of consumer capabilities. Fast consumers shouldn't overwhelm slow consumers, and consumers must be able to handle messages at their own pace without affecting other consumers.</p>
+
+<h2>Message Semantics</h2>
+
+<p>Message queue implementations provide different delivery guarantees. Understanding these guarantees is essential for designing correct systems.</p>
+
+<h3>At-Least-Once Delivery</h3>
+
+<p>At-least-once delivery ensures that messages are never lost, but they may be delivered multiple times. The broker delivers the message, but if the consumer fails before acknowledging, the message is redelivered. This is the most common delivery pattern.</p>
+
+<p>Applications must handle duplicate messages idempotently. Processing a message twice must produce the same result as processing it once. This typically requires message deduplication through unique identifiers or idempotent processing logic.</p>
+
+<h3>Exactly-Once Delivery</h3>
+
+<p>Exactly-once delivery ensures that each message is processed exactly once. This is the hardest guarantee to achieve and requires coordination between the broker and consumer. Several techniques exist:</p>
+
+<p>Broker-side exactly-once uses transactions or deduplication tables to ensure messages are delivered once. Kafka provides exactly-once semantics within the Kafka ecosystem, but ensuring exactly-once across external systems requires additional coordination.</p>
+
+<p>End-to-end exactly-once requires application-level deduplication. The application generates unique message IDs, and the processing logic tracks which IDs have been processed. This approach is complex but works across any broker.</p>
+
+<h3>At-Most-Once Delivery</h3>
+
+<p>At-most-once delivery allows messages to be lost but never redelivered. This pattern is appropriate for metrics, monitoring data, or other scenarios where occasional message loss is acceptable but duplicates are problematic.</p>
+
+<h2>Kafka Architecture and Patterns</h2>
+
+<p>Apache Kafka has become the de facto standard for high-throughput, durable messaging. Its distributed, partitioned, replicated log architecture provides exceptional performance and durability.</p>
+
+<h3>Architecture Fundamentals</h3>
+
+<p>Kafka organizes messages into topics, which are divided into partitions. Each partition is an ordered, immutable sequence of messages. Producers write messages to partitions; consumers read from partitions. Partitioning enables horizontal scaling—each partition can be served by a different broker.</p>
+
+<p>Replication provides durability. Each partition has multiple replicas across different brokers. The leader handles all reads and writes; followers replicate the leader's log. If the leader fails, a follower is elected as the new leader.</p>
+
+<p>Consumers track their position in each partition through offsets. When a consumer processes a message, it commits its offset. If the consumer restarts, it resumes from the committed offset. This checkpointing provides exactly-once semantics within Kafka.</p>
+
+<h3>Producer Patterns</h3>
+
+<p>Producing to Kafka requires careful attention to partitioning, acknowledgment, and error handling:</p>
+
+<pre><code>public class KafkaOrderProducer {
+    private final KafkaProducer<String, Order> producer;
+    private final String topic;
+    
+    public KafkaOrderProducer(Properties config) {
+        config.put("key.serializer", OrderSerializer.class.getName());
+        config.put("value.serializer", OrderSerializer.class.getName());
+        config.put("acks", "all");
+        config.put("retries", 3);
+        config.put("enable.idempotence", true);
+        
+        this.producer = new KafkaProducer<>(config);
+        this.topic = "orders";
+    }
+    
+    public void sendOrder(Order order) {
+        // Use order ID as key for partitioning
+        // All orders with the same key go to the same partition
+        ProducerRecord<String, Order> record = new ProducerRecord<>(
+            topic,
+            order.getId(),
+            order
+        );
+        
+        // Async send with callback
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                // Handle failure - log, retry, alert
+                log.error("Failed to send order: {}", order.getId(), exception);
+            } else {
+                log.debug("Order sent to partition {} offset {}", 
+                    metadata.partition(), metadata.offset());
+            }
+        });
+    }
+    
+    public void sendOrderSynchronously(Order order) {
+        ProducerRecord<String, Order> record = new ProducerRecord<>(
+            topic, order.getId(), order);
+        
+        try {
+            // Block for acknowledgment
+            RecordMetadata metadata = producer.send(record).get(30, TimeUnit.SECONDS);
+            log.info("Order {} sent to {}:{}", 
+                order.getId(), metadata.topic(), metadata.offset());
+        } catch (Exception e) {
+            // Handle failure
+            throw new OrderSendException("Failed to send order", e);
+        }
+    }
+}</code></pre>
+
+<p>This configuration uses idempotent producers (enable.idempotence=true) to ensure exactly-once semantics within Kafka. The acks=all setting ensures that messages are replicated to all in-sync replicas before acknowledgment.</p>
+
+<h3>Consumer Patterns</h3>
+
+<p>Consuming from Kafka requires managing offsets, handling rebalances, and processing messages at appropriate speed:</p>
+
+<pre><code>public class KafkaOrderConsumer {
+    private final KafkaConsumer<String, Order> consumer;
+    private final String topic;
+    
+    public KafkaOrderConsumer(Properties config) {
+        config.put("key.deserializer", StringDeserializer.class.getName());
+        config.put("value.deserializer", OrderDeserializer.class.getName());
+        config.put("group.id", "order-processing-group");
+        config.put("enable.auto.commit", false); // Manual commit
+        config.put("auto.offset.reset", "earliest");
+        config.put("max.poll.records", 100);
+        config.put("session.timeout.ms", 30000);
+        
+        this.consumer = new KafkaConsumer<>(config);
+        this.topic = "orders";
+    }
+    
+    public void processOrders() {
+        consumer.subscribe(Collections.singletonList(topic));
+        
+        try {
+            while (running) {
+                // Poll with timeout
+                ConsumerRecords<String, Order> records = consumer.poll(Duration.ofMillis(1000));
+                
+                // Process batch
+                for (ConsumerRecord<String, Order> record : records) {
+                    try {
+                        processOrder(record.value());
+                        // Commit after successful processing
+                        consumer.commitSync();
+                    } catch (Exception e) {
+                        // Handle processing failure
+                        // Could send to DLQ or retry
+                        handleFailure(record.value(), e);
+                    }
+                }
+                
+                // Periodic commit for at-least-once
+                if (shouldCommit()) {
+                    consumer.commitAsync();
+                }
+            }
+        } finally {
+            consumer.close();
+        }
+    }
+    
+    private void processOrder(Order order) {
+        // Process with idempotency check
+        if (orderProcessor.hasBeenProcessed(order.getId())) {
+            log.debug("Order {} already processed, skipping", order.getId());
+            return;
+        }
+        
+        orderProcessor.process(order);
+        orderProcessor.markProcessed(order.getId());
+    }
+}</code></pre>
+
+<p>This consumer uses manual offset commit for precise control. The at-least-once pattern commits after successful processing, ensuring messages aren't lost if processing fails before commit.</p>
+
+<h3>Kafka Streams for Stream Processing</h3>
+
+<p>Kafka Streams provides lightweight stream processing built on top of Kafka. It enables stateful stream processing without separate infrastructure:</p>
+
+<pre><code>public class OrderAggregationTopology {
+    
+    public static Topology buildTopology() {
+        StreamsBuilder builder = new StreamsBuilder();
+        
+        // Stream from orders topic
+        KStream<String, Order> orders = builder.stream("orders",
+            Consumed.with(Serdes.String(), orderSerde));
+        
+        // Aggregate orders by customer
+        KTable<String, CustomerOrderSummary> customerOrders = orders
+            .groupBy((key, order) -> order.getCustomerId())
+            .aggregate(
+                () -> new CustomerOrderSummary(),
+                (customerId, order, summary) -> summary.add(order),
+                Materialized.with(Serdes.String(), customerSummarySerde)
+            );
+        
+        // Write to customer orders topic
+        customerOrders.toStream().to("customer-orders");
+        
+        // Detect suspicious patterns
+        orders
+            .filter((key, order) -> order.getTotal().compareTo(new BigDecimal("10000")) > 0)
+            .filterNot((key, order) -> order.isVerified())
+            .peek((key, order) -> log.warn("Suspicious order: {}", order))
+            .to("suspicious-orders");
+        
+        return builder.build();
+    }
+}</code></pre>
+
+<h2>RabbitMQ Architecture and Patterns</h2>
+
+<p>RabbitMQ implements the Advanced Message Queuing Protocol (AMQP), providing a flexible routing infrastructure. Its exchange-based architecture enables sophisticated message routing patterns.</p>
+
+<h3>Exchange and Binding Architecture</h3>
+
+<p>RabbitMQ doesn't send messages directly to queues. Instead, producers send messages to exchanges, which route messages to queues based on routing rules called bindings. This architecture enables complex routing without producers knowing queue structure.</p>
+
+<p>Four exchange types provide different routing behaviors:</p>
+
+<p>Direct exchanges route messages to queues with matching routing keys. If the routing key is "orders", the message goes to queues bound with "orders".</p>
+
+<p>Topic exchanges support wildcard matching. A binding key of "orders.*" matches "orders.new" and "orders.cancel" but not "orders.international.create".</p>
+
+<p>Fanout exchanges broadcast to all bound queues, ignoring routing keys.</p>
+
+<p>Headers exchanges route based on message headers rather than routing keys, useful for complex routing logic.</p>
+
+<h3>RabbitMQ Java Client Patterns</h3>
+
+<pre><code>public class RabbitMQOrderProcessor {
+    private final Connection connection;
+    private final Channel channel;
+    private final String queueName = "orders";
+    private final String exchangeName = "orders.exchange";
+    
+    public RabbitMQOrderProcessor() throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        factory.setPort(5672);
+        factory.setUsername("guest");
+        factory.setPassword("guest");
+        
+        connection = factory.newConnection();
+        channel = connection.createChannel();
+        
+        // Declare exchange
+        channel.exchangeDeclare(exchangeName, 
+            BuiltinExchangeType.TOPIC, true);
+        
+        // Declare queue
+        channel.queueDeclare(queueName, true, false, false, null);
+        
+        // Bind queue to exchange
+        channel.queueBind(queueName, exchangeName, "order.#");
+    }
+    
+    public void processOrders() throws Exception {
+        // Fair dispatch - don't prefetch too many
+        channel.basicQos(10);
+        
+        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+            try {
+                Order order = deserialize(delivery.getBody());
+                processOrder(order);
+                
+                // Manual acknowledgment
+                channel.basicAck(delivery.getEnvelope()
+                    .getDeliveryTag(), false);
+                    
+            } catch (Exception e) {
+                // Requeue for retry
+                channel.basicNack(delivery.getEnvelope()
+                    .getDeliveryTag(), false, true);
+            }
+        };
+        
+        channel.basicConsume(queueName, false, deliverCallback, 
+            consumerTag -> {});
+    }
+}</code></pre>
+
+<h3>Complex Routing Patterns</h3>
+
+<p>RabbitMQ excels at complex routing scenarios:</p>
+
+<pre><code>public class OrderRoutingConfigurer {
+    
+    public void configureOrderRouting(Channel channel) throws Exception {
+        // Main orders exchange
+        channel.exchangeDeclare("orders", BuiltinExchangeType.TOPIC, true);
+        
+        // Dead letter exchange for failed messages
+        channel.exchangeDeclare("orders.dlx", BuiltinExchangeType.TOPIC, true);
+        
+        // Main queue with TTL and DLX
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-dead-letter-exchange", "orders.dlx");
+        args.put("x-dead-letter-routing-key", "order.dead");
+        args.put("x-message-ttl", 60000); // 1 minute TTL
+        
+        channel.queueDeclare("orders.processing", true, false, false, args);
+        channel.queueBind("orders.processing", "orders", "order.*");
+        
+        // Priority queue for urgent orders
+        Map<String, Object> priorityArgs = new HashMap<>();
+        priorityArgs.put("x-max-priority", 10);
+        
+        channel.queueDeclare("orders.priority", true, false, false, 
+            priorityArgs);
+        channel.queueBind("orders.priority", "orders", "order.urgent");
+        
+        // Shipping queue
+        channel.queueDeclare("orders.shipping", true, false, false, null);
+        channel.queueBind("orders.shipping", "orders", "order.shipped");
+        
+        // Analytics queue
+        channel.queueDeclare("orders.analytics", true, false, false, null);
+        channel.queueBind("orders.analytics", "orders", "order.created");
+    }
+}</code></pre>
+
+<p>This configuration routes orders to multiple queues based on routing keys. Regular orders go to processing, urgent orders to priority, shipped orders to shipping, and all order events to analytics.</p>
+
+<h2>Apache Pulsar Architecture</h2>
+
+<p>Apache Pulsar provides a modern alternative to Kafka, offering similar throughput with additional features including geo-replication, tiered storage, and topic compaction.</p>
+
+<h3>Key Differentiators</h3>
+
+<p>Pulsar's architecture differs from Kafka in several important ways:</p>
+
+<p>Tiered storage separates compute from storage. Hot data stays in BookKeeper, while cold data moves to object storage like S3 or GCS. This separation enables cost-effective retention of large message volumes.</p>
+
+<p>Geo-replication provides built-in cross-datacenter replication. Pulsar replicates messages across data centers, enabling global deployment with automatic failover.</p>
+
+<p>Topic compaction retains only the latest value for each key. This is valuable for use cases like session stores where only the most recent value matters.</p>
+
+<p>Exactly-once semantics are available for non-transactional producers. Pulsar provides exactly-once without requiring transactions, simplifying application logic.</p>
+
+<h3>Pulsar Java Client</h3>
+
+<pre><code>public class PulsarOrderProducer {
+    private final PulsarClient client;
+    private final Producer<Order> producer;
+    
+    public PulsarOrderProducer() throws Exception {
+        this.client = PulsarClient.builder()
+            .serviceUrl("pulsar://localhost:6650")
+            .build();
+        
+        this.producer = client.newProducer(Schema.JSON(Order.class))
+            .topic("orders")
+            .enableBatching(true)
+            .batchingMaxMessages(1000)
+            .batchingMaxPublishDelay(10, TimeUnit.MILLISECONDS)
+            .compressionType(CompressionType.LZ4)
+            .accessMode(ProducerAccessMode.Exclusive)
+            .create();
+    }
+    
+    public MessageId sendOrder(Order order) throws Exception {
+        // Send with key for partitioning
+        return producer.newMessage()
+            .key(order.getCustomerId())
+            .value(order)
+            .property("order.type", order.getType())
+            .property("priority", order.getPriority())
+            .send();
+    }
+    
+    public void sendBatchAsync(List<Order> orders) {
+        // Send batch for efficiency
+        List<Message<Order>> messages = orders.stream()
+            .map(order -> producer.newMessage()
+                .key(order.getCustomerId())
+                .value(order)
+                .build())
+            .collect(Collectors.toList());
+        
+        producer.sendAsync(messages).thenAccept(messageIds -> 
+            log.debug("Batch sent: {} messages", messageIds.size()));
+    }
+}</code></pre>
+
+<h2>Comparison and Selection Criteria</h2>
+
+<p>Selecting a message queue requires analyzing requirements, trade-offs, and ecosystem fit:</p>
+
+<p>Kafka excels in high-throughput, log-based scenarios. Its partitioned, replicated log architecture provides exceptional write throughput and durable storage. Kafka is the natural choice for event streaming, event sourcing, and audit logging. The vast ecosystem includes stream processing (Kafka Streams, Flink), connectors (Kafka Connect), and management tools.</p>
+
+<p>RabbitMQ excels in complex routing scenarios. Its exchange-based architecture supports sophisticated routing patterns. RabbitMQ is appropriate for task queuing, RPC-style request-response, and scenarios requiring low latency. The extensive protocol support (AMQP, MQTT, STOMP) enables integration with diverse systems.</p>
+
+<p>Pulsar provides a modern alternative to Kafka with additional features. Its tiered storage and geo-replication are valuable for global deployments. Pulsar is appropriate when Kafka features are needed plus geo-replication or tiered storage.</p>
+
+<p>The following comparison summarizes key characteristics:</p>
+
+<table>
+<tr>
+<th>Characteristic</th>
+<th>Kafka</th>
+<th>RabbitMQ</th>
+<th>Pulsar</th>
+</tr>
+<tr>
+<td>Throughput</td>
+<td>Highest</td>
+<td>Moderate</td>
+<td>High</td>
+</tr>
+<tr>
+<td>Latency</td>
+<td>Low</td>
+<td>Lowest</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>Ordering</td>
+<td>Per-partition</td>
+<td>Per-queue</td>
+<td>Per-partition</td>
+</tr>
+<tr>
+<td>Retention</td>
+<td>Configurable</td>
+<td>Per-message TTL</td>
+<td>Tiered</td>
+</tr>
+<tr>
+<td>Routing</td>
+<td>Partition-based</td>
+<td>Complex</td>
+<td>Partition-based</td>
+</tr>
+<tr>
+<td>Geo-replication</td>
+<td>MirrorMaker</td>
+<td>Federation</td>
+<td>Built-in</td>
+</tr>
+<tr>
+<td>Protocol</td>
+<td>Binary</td>
+<td>AMQP, MQTT</td>
+<td>Binary, AMQP</td>
+</tr>
+</table>
+
+<h2>Enterprise Patterns</h2>
+
+<h3>Dead Letter Queues</h3>
+
+<p>Dead letter queues (DLQ) capture messages that cannot be processed successfully. Rather than losing messages or infinite retry, DLQs enable investigation and manual intervention:</p>
+
+<pre><code>public class DLQHandler {
+    
+    public void configureDLQ(Channel channel) throws Exception {
+        // Main queue
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-dead-letter-exchange", "orders.dlx");
+        args.put("x-dead-letter-routing-key", "orders.dead");
+        
+        channel.queueDeclare("orders.main", true, false, false, args);
+        
+        // DLQ
+        channel.queueDeclare("orders.dead", true, false, false, null);
+        
+        // Retry queue with TTL
+        Map<String, Object> retryArgs = new HashMap<>();
+        retryArgs.put("x-dead-letter-exchange", "");
+        retryArgs.put("x-dead-letter-routing-key", "orders.main");
+        
+        channel.queueDeclare("orders.retry", true, false, false, retryArgs);
+    }
+    
+    public void handleDeadLetter(Message message) {
+        // Log and analyze
+        String body = new String(message.getBody());
+        Map<String, Object> headers = message.getMessageProperties()
+            .getHeaders();
+        
+        log.error("Dead letter received: {} with headers {}", body, headers);
+        
+        // Could implement retry with backoff, manual intervention, etc.
+    }
+}</code></pre>
+
+<h3>Circuit Breaker Integration</h3>
+
+<p>Combining message queues with circuit breakers provides resilience against downstream failures:</p>
+
+<pre><code>public class ResilientMessageProcessor {
+    private final CircuitBreaker circuitBreaker;
+    private final MessageQueue queue;
+    
+    public void processWithCircuitBreaker(Message message) {
+        try {
+            // Try to process with circuit breaker
+            Try.of(() -> processMessage(message))
+                .onFailure(e -> {
+                    // On failure, return to queue for retry
+                    queue.requeue(message);
+                })
+                .get();
+                
+        } catch (Exception e) {
+            // Circuit open - requeue immediately
+            if (circuitBreaker.is_open()) {
+                queue.requeue(message);
+            }
+        }
+    }
+    
+    private Object processMessage(Message message) {
+        return circuitBreaker.execute(() -> {
+            // Actual processing logic
+            return doProcess(message);
+        });
+    }
+}</code></pre>
+
+<h3>Message Ordering and Idempotency</h3>
+
+<p>Ensuring correct message ordering while maintaining throughput requires careful design:</p>
+
+<pre><code>public class IdempotentOrderProcessor {
+    private final RedisTemplate<String, String> redis;
+    private final MessageQueue queue;
+    
+    public void processOrder(Message message) {
+        String orderId = message.getOrderId();
+        
+        // Idempotency check using Redis
+        String processed = redis.opsForValue().get("order:processed:" + orderId);
+        if (processed != null) {
+            log.debug("Order {} already processed, skipping", orderId);
+            return;
+        }
+        
+        // Process the order
+        Order order = message.getOrder();
+        doProcess(order);
+        
+        // Mark as processed with expiration
+        redis.opsForValue().set(
+            "order:processed:" + orderId,
+            "true",
+            Duration.ofDays(7)
+        );
+    }
+}</code></pre>
+
+<h2>Conclusion</h2>
+
+<p>Message queues provide essential infrastructure for building scalable, resilient distributed systems. The choice between Kafka, RabbitMQ, and Pulsar depends on specific requirements: throughput needs, routing complexity, latency constraints, and operational capabilities.</p>
+
+<p>Kafka's log-based architecture excels in high-throughput event streaming scenarios. RabbitMQ's flexible routing enables sophisticated integration patterns. Pulsar's modern architecture provides additional features for global deployments.</p>
+
+<p>Regardless of technology selection, successful messaging implementations require attention to delivery semantics, error handling, and monitoring. Dead letter queues, circuit breakers, and idempotent processing ensure that messaging systems remain reliable under failure conditions.</p>
+
+<p>Enterprise messaging architectures continue to evolve with streaming platforms, event-driven patterns, and serverless integration. Understanding these fundamentals provides the foundation for building robust, scalable systems that meet enterprise requirements.</p>
+        </article>
+    </div>
+</body>
+</html>
