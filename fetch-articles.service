@@ -1,0 +1,13 @@
+[Unit]
+Description=Fetch latest articles from DZone and InfoQ
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/sk/Documents/writeups/fetch-articles.sh
+WorkingDirectory=/home/sk/Documents/writeups
+User=sk
+
+[Install]
+WantedBy=multi-user.target
