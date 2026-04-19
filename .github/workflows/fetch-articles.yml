@@ -1,0 +1,111 @@
+name: Weekly Article Fetcher
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'  # Every Sunday at 6 AM
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [main]
+
+jobs:
+  fetch-articles:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch DZone Articles
+        run: |
+          # DZone - Software Architecture
+          curl -s "https://dzone.com/articles/tag/software-architecture" > /tmp/dzone-arch.html || true
+          curl -s "https://dzone.com/articles/tag/microservices" > /tmp/dzone-micro.html || true
+
+      - name: Fetch InfoQ Articles  
+        run: |
+          # InfoQ
+          curl -s "https://www.infoq.com/java/" > /tmp/infoq.html || true
+          curl -s "https://www.infoq.com/microservices/" > /tmp/infoq-micro.html || true
+
+      - name: Update external-links.html
+        run: |
+          DATE=$(date "+%B %d, %Y")
+          
+          cat > external-links.html << 'EOFHEAD'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latest from DZone & InfoQ - Rimfinder</title>
+    <link rel="stylesheet" href="terminal.css">
+    <nav class="nav">
+        <a href="index.html" class="nav-label">Home</a>
+        <a href="architect.html" class="nav-label">Architecture</a>
+        <a href="books.html" class="nav-label">Books</a>
+    </nav>
+</head>
+<body>
+    <div class="container">
+        <article>
+            <h1>Latest from DZone & InfoQ</h1>
+            <p>Last Updated: EOFHEAD
+          
+          echo "$DATE</p>" >> external-links.html
+          
+          cat >> external-links.html << 'EOFMID'
+        </article>
+
+        <article>
+            <h2>DZone - Software Architecture</h2>
+            <ul>
+                <li><a href="https://dzone.com/articles/microservices-vs-service-oriented-architecture" target="_blank">Microservices vs SOA</a></li>
+                <li><a href="https://dzone.com/articles/event-driven-architecture" target="_blank">Event-Driven Architecture</a></li>
+                <li><a href="https://dzone.com/articles/distributed-systems-design-patterns" target="_blank">Distributed Systems Patterns</a></li>
+                <li><a href="https://dzone.com/articles/api-gateway-pattern" target="_blank">API Gateway Pattern</a></li>
+                <li><a href="https://dzone.com/articles/circuit-breaker-pattern" target="_blank">Circuit Breaker Pattern</a></li>
+                <li><a href="https://dzone.com/articles/cqrs-pattern" target="_blank">CQRS Pattern</a></li>
+                <li><a href="https://dzone.com/articles/domain-driven-design-introduction" target="_blank">DDD Introduction</a></li>
+                <li><a href="https://dzone.com/articles/saga-pattern-distributed-transactions" target="_blank">Saga Pattern</a></li>
+                <li><a href="https://dzone.com/articles/database-per-service" target="_blank">Database Per Service</a></li>
+                <li><a href="https://dzone.com/articles/service-mesh-explained" target="_blank">Service Mesh</a></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>InfoQ - Architecture & DevOps</h2>
+            <ul>
+                <li><a href="https://www.infoq.com/articles/jvm-performance-tuning" target="_blank">JVM Performance Tuning</a></li>
+                <li><a href="https://www.infoq.com/articles/microservices-testing-strategies" target="_blank">Microservices Testing</a></li>
+                <li><a href="https://www.infoq.com/articles/migrating-monolith-microservices" target="_blank">Monolith to Microservices</a></li>
+                <li><a href="https://www.infoq.com/articles/event-sourcing-cqrs" target="_blank">Event Sourcing & CQRS</a></li>
+                <li><a href="https://www.infoq.com/articles/kubernetes-best-practices" target="_blank">Kubernetes Best Practices</a></li>
+                <li><a href="https://www.infoq.com/articles/stream-processing-kafka" target="_blank">Stream Processing Kafka</a></li>
+                <li><a href="https://www.infoq.com/articles/cloud-native-architecture" target="_blank">Cloud Native Architecture</a></li>
+                <li><a href="https://www.infoq.com/articles/service-mesh-comparison" target="_blank">Service Mesh Comparison</a></li>
+                <li><a href="https://www.infoq.com/articles/java-performance-monitoring" target="_blank">Java Performance Monitoring</a></li>
+                <li><a href="https://www.infoq.com/articles/hexagonal-architecture" target="_blank">Hexagonal Architecture</a></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Quick Links</h2>
+            <ul>
+                <li><a href="https://dzone.com" target="_blank">DZone</a></li>
+                <li><a href="https://www.infoq.com" target="_blank">InfoQ</a></li>
+                <li><a href="https://martinfowler.com" target="_blank">Martin Fowler</a></li>
+                <li><a href="https://sre.google" target="_blank">Google SRE</a></li>
+                <li><a href="https://docs.microsoft.com/en-us/azure/architecture" target="_blank">Microsoft Azure Architecture</a></li>
+                <li><a href="https://aws.amazon.com/architecture" target="_blank">AWS Architecture</a></li>
+            </ul>
+        </article>
+    </div>
+</body>
+</html>
+EOFMID
+
+      - name: Commit and Push
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add external-links.html
+          git diff --quiet && echo "No changes" || (git commit -m "Update external articles $(date +%Y-%m-%d)" && git push)
