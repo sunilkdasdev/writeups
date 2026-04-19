@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson 53: Distributed Transactions Using Sagas - Rimfinder</title>
+    <link rel="stylesheet" href="../terminal.css">
+    <nav class="nav">
+        <a href="../index.html" class="nav-label">Home</a>
+        <a href="../architect.html" class="nav-label">Architecture</a>
+        <a href="../architect-lessons.html" class="nav-label">Lessons</a>
+    </nav>
+</head>
+<body>
+    <div class="container">
+        <article>
+            <h1>Lesson 53: Distributed Transactions Using Sagas</h1>
+            <p><a href="https://www.developertoarchitect.com/lessons/lesson53.html" target="_blank">Watch Video Lesson</a> | March 18, 2019</p>
+        </article>
+
+        <article>
+            <h2>Video Summary</h2>
+            <p>Sagas replace traditional 2PC for distributed transactions. Instead of locking resources, use compensating transactions to undo steps if any step fails.</p>
+            
+            <h3>Two Approaches:</h3>
+            <ol>
+                <li><strong>Choreography</strong> - Services emit and listen to events
+                    <br>Pros: Loose coupling, no central point
+                    <br>Cons: Hard to trace, implicit flow</li>
+                <li><strong>Orchestration</strong> - Central coordinator manages the flow
+                    <br>Pros: Clear ownership, easier debugging
+                    <br>Cons: Central point of failure, tight coupling</li>
+            </ol>
+        </article>
+
+        <article>
+            <h2>Curated Articles</h2>
+            <ul>
+                <li><a href="https://microservices.io/patterns/data/saga.html" target="_blank">Saga Pattern - Chris Richardson</a></li>
+                <li><a href="https://dev.to/aws/handling-distributed-transactions-in-microservices-1i3a" target="_blank">Saga Pattern in Microservices</a></li>
+                <li><a href="https://blog.paypal.com/technology/2017/01/16/microservices-and-sagas" target="_blank">Sagas at PayPal</a></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Deep Dives</h2>
+            <ul>
+                <li><a href="https://eventuate.io/" target="_blank">Eventuate - Sagas Framework</a></li>
+                <li><a href="https://stackoverflow.com/questions/47540442/saga-pattern-compensation-transaction" target="_blank">Stack Overflow Discussion</a></li>
+                <li><a href="../distributed-systems/01-distributed-transactions.html">Our Distributed Transactions Article</a></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Example: Order Processing Saga</h2>
+            <pre>Order Service: Create Order (pending)
+    → Payment Service: Reserve Payment
+    → Inventory Service: Reserve Items
+    → Shipping Service: Create Shipment
+    
+If any step fails:
+    → Compensate in reverse order
+    → Refund payment, release inventory, cancel shipment</pre>
+        </article>
+
+        <article>
+            <h2>Related Lessons</h2>
+            <ul>
+                <li><a href="lesson023.html">Lesson 23: Orchestration vs Choreography</a></li>
+                <li><a href="lesson027.html">Lesson 27: Circuit Breaker</a></li>
+                <li><a href="lesson148.html">Lesson 148: Fallacies of Compensating Updates</a></li>
+            </ul>
+        </article>
+    </div>
+</body>
+</html>

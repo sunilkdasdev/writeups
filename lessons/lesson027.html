@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson 27: Circuit Breaker Pattern - Rimfinder</title>
+    <link rel="stylesheet" href="../terminal.css">
+    <nav class="nav">
+        <a href="../index.html" class="nav-label">Home</a>
+        <a href="../architect.html" class="nav-label">Architecture</a>
+        <a href="../architect-lessons.html" class="nav-label">Lessons</a>
+    </nav>
+</head>
+<body>
+    <div class="container">
+        <article>
+            <h1>Lesson 27: Circuit Breaker Pattern</h1>
+            <p><a href="https://www.developertoarchitect.com/lessons/lesson27.html" target="_blank">Watch Video Lesson</a> | July 23, 2018</p>
+        </article>
+
+        <article>
+            <h2>Video Summary</h2>
+            <p>The Circuit Breaker Pattern prevents cascading failures in distributed systems by detecting failures and stopping requests to failing services.</p>
+            
+            <h3>Three States:</h3>
+            <ol>
+                <li><strong>Closed</strong> - Requests flow normally. Counter tracks failures.</li>
+                <li><strong>Open</strong> - Failures threshold reached. Requests fail immediately.</li>
+                <li><strong>Half-Open</strong> - Testing recovery. Limited requests allowed.</li>
+            </ol>
+            
+            <h3>When to Use:</h3>
+            <ul>
+                <li>External API calls</li>
+                <li>Database connections</li>
+                <li>Remote service communication</li>
+                <li>Any network-dependent operation</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Curated Articles</h2>
+            <ul>
+                <li><a href="https://martinfowler.com/bliki/CircuitBreaker.html" target="_blank">Circuit Breaker - Martin Fowler</a></li>
+                <li><a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker" target="_blank">Circuit Breaker Pattern - Microsoft</a></li>
+                <li><a href="https://dzone.com/articles/circuit-breaker-pattern-in-microservices" target="_blank">Circuit Breaker in Microservices - DZone</a></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Deep Dives</h2>
+            <ul>
+                <li><a href="https://github.com/Netflix/Hystrix" target="_blank">Netflix Hystrix (Library)</a></li>
+                <li><a href="https://resilience4j.com/" target="_blank">Resilience4j (Modern Alternative)</a></li>
+                <li><a href="https://spring.io/guides/gs/circuit-breaker/" target="_blank">Spring Circuit Breaker</a></li>
+                <li><a href="../stability.html">Stability Page</a> - Fault tolerance patterns</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Implementation Examples</h2>
+            <h3>Resilience4j (Java)</h3>
+            <pre>CircuitBreakerConfig config = CircuitBreakerConfig.custom()
+    .failureRateThreshold(50)
+    .waitDurationInOpenState(Duration.ofSeconds(10))
+    .slidingWindowSize(10)
+    .build();
+
+CircuitBreaker circuitBreaker = CircuitBreaker.of("myService", config);</pre>
+
+            <h3>Configuration Parameters</h3>
+            <ul>
+                <li><strong>failureRateThreshold</strong> - % failures to open (default: 50)</li>
+                <li><strong>waitDurationInOpenState</strong> - Time before half-open (default: 60s)</li>
+                <li><strong>slidingWindowSize</strong> - Number of calls to track</li>
+                <li><strong>permittedNumberOfCallsInHalfOpenState</strong> - Test requests allowed</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Related Lessons</h2>
+            <ul>
+                <li><a href="lesson018.html">Lesson 18: Fallacies of Distributed Computing</a></li>
+                <li><a href="lesson053.html">Lesson 53: Sagas for Distributed Transactions</a></li>
+                <li><a href="lesson056.html">Lesson 56: The Ambulance Pattern</a></li>
+                <li><a href="lesson138.html">Lesson 138: Dynamic Quantum Entanglement</a></li>
+            </ul>
+        </article>
+    </div>
+</body>
+</html>

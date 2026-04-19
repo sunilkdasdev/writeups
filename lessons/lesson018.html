@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson 18: The 8 Fallacies of Distributed Computing - Rimfinder</title>
+    <link rel="stylesheet" href="../terminal.css">
+    <nav class="nav">
+        <a href="../index.html" class="nav-label">Home</a>
+        <a href="../architect.html" class="nav-label">Architecture</a>
+        <a href="../architect-lessons.html" class="nav-label">Lessons</a>
+    </nav>
+</head>
+<body>
+    <div class="container">
+        <article>
+            <h1>Lesson 18: The 8 Fallacies of Distributed Computing</h1>
+            <p><a href="https://www.developertoarchitect.com/lessons/lesson18.html" target="_blank">Watch Video Lesson</a> | May 21, 2018</p>
+        </article>
+
+        <article>
+            <h2>Video Summary</h2>
+            <p>Mark Richards reviews the 8 fallacies of distributed computing - the misconceptions that cause most distributed system failures. These are critical for anyone moving from monolithic to distributed architectures.</p>
+            
+            <ol>
+                <li><strong>The Network is Reliable</strong> - Networks fail constantly; plan for partial failures</li>
+                <li><strong>Latency is Zero</strong> - Network calls are slow (ms vs ns); don't assume instant communication</li>
+                <li><strong>Bandwidth is Infinite</strong> - Network congestion happens; optimize payloads</li>
+                <li><strong>The Network is Secure</strong> - Assume hostile network; encrypt and authenticate</li>
+                <li><strong>Topology Doesn't Change</strong> - Networks evolve; use service discovery</li>
+                <li><strong>There is One Administrator</strong> - Multiple teams/systems; coordinate changes</li>
+                <li><strong>Transport Cost is Zero</strong> - Resources cost money; budget for infrastructure</li>
+                <li><strong>The Network is Homogeneous</strong> - Heterogeneous systems exist; support diversity</li>
+            </ol>
+        </article>
+
+        <article>
+            <h2>Curated Articles</h2>
+            <ul>
+                <li><a href="https://pages.aws.amazon.com/AWSwhitepapers/a/pdf/the-eight-fallacies-of-distributed-computing.html" target="_blank">The Eight Fallacies of Distributed Computing - AWS</a></li>
+                <li><a href="https://developer.adobe.com/blogs/blog/fallacies-of-distributed-computing/" target="_blank">Fallacies of Distributed Computing - Adobe</a></li>
+                <li><a href="https://www.rfadem.com/the-8-fallacies-of-distributed-computing" target="_blank">The 8 Fallacies Explained</a></li>
+                <li><a href="https://www.infoq.com/articles/fallacies-distributed-computing/" target="_blank">Why These Fallacies Matter - InfoQ</a></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Deep Dives</h2>
+            <ul>
+                <li><a href="https://sre.google/sre-book/handling-isolation-failures/" target="_blank">Handling Isolation Failures - Google SRE</a></li>
+                <li><a href="https://codahale.com/failure-acceptance-and-recovery/" target="_blank">Failure Acceptance and Recovery</a></li>
+                <li><a href="https://aws.amazon.com/architecture/operational-excellence/" target="_blank">AWS Operational Excellence</a></li>
+                <li><a href="../scalability.html">Scalability Page</a> - Load Balancing, Caching, Partitioning</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Related Lessons</h2>
+            <ul>
+                <li><a href="lesson17.html">Lesson 17: Architecture Tradeoffs</a></li>
+                <li><a href="lesson23.html">Lesson 23: Orchestration vs. Choreography</a></li>
+                <li><a href="lesson27.html">Lesson 27: Circuit Breaker Pattern</a></li>
+                <li><a href="lesson53.html">Lesson 53: Distributed Transactions Using Sagas</a></li>
+            </ul>
+        </article>
+    </div>
+</body>
+</html>

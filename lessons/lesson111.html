@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson 111: CAP Theorem Illustrated - Rimfinder</title>
+    <link rel="stylesheet" href="../terminal.css">
+    <nav class="nav">
+        <a href="../index.html" class="nav-label">Home</a>
+        <a href="../architect.html" class="nav-label">Architecture</a>
+        <a href="../architect-lessons.html" class="nav-label">Lessons</a>
+    </nav>
+</head>
+<body>
+    <div class="container">
+        <article>
+            <h1>Lesson 111: CAP Theorem Illustrated</h1>
+            <p><a href="https://www.developertoarchitect.com/lessons/lesson111.html" target="_blank">Watch Video Lesson</a> | April 12, 2021</p>
+        </article>
+
+        <article>
+            <h2>Video Summary</h2>
+            <p>CAP Theorem describes the tradeoffs in distributed systems between Consistency (C), Availability (A), and Partition tolerance (P). The theorem states you can only pick two. Mark illustrates these options using services and data examples.</p>
+            
+            <h3>The Three Options:</h3>
+            <ul>
+                <li><strong>CP (Consistency + Partition Tolerance)</strong> - MongoDB, Cassandra (Strong), HBase
+                    <br><em>When partitions occur: sacrifice availability for consistency</em></li>
+                <li><strong>AP (Availability + Partition Tolerance)</strong> - Cassandra, CouchDB, DynamoDB
+                    <br><em>When partitions occur: sacrifice consistency for availability</em></li>
+                <li><strong>CA (Consistency + Availability)</strong> - Not possible with partitions
+                    <br><em>Only works without network partitions (rare in practice)</em></li>
+            </ul>
+            
+            <h3>Key Insight:</h3>
+            <p>Network partitions WILL happen. So you must choose between CP or AP. There's no "CA" in real distributed systems.</p>
+        </article>
+
+        <article>
+            <h2>Curated Articles</h2>
+            <ul>
+                <li><a href="https://www.infoq.com/articles/understanding-cap/" target="_blank">Understanding CAP Theorem - InfoQ</a></li>
+                <li><a href="https://martinfowler.com/bliki/CAPTheorem.html" target="_blank">CAP Theorem - Martin Fowler</a></li>
+                <li><a href="https://www.teamsilverite.com/cap-theorem-explained-simply.html" target="_blank">CAP Theorem Simply Explained</a></li>
+                <li><a href="https://codahale.com/you-cant-sacrifice-partition-tolerance/" target="_blank">You Can't Sacrifice Partition Tolerance</a></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Deep Dives</h2>
+            <ul>
+                <li><a href="https://people.eecs.berkeley.edu/~brewer/cs262b-2004.pdf" target="_blank">CAP Twelve Years Later - Eric Brewer</a></li>
+                <li><a href="https://www.datastax.com/blog/cap-theorem-and-databases-cloud-era" target="_blank">CAP Theorem and Databases - DataStax</a></li>
+                <li><a href="https://docs.microsoft.com/en-us/azure/architecture/guide/design-principles/scale-out" target="_blank">Design for Scaling Out - Azure</a></li>
+                <li><a href="../principle.html">Principles Page</a> - More on CAP, BASE, ACID</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Database CAP Tradeoffs</h2>
+            <table>
+                <tr><th>Database</th><th>Type</th><th>Use Case</th></tr>
+                <tr><td>MongoDB</td><td>CP</td><td>Strong consistency needed</td></tr>
+                <tr><td>Cassandra</td><td>AP</td><td>High availability</td></tr>
+                <tr><td>DynamoDB</td><td>AP</td><td>AWS globally distributed</td></tr>
+                <tr><td>CouchDB</td><td>AP</td><td>Eventual consistency</td></tr>
+                <tr><td>PostgreSQL</td><td>CA</td><td>Single node (no partitions)</td></tr>
+                <tr><td>Redis</td><td>CP</td><td>Consistent cache</td></tr>
+            </table>
+        </article>
+
+        <article>
+            <h2>Related Lessons</h2>
+            <ul>
+                <li><a href="lesson109.html">Lesson 109: BASE Transactions</a></li>
+                <li><a href="lesson149.html">Lesson 149: Caching and CAP</a></li>
+                <li><a href="lesson018.html">Lesson 18: Fallacies of Distributed Computing</a></li>
+                <li><a href="lesson124.html">Lesson 124: Challenges of Distributed Architectures</a></li>
+            </ul>
+        </article>
+    </div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    font-family: "Times New Roman", Times, serif;
+    font-family: Helvetica, Verdana, Arial, "Liberation Sans", FreeSans, sans-serif;
     font-size: 16px;
     color: #000000;
     background: #ffffff;
@@ -8,12 +8,13 @@ body {
 }
 a { color: #0000ee; text-decoration: underline; }
 a:hover { color: #ff0000; }
+h1, h2, h3, h4, h5, h6 { font-family: Helvetica, Verdana, Arial, "Liberation Sans", FreeSans, sans-serif; }
 h1 { color: #000000; font-size: 200%; font-weight: bold; border-bottom: 1px solid #000; padding: 0.5ex 0 0.5ex 0.6ex; margin: 1em 0 0.5em 0; }
 h2 { color: #000000; font-size: 150%; font-weight: bold; border-bottom: 1px solid #000; padding: 0.5ex 0 0.5ex 0.6ex; margin: 2em 0 0.5em 0; }
 h3 { color: #000000; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
 ul { list-style-type: square; margin-left: 20px; }
 li { padding: 3px 0; }
-.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+.container { max-width: 900px; margin: 0; padding: 20px; }
 article {
     background: #fff; border: 1px solid #999; padding: 20px; margin-bottom: 20px;
 }
@@ -23,8 +24,8 @@ article {
 table { border-collapse: collapse; width: 100%; margin: 10px 0; }
 th, td { border: 1px solid #999; padding: 8px; text-align: left; }
 th { background: #eee; }
-pre { margin-left: 2em; font-size: 1.2em; white-space: pre-wrap; font-family: "Courier New", Courier, monospace; background: #f5f5f5; padding: 10px; overflow-x: auto; }
-code { font-family: "Courier New", Courier, monospace; background: #f5f5f5; padding: 2px 5px; }
+pre { margin-left: 2em; font-size: 1.2em; white-space: pre-wrap; font-family: "Liberation Mono", "Courier New", monospace; background: #f5f5f5; padding: 10px; overflow-x: auto; }
+code { font-family: "Liberation Mono", "Courier New", monospace; background: #f5f5f5; padding: 2px 5px; }
 blockquote { border-left: 1px solid #999; font-style: italic; margin-left: 1em; padding-left: 1em; color: #666; }
 hr { border-width: 0px 0px 1px 0px; border-color: #999; }
 
