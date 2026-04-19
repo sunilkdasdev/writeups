@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Architecture Lessons - Rimfinder</title>
+    <link rel="stylesheet" href="terminal.css">
+    <nav class="nav">
+        <a href="index.html" class="nav-label">Home</a>
+        <a href="architect.html" class="nav-label">Architecture</a>
+        <a href="principle.html" class="nav-label">Principles</a>
+        <a href="interview.html" class="nav-label">Interview</a>
+    </nav>
+</head>
+<body>
+    <div class="container">
+        <article>
+            <h1>Software Architecture Monday - Complete Lessons</h1>
+            <p>218+ video lessons from Mark Richards covering all aspects of software architecture. Organized by topic.</p>
+        </article>
+
+        <article>
+            <h2>1. Getting Started with Architecture (Lessons 1-18)</h2>
+            <ul>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson1.html" target="_blank">Lesson 1 - Event-Driven Architecture: Request/Reply Processing</a>
+                    <br><em>How to implement synchronous request/reply within async messaging using correlation IDs and reply queues. Patterns for handling responses in event-driven systems.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson2.html" target="_blank">Lesson 2 - How Kafka Differs From Standard Messaging</a>
+                    <br><em>Kafka's log-based architecture vs traditional message queues. Append-only logs, replay capability, partitions, consumer groups.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson3.html" target="_blank">Lesson 3 - Soft Skills: Gaining Technical Breadth</a>
+                    <br><em>The 20-minute rule: Spend 20 minutes daily learning something new outside your expertise area. Building T-shaped skills.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson4.html" target="_blank">Lesson 4 - Microservices: Distributed Logging</a>
+                    <br><em>Correlation IDs across service boundaries to trace requests. Header propagation, distributed tracing tools.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson5.html" target="_blank">Lesson 5 - Microservices: Reducing Staging Iterations</a>
+                    <br><em>Shift-left testing: catch issues earlier in the development cycle. Local development, feature flags, canary releases.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson6.html" target="_blank">Lesson 6 - Classifying Architecture Patterns</a>
+                    <br><em>Distinguish between: patterns (solver-specific solutions), styles (broad structural categories), architecture patterns (structural solutions to recurring problems).</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson7.html" target="_blank">Lesson 7 - Analyzing Architecture: Structural Decay</a>
+                    <br><em>Entropy in codebases: how technical debt accumulates and accelerates. Signs of structural decay and how to prevent it.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson8.html" target="_blank">Lesson 8 - Analyzing Architecture: Components</a>
+                    <br><em>First step in architecture: identify what components make up your system. Component identification techniques.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson9.html" target="_blank">Lesson 9 - Analyzing Architecture: Macro Techniques</a>
+                    <br><em>Architectural Analysis at Scale: ATAM (Architecture Tradeoff Analysis Method), CBAM (Cost Benefit Analysis Method).</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson10.html" target="_blank">Lesson 10 - Analyzing Architecture: Microservices</a>
+                    <br><em>Key metrics for microservices: service span, cyclic dependencies, modularity measurements. Analyzing service boundaries.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson11.html" target="_blank">Lesson 11 - Analyzing Architecture: Code Metrics</a>
+                    <br><em>Use code metrics (Lines of Code, cyclomatic complexity, coupling) to analyze architecture health.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson12.html" target="_blank">Lesson 12 - CQRS and Microservices</a>
+                    <br><em>Command Query Responsibility Segregation: separate read/write models. Benefits for scaling reads vs writes independently.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson13.html" target="_blank">Lesson 13 - Microservices and Reporting</a>
+                    <br><em>Challenge: microservices fragment data making reporting difficult. Solutions: event sourcing, data warehouse, CDC (Change Data Capture).</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson14.html" target="_blank">Lesson 14 - Refactoring Patterns: Migration vs. Adaptation</a>
+                    <br><em>Two approaches to refactoring: Strangler Fig pattern (gradual migration) vs. Adaptation (in-place changes).</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson15.html" target="_blank">Lesson 15 - Refactoring: Business Justification</a>
+                    <br><em>How to justify refactoring to business: cost of delay, technical debt interest, opportunity cost.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson16.html" target="_blank">Lesson 16 - The Challenges of Architecture Teams</a>
+                    <br><em>Common challenges: politics, coordination, communication gaps between architecture and development teams.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson17.html" target="_blank">Lesson 17 - Architecture Tradeoffs</a>
+                    <br><em>Every architecture decision involves tradeoffs. How to analyze and communicate tradeoffs effectively.</em></li>
+                <li><a href="https://www.developertoarchitect.com/lessons/lesson18.html" target="_blank">Lesson 18 - The Fallacies of Distributed Computing</a>
+                    <br><em>The 8 fallacies: Network is reliable, Latency is zero, Bandwidth is infinite, Network is secure, Topology doesn't change, One administrator, Transport cost is zero, Network is homogeneous. These cause most distributed system failures.</em></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>2. Integration Architecture (Lessons 19-40)</h2>
+            <ul>
+                <li><strong>Lesson 19</strong> - File Transfer Integration
+                    <br><em>Integration style: batch file exchange between systems. Use cases, benefits, drawbacks.</em></li>
+                <li><strong>Lesson 20</strong> - Shared Database Integration
+                    <br><em>Tight coupling via shared database. Avoid unless necessary. Creates brittle dependencies.</em></li>
+                <li><strong>Lesson 21</strong> - Remote Procedure Invocation
+                    <br><em>Synchronous coupling: REST, gRPC, SOAP. Tight but simple. Call latency considerations.</em></li>
+                <li><strong>Lesson 22</strong> - Messaging Integration
+                    <br><em>Asynchronous, loose coupling via message queues. Benefits of temporal decoupling.</em></li>
+                <li><strong>Lesson 23</strong> - Orchestration vs. Choreography
+                    <br><em>Orchestration: central coordinator tells services what to do. Choreography: services react to events. Tradeoffs.</em></li>
+                <li><strong>Lesson 24</strong> - Lean Modeling Concepts
+                    <br><em>Domain-Driven Design: bounded contexts, core domain, generic subdomains, supporting subdomains.</em></li>
+                <li><strong>Lesson 25</strong> - Architectural Abstraction
+                    <br><em>Abstraction levels: domain (business logic), technical (frameworks), deployment (infrastructure).</em></li>
+                <li><strong>Lesson 26</strong> - Agile Architecture Review Boards
+                    <br><em>Lightweight architecture reviews in agile teams. Just enough governance.</em></li>
+                <li><strong>Lesson 27</strong> - Circuit Breaker Pattern
+                    <br><em>States: Closed (normal), Open (failures detected), Half-Open (testing recovery). Prevents cascading failures.</em></li>
+                <li><strong>Lesson 28</strong> - Service Design Patterns
+                    <br><em>Patterns: Naked Service (exposes internals), Facade Service (simplified interface), Anti-Corruption Layer.</em></li>
+                <li><strong>Lesson 29</strong> - Component and Service Coupling
+                    <br><em>Coupling types: Stamp (shares schema), Common (shares state), Content (direct access). Minimize coupling.</em></li>
+                <li><strong>Lesson 30</strong> - Agile and Architecture
+                    <br><em>Architecture in agile: just enough, just in time. Avoid big upfront design.</em></li>
+                <li><strong>Lesson 31</strong> - Presenting Architecture
+                    <br><em>Architecture presentations: know your audience, focus on business value, tell a story.</em></li>
+                <li><strong>Lesson 32</strong> - Diagramming Architecture
+                    <br><em>C4 model: Context (system), Container (apps), Component (modules), Code (classes). Four levels of abstraction.</em></li>
+                <li><strong>Lesson 33</strong> - Creating a Service Taxonomy
+                    <br><em>Service types: Business Capability Service (core logic), Entity Service (data), Utility Service (cross-cutting).</em></li>
+                <li><strong>Lesson 34</strong> - Creating Service Domains
+                    <br><em>Group related services into domains for ownership and boundaries. Domain-driven boundaries.</em></li>
+                <li><strong>Lesson 35</strong> - Watch Notification Pattern
+                    <br><em>Real-time monitoring via event subscription. Detect anomalies early.</em></li>
+                <li><strong>Lesson 36</strong> - Embedded Messaging
+                    <br><em>Embed message broker within application for simpler deployment. Tradeoffs vs standalone brokers.</em></li>
+                <li><strong>Lesson 37</strong> - Translating Quality Attributes to Business
+                    <br><em>Translate technical -ilities (scalability, performance) to business value for stakeholders.</em></li>
+                <li><strong>Lesson 38</strong> - Identifying Microservices
+                    <br><em>Methods: Decompose by business capability, DDD bounded contexts, self-discovering services.</em></li>
+                <li><strong>Lesson 39</strong> - Integration Hubs (ESBs)
+                    <br><em>Enterprise Service Buses: benefits and pitfalls. Consider lightweight alternatives.</em></li>
+                <li><strong>Lesson 40</strong> - Common Integration Patterns
+                    <br><em>Patterns: Point-to-Point, Publish/Subscribe, Hub-and-Spoke.</em></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>3. Microservices Deep Dive (Lessons 41-75)</h2>
+            <ul>
+                <li><strong>Lesson 41</strong> - Contract Versioning
+                    <br><em>Semantic versioning for APIs. Backward compatibility strategies: header versioning, URL versioning.</em></li>
+                <li><strong>Lesson 42</strong> - Deferred Data Migration
+                    <br><em>Move data gradually using strangler fig pattern. Don't big-bang migrate.</em></li>
+                <li><strong>Lesson 43</strong> - Orchestration Pattern
+                    <br><em>Central orchestrator coordinates microservice calls. Pros: control. Cons: single point of failure.</em></li>
+                <li><strong>Lesson 44</strong> - Aggregation Pattern
+                    <br><em>Aggregate results from multiple services. API aggregator pattern.</em></li>
+                <li><strong>Lesson 45</strong> - Gateway Pattern
+                    <br><em>API gateway as single entry point. Auth, rate limiting, routing, protocol translation.</em></li>
+                <li><strong>Lesson 46</strong> - Reactive Architecture
+                    <br><em>The Reactive Manifesto: Responsive, Resilient, Message-Driven, Elastic systems.</em></li>
+                <li><strong>Lesson 47</strong> - Channel Monitoring Pattern
+                    <br><em>Monitor message channel health. Detect stuck queues, message buildup.</em></li>
+                <li><strong>Lesson 48</strong> - Thread Delegate Pattern
+                    <br><em>Offload work to background threads for responsiveness. Keep request threads free.</em></li>
+                <li><strong>Lesson 49</strong> - What is Enterprise Architecture?
+                    <br><em>EA: technology governance, standardization, roadmap. Bridging business and IT.</em></li>
+                <li><strong>Lesson 50</strong> - Model-Driven EA
+                    <br><em>EA frameworks: TOGAF (The Open Group Architecture Framework), Zachman Framework.</em></li>
+                <li><strong>Lesson 51</strong> - Initiative-Driven Approach
+                    <br><em>EA driven by specific initiatives rather than comprehensive frameworks.</em></li>
+                <li><strong>Lesson 52</strong> - Modern Approaches to EA
+                    <br><em>Lean EA: minimal viable architecture, just enough governance.</em></li>
+                <li><strong>Lesson 53</strong> - Sagas for Distributed Transactions
+                    <br><em>Choreography-based or Orchestration-based. Compensating transactions for eventual consistency.</em></li>
+                <li><strong>Lesson 54</strong> - The Software Architects Bookshelf
+                    <br><em>Essential books: Domain-Driven Design, Enterprise Integration Patterns, Release It!</em></li>
+                <li><strong>Lesson 55</strong> - Architecture Decision Records (ADRs)
+                    <br><em>Track why decisions were made. Format: Title, Status, Context, Decision, Consequences.</em></li>
+                <li><strong>Lesson 56</strong> - The Ambulance Pattern
+                    <br><em>Prioritize critical services during failures. Not all services are equally important.</em></li>
+                <li><strong>Lesson 57</strong> - Law of Demeter
+                    <br><em>Loose coupling principle: don't talk to strangers. Single responsibility for service communication.</em></li>
+                <li><strong>Lesson 58</strong> - Architecture Certification
+                    <br><em>Certifications: AWS, Azure, GCP, TOGAF. Value and limitations.</em></li>
+                <li><strong>Lesson 59</strong> - Tradeoffs of Loose Coupling
+                    <br><em>Weak coupling often means weak cohesion. Finding the right balance.</em></li>
+                <li><strong>Lesson 60</strong> - Microservices and gRPC
+                    <br><em>gRPC for high-performance service communication. Protocol buffers, HTTP/2.</em></li>
+                <li><strong>Lesson 61</strong> - Extensibility Using Pub/Sub
+                    <br><em>Add new features without modifying existing code. Event-driven extensibility.</em></li>
+                <li><strong>Lesson 62</strong> - Enterprise Architecture Strategies
+                    <br><em>Prescriptive (top-down), Market-driven (bottom-up), Opportunistic.</em></li>
+                <li><strong>Lesson 63</strong> - Prescriptive Strategy
+                    <br><em>Comprehensive framework-driven EA. Pros: consistency. Cons: slow.</em></li>
+                <li><strong>Lesson 64</strong> - Classic Alternatives Strategy
+                    <br><em>Architecture Review Boards evaluating alternatives. Standardization focus.</em></li>
+                <li><strong>Lesson 65</strong> - Distributed Strategy
+                    <br><em>Decentralized EA authority. Teams have autonomy within guidelines.</em></li>
+                <li><strong>Lesson 66</strong> - Durable Interface Strategy
+                    <br><em>Invest in stable APIs. Long-term thinking about interfaces.</em></li>
+                <li><strong>Lesson 67</strong> - EA Strategy Case Studies
+                    <br><em>Real-world examples of EA implementation. Success factors and pitfalls.</em></li>
+                <li><strong>Lesson 68</strong> - Automating Governance
+                    <br><em>Automate architecture compliance checking. Linters, policies as code.</em></li>
+                <li><strong>Lesson 69</strong> - Importance of Event-Driven Architecture
+                    <br><em>Why EDA matters: loose coupling, scalability, resilience.</em></li>
+                <li><strong>Lesson 70</strong> - Preventing Data Loss in Messaging
+                    <br><em>Idempotency, transactional outbox, acknowledgment strategies.</em></li>
+                <li><strong>Lesson 71</strong> - Measuring Scalability
+                    <br><em>Metrics: requests per second, latency, throughput. Scalability factors.</em></li>
+                <li><strong>Lesson 72</strong> - Multi-Broker Pattern
+                    <br><em>Multiple message brokers for high availability. Failover strategies.</em></li>
+                <li><strong>Lesson 73</strong> - Architecture Fitness Functions
+                    <br><em>Automated validation of architecture characteristics. Metric-based governance.</em></li>
+                <li><strong>Lesson 74</strong> - Elephant Migration AntiPattern
+                    <br><em>Moving massive monolith to microservices at once. Wrong approach.</em></li>
+                <li><strong>Lesson 75</strong> - Microservices Data Services
+                    <br><em>Data management in microservices: database per service, shared databases, CQRS.</em></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>4. Caching & Performance (Lessons 76-85)</h2>
+            <ul>
+                <li><strong>Lesson 76</strong> - Single In-Memory Data Grid
+                    <br><em>IMDG basics: Hazelcast, Infinispan. Single-node caching.</em></li>
+                <li><strong>Lesson 77</strong> - Distributed Cache
+                    <br><em>Cache across multiple nodes. Consistency challenges. Redis, Memcached.</em></li>
+                <li><strong>Lesson 78</strong> - Replicated Cache
+                    <br><em>Full replication for low latency. Tradeoffs with data freshness.</em></li>
+                <li><strong>Lesson 79</strong> - Near Cache Hybrid
+                    <br><em>Local + distributed cache. Optimizing for read-heavy workloads.</em></li>
+                <li><strong>Lesson 80</strong> - Choosing Caching Topology
+                    <br><em>Decision framework: local, replicated, distributed, or hybrid.</em></li>
+                <li><strong>Lesson 81</strong> - Workflow Event Pattern
+                    <br><em>Long-running workflows via events. State machines, saga orchestration.</em></li>
+                <li><strong>Lesson 82</strong> - Defining Testability
+                    <br><em>How testable is your architecture? Unit, integration, contract testing.</em></li>
+                <li><strong>Lesson 83</strong> - Performance and Responsiveness
+                    <br><em>Performance: execution time. Responsiveness: how quickly system responds.</em></li>
+                <li><strong>Lesson 84</strong> - Defining Deployability
+                    <br><em>Frequency and ease of deployment. Deployment pipeline maturity.</em></li>
+                <li><strong>Lesson 85</strong> - Scalability vs. Elasticity
+                    <br><em>Scalability: add capacity. Elasticity: add/remove automatically based on load.</em></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>5. Becoming an Architect (Lessons 86-100)</h2>
+            <ul>
+                <li><strong>Lessons 86-91</strong> - Becoming a Software Architect (Parts 1-6)
+                    <br><em>The journey: technologist, communicator, decision-maker, mentor. Skills needed.</em></li>
+                <li><strong>Lesson 92</strong> - Hybrid Architectures
+                    <br><em>Combine architecture styles: microservices + monolith + event-driven where appropriate.</em></li>
+                <li><strong>Lesson 93</strong> - What is Software Architecture?
+                    <br><em>High-level structure. Decisions that are hard to change. Balancing stakeholder needs.</em></li>
+                <li><strong>Lesson 94</strong> - Guidelines for Architecture Diagrams
+                    <br><em>Best practices: clear labels, consistent notation, appropriate detail level.</em></li>
+                <li><strong>Lesson 95</strong> - Architecture Diagrams Revisited
+                    <br><em>Refining diagram techniques. Tool recommendations.</em></li>
+                <li><strong>Lesson 96</strong> - Enterprise Architecture Roadmaps: Introduction
+                    <br><em>Planning the EA journey. Vision, current state, target state.</em></li>
+                <li><strong>Lesson 97</strong> - Iteration Model
+                    <br><em>Iterative EA roadmap. Incremental improvements over big bang.</em></li>
+                <li><strong>Lesson 98</strong> - Portfolio Model
+                    <br><em>EA as portfolio of initiatives. Prioritization frameworks.</em></li>
+                <li><strong>Lesson 99</strong> - Priority Model
+                    <br><em>Prioritizing EA initiatives by business value and risk.</em></li>
+                <li><strong>Lesson 100</strong> - My Architecture Journey
+                    <br><em>Lessons learned from Mark Richards' career. Mistakes and successes.</em></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>6. Architecture Fundamentals (Lessons 101-130)</h2>
+            <ul>
+                <li><strong>Lesson 101</strong> - Components and Root Namespaces
+                    <br><em>Organizing code. Namespace conventions, package structure.</em></li>
+                <li><strong>Lesson 102</strong> - Architecture Characteristics FAQ
+                    <br><em>Common -ilities: scalability, performance, availability, security, testability, maintainability.</em></li>
+                <li><strong>Lesson 103</strong> - Balancing Architecture and Coding
+                    <br><em>Staying hands-on while being an architect. Finding the right balance.</em></li>
+                <li><strong>Lesson 104</strong> - Architecture Styles FAQ
+                    <br><em>Layered, microservices, event-driven, space-based, pipeline.</em></li>
+                <li><strong>Lesson 105</strong> - Stamp Coupling
+                    <br><em>Sharing data structure. Changes affect both producer and consumer.</em></li>
+                <li><strong>Lesson 106</strong> - Architecture Stories
+                    <br><em>Narrative approach to explain architecture decisions. Storytelling for buy-in.</em></li>
+                <li><strong>Lesson 107</strong> - Annotations and Attributes
+                    <br><em>Add architecture metadata to code. Enable tooling for governance.</em></li>
+                <li><strong>Lesson 108</strong> - Role of a Software Architect
+                    <br><em>Technologist, communicator, decision-maker, mentor, translator.</em></li>
+                <li><strong>Lesson 109</strong> - BASE Transactions
+                    <br><em>Basically Available, Soft State, Eventually Consistent. Alternative to ACID.</em></li>
+                <li><strong>Lesson 110</strong> - Pros/Cons of Event-Driven Architecture
+                    <br><em>Pros: loose coupling, scalability, resilience. Cons: complexity, debugging.</em></li>
+                <li><strong>Lesson 111</strong> - CAP Theorem Illustrated
+                    <br><em>Pick 2 of Consistency, Availability, Partition Tolerance. CP vs AP in practice.</em></li>
+                <li><strong>Lesson 112</strong> - Architecture Characteristics Worksheet
+                    <br><em>Tool for identifying critical -ilities. Definitions and examples.</em></li>
+                <li><strong>Lesson 113</strong> - Cart Before Horse AntiPattern
+                    <br><em>Designing architecture before understanding requirements. Avoid big upfront design.</em></li>
+                <li><strong>Lesson 114</strong> - Microservices vs Service-Based
+                    <br><em>Service-based: shared database, smaller deployment units than microservices.</em></li>
+                <li><strong>Lesson 115</strong> - Email-Driven Architecture (Anti-Pattern)
+                    <br><em>Using email as integration mechanism. Why it's an anti-pattern.</em></li>
+                <li><strong>Lesson 116</strong> - Negotiation Tips
+                    <br><em>Negotiating with stakeholders. BATNA, interest-based negotiation.</em></li>
+                <li><strong>Lesson 117</strong> - Accidental Complexity AntiPattern
+                    <br><em>Adding unnecessary complexity. Simplicity as a goal.</em></li>
+                <li><strong>Lesson 118</strong> - Limiting Assumptions
+                    <br><em>Identify and challenge assumptions in architecture decisions.</em></li>
+                <li><strong>Lesson 119</strong> - Why EA Efforts Fail
+                    <br><em>Common reasons: too abstract, no business alignment, lack of authority.</em></li>
+                <li><strong>Lesson 120</strong> - Domain vs. Technical Partitioning
+                    <br><em>Partition by business domain or technical function. Tradeoffs.</em></li>
+                <li><strong>Lesson 121</strong> - Transacted Messages
+                    <br><em>Combining messaging with transactions. Outbox pattern.</em></li>
+                <li><strong>Lesson 122</strong> - When to Replace Architecture
+                    <br><em>Signs it's time for architecture change. Incremental vs big bang.</em></li>
+                <li><strong>Lesson 123</strong> - Composite Characteristics
+                    <br><em>Multiple -ilities interact. Understanding compound effects.</em></li>
+                <li><strong>Lesson 124</strong> - Challenges of Distributed Architectures
+                    <br><em>Network failures, latency, partial failures. Managing complexity.</em></li>
+                <li><strong>Lesson 125</strong> - Managing Broad Bounded Contexts
+                    <br><em>When DDD bounded contexts get too large. Strategies for handling.</em></li>
+                <li><strong>Lesson 126</strong> - Is SOA Dead?
+                    <br><em>SOA vs microservices. What survived from SOA era.</em></li>
+                <li><strong>Lesson 127-129</strong> - Assessing Architectural Risk (Parts 1-3)
+                    <br><em>Identifying, analyzing, and mitigating architecture risks.</em></li>
+                <li><strong>Lesson 130</strong> - Frozen Caveman AntiPattern
+                    <br><em>Fearing change and refusing to evolve. Innovation vs stability.</em></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>7. Architecture Styles (Lessons 131-170)</h2>
+            <ul>
+                <li><strong>Lesson 131</strong> - Microservices vs Event-Driven Architecture
+                    <br><em>MSA: organizational pattern. EDA: integration pattern. They're different.</em></li>
+                <li><strong>Lesson 132</strong> - Architecture by Implication AntiPattern
+                    <br><em>When architecture isn't documented or communicated. Silent failures.</em></li>
+                <li><strong>Lesson 133</strong> - Stovepipe Architecture AntiPattern
+                    <br><em>Systems that don't integrate well. Legacy integration challenges.</em></li>
+                <li><strong>Lesson 134</strong> - What is a Service?
+                    <br><em>Defining characteristics: independent deployability, own data, single responsibility.</em></li>
+                <li><strong>Lesson 135</strong> - Scalability Revisited
+                    <br><em>Horizontal vs vertical scaling. When to use each.</em></li>
+                <li><strong>Lesson 136</strong> - Managing Shared Database Changes
+                    <br><em>When databases are shared. Strategies for decomposition.</em></li>
+                <li><strong>Lesson 137</strong> - REST vs Messaging
+                    <br><em>Synchronous vs asynchronous. When to use each.</em></li>
+                <li><strong>Lesson 138</strong> - Dynamic Quantum Entanglement
+                    <br><em>Architecture quantum boundaries. When components become coupled.</em></li>
+                <li><strong>Lesson 139</strong> - Triggered vs Continuous Fitness Functions
+                    <br><em>Scheduled validation vs real-time monitoring of architecture rules.</em></li>
+                <li><strong>Lesson 140</strong> - Governing Data Services
+                    <br><em>Standards for data access in distributed systems.</em></li>
+                <li><strong>Lesson 141</strong> - Managing Architecture Decisions
+                    <br><em>Process for making and reviewing architecture decisions.</em></li>
+                <li><strong>Lesson 142</strong> - Request/Reply vs Async Notification
+                    <br><em>Patterns for async communication. When each applies.</em></li>
+                <li><strong>Lesson 143</strong> - Problem Solving Checklist
+                    <br><em>Systematic approach to solving architecture problems.</em></li>
+                <li><strong>Lesson 144</strong> - Using Redirection to Solve Problems
+                    <br><em>Indirection patterns for solving coupling problems.</em></li>
+                <li><strong>Lesson 145</strong> - Analyzing Tradeoffs
+                    <br><em>Framework for analyzing architecture tradeoffs systematically.</em></li>
+                <li><strong>Lesson 146</strong> - Out-of-Context Scorecard AntiPattern
+                    <br><em>Applying wrong metrics. Context matters in architecture.</em></li>
+                <li><strong>Lesson 147</strong> - Fallacies of Versioning
+                    <br><em>Common misconceptions about API versioning. Versioning strategies.</em></li>
+                <li><strong>Lesson 148</strong> - Fallacies of Compensating Updates
+                    <br><em>Mistakes in saga implementations. Handling failures correctly.</em></li>
+                <li><strong>Lesson 149</strong> - Caching and CAP Theorem
+                    <br><em>Cache consistency challenges. Caching in CP vs AP systems.</em></li>
+                <li><strong>Lesson 150</strong> - Quantitative vs Qualitative Analysis
+                    <br><em>Data-driven vs intuition-based architecture decisions.</em></li>
+                <li><strong>Lesson 151</strong> - Architecture Roles and Titles
+                    <br><em>Variety of architect roles: solution, enterprise, domain, technical.</em></li>
+                <li><strong>Lesson 152</strong> - Modeling Distributed Workflows
+                    <br><em>State machines, saga patterns for long-running processes.</em></li>
+                <li><strong>Lesson 153</strong> - Service-Based vs SOA
+                    <br><em>Comparing modern service-based with classic SOA.</em></li>
+                <li><strong>Lesson 154</strong> - Is ESB Still Relevant?
+                    <br><em>Enterprise Service Buses today. Lightweight alternatives.</em></li>
+                <li><strong>Lesson 155</strong> - Infinity Architecture AntiPattern
+                    <br><em>Adding unnecessary layers/indirection. Over-abstraction.</em></li>
+                <li><strong>Lesson 156</strong> - Zachman Framework
+                    <br><em>6x6 matrix for enterprise architecture. Views and perspectives.</em></li>
+                <li><strong>Lesson 157</strong> - Incorporating ADRs
+                    <br><em>Adding Architecture Decision Records to existing systems.</em></li>
+                <li><strong>Lesson 158</strong> - Layered Architecture
+                    <br><em>Traditional: presentation, business, data access, database layers.</em></li>
+                <li><strong>Lesson 159</strong> - Modular Monolith
+                    <br><em>Single deployable with internal modularity. Good starting point.</em></li>
+                <li><strong>Lesson 160</strong> - Microkernel Architecture
+                    <br><em>Core system + plug-in components. Eclipse IDE model.</em></li>
+                <li><strong>Lesson 161</strong> - Agility and Monoliths
+                    <br><em>Monoliths can be agile if properly structured. Modular monolith benefits.</em></li>
+                <li><strong>Lesson 162</strong> - Microservices Architecture
+                    <br><em>Independent deployables, own database, business capability boundaries.</em></li>
+                <li><strong>Lesson 163</strong> - Service-Based Architecture
+                    <br><em>Shared database, smaller services than microservices.</em></li>
+                <li><strong>Lesson 164</strong> - Service-Oriented Architecture
+                    <br><em>Classic SOA: enterprise services, ESB, standardized interfaces.</em></li>
+                <li><strong>Lesson 165</strong> - Event-Driven Architecture
+                    <br><em>Producers, consumers, event channels. Loose coupling.</em></li>
+                <li><strong>Lesson 166</strong> - Space-Based Architecture
+                    <br><em>In-memory data grids, avoiding databases for speed. GigaSpaces.</em></li>
+                <li><strong>Lesson 167</strong> - Architecture vs Design
+                    <br><em>Architecture: high-level structure. Design: implementation details.</em></li>
+                <li><strong>Lesson 168</strong> - ADRs and Architecture Stories
+                    <br><em>Using ADRs with narrative to explain decisions.</em></li>
+                <li><strong>Lesson 169</strong> - Atomic vs Eventual Transactions
+                    <br><em>ACID vs BASE. When to use each model.</em></li>
+                <li><strong>Lesson 170</strong> - Managing Code Reuse in Microservices
+                    <br><em>Sharing code between services. Libraries vs duplication.</em></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>8. Advanced Topics (Lessons 171-218)</h2>
+            <ul>
+                <li><strong>Lesson 171</strong> - Producer Control Flow Pattern
+                    <br><em>Controlling message flow from producer side. Backpressure.</em></li>
+                <li><strong>Lesson 172</strong> - TOGAF in 10 Minutes
+                    <br><em>Overview of TOGAF: Architecture Development Method, Enterprise Continuum.</em></li>
+                <li><strong>Lesson 173</strong> - Leveraging Checklists
+                    <br><em>Architecture checklists for consistency. Pre-flight checks.</em></li>
+                <li><strong>Lesson 174</strong> - Replicated Caching and Data Collisions
+                    <br><em>Challenges with concurrent updates in replicated caches.</em></li>
+                <li><strong>Lesson 175</strong> - Events vs Messages
+                    <br><em>Events: something that happened (immutable). Messages: instructions (actionable).</em></li>
+                <li><strong>Lesson 176</strong> - Compensating Updates Revisited
+                    <br><em>Deep dive into saga failure handling. Idempotency.</em></li>
+                <li><strong>Lesson 177</strong> - Logical Architecture Components
+                    <br><em>Components independent of deployment. Logical view.</em></li>
+                <li><strong>Lesson 178</strong> - Multi-Broker Pattern
+                    <br><em>High availability through multiple message brokers.</em></li>
+                <li><strong>Lesson 179</strong> - Domain to Architecture Isomorphism Part 1
+                    <br><em>Domain model should mirror architecture. Alignment.</em></li>
+                <li><strong>Lesson 180</strong> - Domain to Architecture Isomorphism Part 2
+                    <br><em>Pitfalls when domain doesn't match architecture.</em></li>
+                <li><strong>Lesson 181</strong> - Feasibility and Questioning Requirements
+                    <br><em>Challenging requirements. Feasibility analysis.</em></li>
+                <li><strong>Lesson 182</strong> - Domain to Architecture Isomorphism Part 3
+                    <br><em>Advanced alignment techniques.</em></li>
+                <li><strong>Lesson 183</strong> - Head First Software Architecture Book
+                    <br><em>Introduction to new book on fundamentals.</em></li>
+                <li><strong>Lesson 184</strong> - Running an Architecture Kata
+                    <br><em>Practice architecture design like code katas.</em></li>
+                <li><strong>Lesson 185</strong> - Residuality Theory
+                    <br><em>Things that survive system changes. Core vs accidental.</em></li>
+                <li><strong>Lesson 186</strong> - Observability is Optional (Fallacy #11)
+                    <br><em>Observability IS required in distributed systems. Logs, metrics, traces.</em></li>
+                <li><strong>Lesson 187</strong> - Categorizing Characteristics
+                    <br><em>Operational (scalability), Structural (modularity), Cross-cutting (security).</em></li>
+                <li><strong>Lesson 188</strong> - Identifying Characteristics
+                    <br><em>Interview stakeholders to find what matters most.</em></li>
+                <li><strong>Lesson 189</strong> - Architecture Quantum Tradeoffs
+                    <br><em>Size affects coupling and cohesion. Finding right quantum size.</em></li>
+                <li><strong>Lesson 190</strong> - Logical vs Physical Architecture
+                    <br><em>Logical: what components. Physical: how deployed.</em></li>
+                <li><strong>Lesson 191</strong> - The Entity Trap
+                    <br><em>Don't let database entities drive service boundaries.</em></li>
+                <li><strong>Lesson 192</strong> - Workflow Approach
+                    <br><em>Identify services by business workflows.</em></li>
+                <li><strong>Lesson 193</strong> - Actor/Action Approach
+                    <br><em>Identify services by actors and their actions.</em></li>
+                <li><strong>Lesson 194</strong> - Architecture as Code
+                    <br><em>Define architecture in code for reproducibility.</em></li>
+                <li><strong>Lesson 195</strong> - Sacrificial Architecture
+                    <br><em>Build to throw away. Plan for replacement.</em></li>
+                <li><strong>Lesson 196</strong> - Modularity and Styles
+                    <br><em>Modularity is independent of architecture style.</em></li>
+                <li><strong>Lesson 197</strong> - Communication Patterns
+                    <br><em>Sync vs async, request/response vs fire-and-forget.</em></li>
+                <li><strong>Lesson 198</strong> - Swarm of Gnats AntiPattern
+                    <br><em>Too many small services creating noise.</em></li>
+                <li><strong>Lesson 199</strong> - Anemic Events
+                    <br><em>Events should carry rich data, not just IDs.</em></li>
+                <li><strong>Lesson 200</strong> - A Call To Action
+                    <br><em>Putting learning into practice.</em></li>
+                <li><strong>Lesson 201</strong> - Communication Protocols
+                    <br><em>HTTP/REST, gRPC, messaging protocols. Tradeoffs.</em></li>
+                <li><strong>Lesson 202</strong> - Overlooked Characteristics
+                    <br><em>Often forgotten -ilities: observability, elasticity, recoverability.</em></li>
+                <li><strong>Lesson 203</strong> - Architecture Style Risks
+                    <br><em>Each style has specific risks. Understand what you're signing up for.</em></li>
+                <li><strong>Lesson 204</strong> - Risk Storming
+                    <br><em>Collaborative risk identification. Architecture decision games.</em></li>
+                <li><strong>Lesson 205</strong> - Fundamentals of SA 2nd Edition
+                    <br><em>Updates to foundational book.</em></li>
+                <li><strong>Lesson 206</strong> - Analysis Paralysis
+                    <br><em>When to stop analyzing and start building.</em></li>
+                <li><strong>Lesson 207</strong> - Iterative Architecture
+                    <br><em>Architecture evolves with requirements. Embrace change.</em></li>
+                <li><strong>Lesson 208</strong> - Architectural Intersections
+                    <br><em>Where architecture styles meet. Hybrid approaches.</em></li>
+                <li><strong>Lesson 209</strong> - Fallacies of Software Architecture Part 1
+                    <br><em>Common misconceptions about architecture decisions.</em></li>
+                <li><strong>Lesson 210</strong> - Architecture Definition Language (ADL)
+                    <br><em>Pseudo-code for describing architecture formally.</em></li>
+                <li><strong>Lesson 211</strong> - Architectural Modularity
+                    <br><em>Independent, replaceable components. Boundaries.</em></li>
+                <li><strong>Lesson 212</strong> - Stressor Analysis
+                    <br><em>Test architecture under stress conditions.</em></li>
+                <li><strong>Lesson 213</strong> - Governing Constraints
+                    <br><em>Rules that guide architecture decisions.</em></li>
+                <li><strong>Lesson 214</strong> - Microservice All The Things Pitfall
+                    <br><em>Don't jump to microservices without reason.</em></li>
+                <li><strong>Lesson 215</strong> - Fitness Function-Driven Architecture
+                    <br><em>Automated validation of architecture characteristics.</em></li>
+                <li><strong>Lesson 216</strong> - Creating Scalable Systems
+                    <br><em>Techniques: cloning, decomposition, partitioning, caching.</em></li>
+                <li><strong>Lesson 217</strong> - Supervisor-Consumer Pattern
+                    <br><em>Programmatic scaling within a single service instance.</em></li>
+                <li><strong>Lesson 218</strong> - Thread Delegate Pattern
+                    <br><em>Offloading work to background threads for responsiveness.</em></li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>All Lessons by Category</h2>
+            <ul>
+                <li><a href="https://www.developertoarchitect.com/lessons-microservices.html" target="_blank">Microservices Lessons</a> - 40+ lessons on microservices patterns</li>
+                <li><a href="https://www.developertoarchitect.com/lessons-general.html" target="_blank">General Architecture Lessons</a> - Core architecture concepts</li>
+                <li><a href="https://www.developertoarchitect.com/lessons-eda.html" target="_blank">Event-Driven Architecture Lessons</a> - EDA patterns</li>
+                <li><a href="https://www.developertoarchitect.com/lessons-softskills.html" target="_blank">Soft Skills Lessons</a> - Communication, negotiation</li>
+                <li><a href="https://www.developertoarchitect.com/lessons-integration.html" target="_blank">Integration Architecture Lessons</a> - Integration patterns</li>
+                <li><a href="https://www.developertoarchitect.com/lessons-enterprise.html" target="_blank">Enterprise Architecture Lessons</a> - EA frameworks</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Resources</h2>
+            <ul>
+                <li><a href="https://www.developertoarchitect.com/downloads/architecture-characteristics-worksheet.pdf" target="_blank">Architecture Characteristics Worksheet (PDF)</a></li>
+                <li><a href="https://www.developertoarchitect.com/downloads/architecture-styles-worksheet.pdf" target="_blank">Architecture Styles Worksheet (PDF)</a></li>
+                <li><a href="https://www.developertoarchitect.com/downloads/adl-ref.pdf" target="_blank">Architecture Definition Language Reference (PDF)</a></li>
+                <li><a href="https://github.com/TheKataLog" target="_blank">O'Reilly Architecture Katas</a></li>
+            </ul>
+        </article>
+    </div>
+</body>
+</html>
