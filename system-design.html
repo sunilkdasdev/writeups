@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Step by Step - Rimfinder</title>
+    <link rel="stylesheet" href="terminal.css">
+    <nav class="nav">
+        <a href="index.html" class="nav-label">Home</a>
+        <a href="principle.html" class="nav-label">Principles</a>
+        <a href="interview.html" class="nav-label">Interview</a>
+        <a href="books.html" class="nav-label">Books</a>
+    </nav>
+</head>
+<body>
+    <div class="container">
+        <article>
+            <h1>System Design: Step by Step</h1>
+            <p>A conversational guide to designing systems from scratch. Think of this as a dialogue between you (the engineer) and the system.</p>
+        </article>
+
+        <article>
+            <h2>Step 1: What Are We Building?</h2>
+            <blockquote>
+                <strong>You:</strong> "I need to build something. Where do I start?"<br><br>
+                <strong>System:</strong> "Hold on! First, tell me WHAT you're building. Give me requirements."<br><br>
+                <strong>You:</strong> "Okay, it's a URL shortening service like bit.ly."<br><br>
+                <strong>System:</strong> "Got it. Requirements:<br>
+                - Users submit long URLs, we give them short URLs<br>
+                - When someone visits short URL, redirect to long URL<br>
+                - Must handle millions of users"<br><br>
+                <strong>Key Question:</strong> What is the functional requirement? What are the non-functional requirements (latency, throughput, availability)?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 2: High-Level Design</h2>
+            <blockquote>
+                <strong>You:</strong> "Now how do I structure this?"<br><br>
+                <strong>System:</strong> "Let's draw boxes. Three main parts:<br><br>
+                1. <strong>API Server</strong> - handles user requests<br>
+                2. <strong>Database</strong> - stores URL mappings<br>
+                3. <strong>Redirect Service</strong> - maps short → long URL"<br><br>
+                <pre>User → API Server → Database
+                Browser → Redirect → Long URL</pre><br>
+                <strong>Key Decision:</strong> What are the core components? How do they communicate?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 3: API Design</h2>
+            <blockquote>
+                <strong>You:</strong> "What should the API look like?"<br><br>
+                <strong>System:</strong> "Keep it simple:<br><br>
+                1. <code>POST /api/shorten</code> - body: {longUrl: "..."}<br>
+                   &nbsp;&nbsp;returns: {shortUrl: "http://s.ly/abc123"}<br>
+                2. <code>GET /api/shorten/:id</code> - returns the long URL<br>
+                3. <code>GET /abc123</code> - redirects to long URL"<br><br>
+                <strong>Key Question:</strong> What are the endpoints? What are the request/response formats?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 4: Data Model</h2>
+            <blockquote>
+                <strong>You:</strong> "How do I store the URLs?"<br><br>
+                <strong>System:</strong> "Simple table:<br><br>
+                <table>
+                <tr><th>id</th><th>short_code</th><th>long_url</th><th>created_at</th></tr>
+                <tr><td>1</td><td>abc123</td><td>https://google.com</td><td>2024-01-01</td></tr>
+                </table><br>
+                <strong>You:</strong> "What database?"<br>
+                <strong>System:</strong> "Start with relational (MySQL/PostgreSQL). Move to NoSQL if needed. For this? Any works."<br><br>
+                <strong>Key Decision:</strong> What database? What schema?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 5: Capacity Planning</h2>
+            <blockquote>
+                <strong>You:</strong> "Will this scale?"<br><br>
+                <strong>System:</strong> "Let's calculate:<br><br>
+                - 1 billion URLs<br>
+                - Each URL ~100 bytes + overhead = ~150 bytes<br>
+                - Storage: 1B × 150 bytes = 150GB<br><br>
+                Read QPS (queries per second):<br>
+                - 10M visits/day = ~100 QPS average<br>
+                - 10x for peak = ~1000 QPS<br><br>
+                <strong>Key Question:</strong> What's the storage? What's the QPS?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 6: Caching</h2>
+            <blockquote>
+                <strong>You:</strong> "Database will get hit hard!"<br><br>
+                <strong>System:</strong> "Yes! Add cache:<br><br>
+                1. Check Redis/Memcached first<br>
+                2. If miss, query database<br>
+                3. Store in cache, return<br><br>
+                Use 80/20 rule:<br>
+                - 80% traffic goes to 20% popular URLs<br>
+                - Cache those!"<br><br>
+                <strong>Key Decision:</strong> What to cache? Eviction policy?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 7: Load Balancing</h2>
+            <blockquote>
+                <strong>You:</strong> "One server won't handle all traffic!"<br><br>
+                <strong>System:</strong> "Right! Add load balancer:<br><br>
+                <pre>Users → LB → Server1
+                    → Server2
+                    → Server3</pre><br>
+                Options: Round Robin, Least Connections, IP Hash<br><br>
+                <strong>Key Decision:</strong> How to distribute? What algorithm?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 8: High Availability</h2>
+            <blockquote>
+                <strong>You:</strong> "What if a server dies?"<br><br>
+                <strong>System:</strong> "Design for failure:<br><br>
+                1. <strong>Replication</strong> - DB primary + replicas<br>
+                2. <strong>Multi-AZ</strong> - across data centers<br>
+                3. <strong>Health checks</strong> - detect failures<br>
+                4. <strong>Automatic failover</strong> - switch to backup<br><br>
+                <strong>You:</strong> "What's our SLA?"<br>
+                <strong>System:</strong> "99.9% = 9 hours downtime/year<br>
+                99.99% = 53 minutes downtime/year"<br><br>
+                <strong>Key Decision:</strong> What availability level?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 9: Short URL Generation</h2>
+            <blockquote>
+                <strong>You:</strong> "How do I generate the short code?"<br><br>
+                <strong>System:</strong> "Several options:<br><br>
+                1. <strong>Hash-based</strong>: hash(longUrl) → base62<br>
+                   &nbsp;&nbsp;Problem: hash collisions<br><br>
+                2. <strong>Auto-increment</strong>: DB id → base62(1)<br>
+                   &nbsp;&nbsp;Problem: predictable, exposes count<br><br>
+                3. <strong>Random + Check</strong>: generate random, verify unique<br>
+                   &nbsp;&nbsp;Best for URL shorteners!"<br><br>
+                <strong>Key Decision:</strong> How to generate? What encoding?
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>Step 10: Wrap Up</h2>
+            <blockquote>
+                <strong>You:</strong> "Anything else?"<br><br>
+                <strong>System:</strong> "Review time:<br><br>
+                ✓ Flow: User → Short URL → Redirect → Long URL<br>
+                ✓ API: POST /shorten, GET /:id<br>
+                ✓ DB: id, short_code, long_url<br>
+                ✓ Scale: Cache + LB + Replication<br>
+                ✓ Availability: Multi-AZ failover<br><br>
+                <strong>Now draw it on whiteboard!</strong>"<br><br>
+                <strong>Pro Tips:</strong><br>
+                - Start simple, iterate<br>
+                - Don't over-engineer<br>
+                - Know trade-offs<br>
+                - Be ready to explain choices
+            </blockquote>
+        </article>
+
+        <article>
+            <h2>System Design Checklist</h2>
+            <ul>
+                <li><strong>Requirements</strong> - What are we building?</li>
+                <li><strong>High-Level Design</strong> - Core components?</li>
+                <li><strong>API Design</strong> - Endpoints?</li>
+                <li><strong>Data Model</strong> - Schema?</li>
+                <li><strong>Capacity</strong> - Storage, QPS?</li>
+                <li><strong>Caching</strong> - What to cache?</li>
+                <li><strong>Load Balancing</strong> - Distribution?</li>
+                <li><strong>Availability</strong> - SLA?</li>
+                <li><strong>Generation</strong> - Short codes?</li>
+                <li><strong>Trade-offs</strong> - What did we compromise?</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Next Steps</h2>
+            <p>Now practice with these real systems:</p>
+            <ul>
+                <li><a href="interview.html">Design Dropbox</a></li>
+                <li><a href="interview.html">Design Twitter</a></li>
+                <li><a href="interview.html">Design YouTube/Netflix</a></li>
+                <li><a href="interview.html">Design Uber</a></li>
+                <li><a href="interview.html">Design WhatsApp</a></li>
+            </ul>
+        </article>
+    </div>
+</body>
+</html>
