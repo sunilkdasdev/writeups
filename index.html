@@ -36,6 +36,18 @@
         <article>
             <h1><a href="http://awesome-scalability.com/" target="_blank"><img src="logo.png" alt="Logo" style="height: 40px; vertical-align: middle; margin-right: 15px;"></a>Technical Knowledge Base</h1>
             <p>An updated and organized reading list for illustrating the patterns of scalable, reliable, and performant large-scale systems. Concepts are explained in the articles of prominent engineers and credible references. Case studies are taken from battle-tested systems that serve millions to billions of users.</p>
+
+            <h3>If your system goes slow</h3>
+            <p>Understand your problems: scalability problem (fast for a single user but slow under heavy load) or performance problem (slow for a single user) by reviewing some design principles and checking how scalability and performance problems are solved at tech companies. The section of intelligence are created for those who work with data and machine learning at big (data) and deep (learning) scale.</p>
+
+            <h3>If your system goes down</h3>
+            <p>"Even if you lose all one day, you can build all over again if you retain your calm!" - Thuan Pham, former CTO of Uber. So, keep calm and mind the availability and stability matters!</p>
+
+            <h3>If you are having a system design interview</h3>
+            <p>Look at some interview notes and real-world architectures with completed diagrams to get a comprehensive view before designing your system on whiteboard. You can check some talks of engineers from tech giants to know how they build, scale, and optimize their systems. Good luck!</p>
+
+            <h3>If you are building your dream team</h3>
+            <p>The goal of scaling team is not growing team size but increasing team output and value. You can find out how tech companies reach that goal in various aspects: hiring, management, organization, culture, and communication in the organization section.</p>
         </article>
 
         <!-- Local Articles -->
@@ -268,6 +280,49 @@
             </div>
 
             <div class="category">
+                <h3>Distributed Caching</h3>
+                <ul>
+                    <li><a href="https://www.wix.engineering/post/scaling-to-100m-to-cache-or-not-to-cache" target="_blank">Scaling to 100M - Cache or Not to Cache</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/caching-for-a-global-netflix-7bcc457012f1" target="_blank">EVCache: Distributed In-memory Caching at Netflix</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/cache-warming-agility-for-a-stateful-service-2d3b1da82642" target="_blank">EVCache Cache Warmer at Netflix</a></li>
+                    <li><a href="https://blog.box.com/blog/introducing-memsniff-robust-memcache-traffic-analyzer/" target="_blank">Memsniff at Box</a></li>
+                    <li><a href="https://codeascraft.com/2017/11/30/how-etsy-caches/" target="_blank">Caching with Consistent Hashing at Etsy</a></li>
+                    <li><a href="https://code.facebook.com/posts/220956754772273/an-analysis-of-facebook-photo-caching/" target="_blank">Analysis of Photo Caching at Facebook</a></li>
+                    <li><a href="https://code.facebook.com/posts/964122680272229/web-performance-cache-efficiency-exercise/" target="_blank">Cache Efficiency Exercise at Facebook</a></li>
+                    <li><a href="http://tech.trivago.com/2015/10/15/tcache/" target="_blank">tCache at Trivago</a></li>
+                    <li><a href="https://quoraengineering.quora.com/Pycache-lightning-fast-in-process-caching" target="_blank">Pycache at Quora</a></li>
+                    <li><a href="http://tech.trivago.com/2017/12/19/how-trivago-reduced-memcached-memory-usage-by-50/" target="_blank">Reduce Memcached Memory Usage by 50% at Trivago</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2018/03/caching-internal-service-calls-at-yelp.html" target="_blank">Caching Internal Service Calls at Yelp</a></li>
+                    <li><a href="https://allegro.tech/2017/01/estimating-the-cache-efficiency-using-big-data.html" target="_blank">Estimating Cache Efficiency at Allegro</a></li>
+                    <li><a href="https://engineering.zalando.com/posts/2018/04/distributed-cache-akka-kubernetes.html" target="_blank">Distributed Cache at Zalando</a></li>
+                    <li><a href="https://clickhouse.com/blog/building-a-distributed-cache-for-s3" target="_blank">Distributed Cache for S3 at ClickHouse</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/evolution-of-application-data-caching-from-ram-to-ssd-a33d6fa7a690" target="_blank">Application Data Caching from RAM to SSD at Netflix</a></li>
+                    <li><a href="https://medium.com/@SkyscannerEng/the-tradeoffs-of-a-replicated-cache-b6680c722f58" target="_blank">Tradeoffs of Replicated Cache at Skyscanner</a></li>
+                    <li><a href="http://engblog.yext.com/post/geolocation-caching" target="_blank">Location Caching with Quadtrees at Yext</a></li>
+                    <li><a href="https://medium.com/vimeo-engineering-blog/video-metadata-caching-at-vimeo-a54b25f0b304" target="_blank">Video Metadata Caching at Vimeo</a></li>
+                    <li><a href="http://highscalability.com/blog/2014/9/8/how-twitter-uses-redis-to-scale-105tb-ram-39mm-qps-10000-ins.html" target="_blank">Scaling Redis at Twitter</a></li>
+                    <li><a href="https://slack.engineering/scaling-slacks-job-queue-687222e9d100" target="_blank">Scaling Job Queue with Redis at Slack</a></li>
+                    <li><a href="https://githubengineering.com/moving-persistent-data-out-of-redis/" target="_blank">Moving persistent data out of Redis at Github</a></li>
+                    <li><a href="https://engineering.instagram.com/storing-hundreds-of-millions-of-simple-key-value-pairs-in-redis-1091ae80f74c" target="_blank">Redis at Instagram</a></li>
+                    <li><a href="http://tech.trivago.com/2017/01/25/learn-redis-the-hard-way-in-production/" target="_blank">Redis at Trivago</a></li>
+                    <li><a href="https://deliveroo.engineering/2017/01/19/optimising-membership-queries.html" target="_blank">Optimizing Redis Storage at Deliveroo</a></li>
+                    <li><a href="http://engineering.wattpad.com/post/23244724794/store-more-stuff-memory-optimization-in-redis" target="_blank">Memory Optimization in Redis at Wattpad</a></li>
+                    <li><a href="https://blog.heroku.com/rolling-redis-fleet" target="_blank">Redis Fleet at Heroku</a></li>
+                    <li><a href="https://www.wix.engineering/post/how-we-built-a-cross-region-caching-library" target="_blank">Cross-Region Caching Library at Wix</a></li>
+                    <li><a href="https://medium.com/pinterest-engineering/improving-distributed-caching-performance-and-efficiency-at-pinterest-92484b5fe39b" target="_blank">Improving Distributed Caching Performance at Pinterest</a></li>
+                    <li><a href="https://doordash.engineering/2023/10/19/how-doordash-standardized-and-improved-microservices-caching/" target="_blank">Standardize and Improve Microservices Caching at DoorDash</a></li>
+                    <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching" target="_blank">HTTP Caching and CDN</a></li>
+                    <li><a href="https://www.zynga.com/blogs/engineering/zynga-geo-proxy-reducing-mobile-game-latency" target="_blank">Zynga Geo Proxy</a></li>
+                    <li><a href="https://technology.condenast.com/story/the-why-and-how-of-google-amp-at-conde-nast" target="_blank">Google AMP at Condé Nast</a></li>
+                    <li><a href="https://deliveroo.engineering/2016/09/19/ab-testing-cdns.html" target="_blank">A/B Tests on CDNs at Deliveroo</a></li>
+                    <li><a href="https://developers.soundcloud.com/blog/how-soundcloud-uses-haproxy-with-kubernetes-for-user-facing-traffic" target="_blank">HAProxy with Kubernetes at SoundCloud</a></li>
+                    <li><a href="https://dropbox.tech/infrastructure/meet-bandaid-the-dropbox-service-proxy" target="_blank">Bandaid: Service Proxy at Dropbox</a></li>
+                    <li><a href="https://slack.engineering/service-workers-at-slack-our-quest-for-faster-boot-times-and-offline-support-3492cf79c88" target="_blank">Service Workers at Slack</a></li>
+                    <li><a href="https://labs.spotify.com/2020/02/24/how-spotify-aligned-cdn-services-for-a-lightning-fast-streaming-experience/" target="_blank">CDN Services at Spotify</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
                 <h3>Distributed Tracing</h3>
                 <ul>
                     <li><a href="https://www.oreilly.com/ideas/understanding-the-value-of-distributed-tracing" target="_blank">Understanding the Value of Distributed Tracing</a></li>
@@ -346,6 +401,203 @@
             </div>
 
             <div class="category">
+                <h3>Distributed Monitoring</h3>
+                <ul>
+                    <li><a href="https://www.ebayinc.com/stories/blogs/tech/unicorn-rheos-remediation-center/" target="_blank">Unicorn at eBay</a></li>
+                    <li><a href="https://eng.uber.com/optimizing-m3/" target="_blank">M3 at Uber</a></li>
+                    <li><a href="https://dropbox.tech/infrastructure/athena-our-automated-build-health-management-system" target="_blank">Athena at Dropbox</a></li>
+                    <li><a href="https://dropbox.tech/infrastructure/monitoring-server-applications-with-vortex" target="_blank">Vortex at Dropbox</a></li>
+                    <li><a href="https://engineering.linkedin.com/blog/2019/solving-manageability-challenges-with-nuage" target="_blank">Nuage at LinkedIn</a></li>
+                    <li><a href="https://netflixtechblog.com/telltale-netflix-application-monitoring-simplified-5c08bfa780ba" target="_blank">Telltale at Netflix</a></li>
+                    <li><a href="https://engineering.linkedin.com/blog/2019/06/smart-alerts-in-thirdeye--linkedins-real-time-monitoring-platfor" target="_blank">ThirdEye at LinkedIn</a></li>
+                    <li><a href="https://developers.soundcloud.com/blog/periskop-exception-monitoring-service" target="_blank">Periskop at SoundCloud</a></li>
+                    <li><a href="https://dropbox.tech/security/meet-securitybot-open-sourcing-automated-security-at-scale" target="_blank">Securitybot at Dropbox</a></li>
+                    <li><a href="https://www.usenix.org/conference/srecon18asia/presentation/xinchi" target="_blank">Monitoring System at Alibaba</a></li>
+                    <li><a href="https://medium.com/dailymotion/real-user-monitoring-1948375f8be5" target="_blank">Real User Monitoring at Dailymotion</a></li>
+                    <li><a href="https://eng.uber.com/observability-at-scale/" target="_blank">Alerting Ecosystem at Uber</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2017/03/monitoring-and-alert-system-using-graphite-and-cabot/" target="_blank">Monitoring and Alert System at HackerEarth</a></li>
+                    <li><a href="https://blog.twitter.com/engineering/en_us/a/2016/observability-at-twitter-technical-overview-part-ii.html" target="_blank">Observability at Twitter</a></li>
+                    <li><a href="https://slack.engineering/distributed-security-alerting-c89414c992d6" target="_blank">Distributed Security Alerting at Slack</a></li>
+                    <li><a href="https://www.infoq.com/presentations/news-alerting-bloomberg" target="_blank">Real-Time News Alerting at Bloomberg</a></li>
+                    <li><a href="https://engineering.linkedin.com/blog/2019/an-inside-look-at-linkedins-data-pipeline-monitoring-system-" target="_blank">Data Pipeline Monitoring at LinkedIn</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Distributed Security</h3>
+                <ul>
+                    <li><a href="https://medium.com/netflix-techblog/introducing-aardvark-and-repokid-53b081bf3a7e" target="_blank">Aardvark and Repokid at Netflix</a></li>
+                    <li><a href="https://www.slideshare.net/MikeSvoboda/2017-lisa-linkedins-distributed-firewall-dfw" target="_blank">LISA at LinkedIn</a></li>
+                    <li><a href="https://engineering.coinbase.com/how-coinbase-builds-secure-infrastructure-to-store-bitcoin-in-the-cloud-30a6504e40ba" target="_blank">Secure Infrastructure at Coinbase</a></li>
+                    <li><a href="https://medium.com/airbnb-engineering/binaryalert-real-time-serverless-malware-detection-ca44370c1b90" target="_blank">BinaryAlert at Airbnb</a></li>
+                    <li><a href="https://segment.com/blog/secure-access-to-100-aws-accounts/" target="_blank">Scalable IAM at Segment</a></li>
+                    <li><a href="http://engineering.indeedblog.com/blog/2018/04/oaudit-toolbox/" target="_blank">OAuth Audit Toolbox at Indeed</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2018/04/ad-password-blacklisting.html" target="_blank">AD Password Blacklisting at Yelp</a></li>
+                    <li><a href="https://slack.engineering/syscall-auditing-at-scale-e6a3ca8ac1b8" target="_blank">Syscall Auditing at Scale at Slack</a></li>
+                    <li><a href="https://yahooeng.tumblr.com/post/160481899076/open-sourcing-athenz-fine-grained-role-based" target="_blank">Athenz at Yahoo</a></li>
+                    <li><a href="https://slack.engineering/moving-fast-and-securing-things-540e6c5ae58a" target="_blank">Security Development Lifecycle at Slack</a></li>
+                    <li><a href="https://kinvolk.io/blog/2018/04/towards-unprivileged-container-builds/" target="_blank">Unprivileged Container Builds at Kinvolk</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/netflix-sirt-releases-diffy-a-differencing-engine-for-digital-forensics-in-the-cloud-37b71abd2698" target="_blank">Diffy at Netflix</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/netflix-cloud-security-detecting-credential-compromise-in-aws-9493d6fd373a" target="_blank">Detecting Credential Compromise at Netflix</a></li>
+                    <li><a href="https://labs.spotify.com/2018/09/18/scalable-user-privacy/" target="_blank">Scalable User Privacy at Spotify</a></li>
+                    <li><a href="https://engineering.indeedblog.com/blog/2018/09/application-scanning/" target="_blank">AVA at Indeed</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2018/11/ttl-as-a-service.html" target="_blank">TTL as a Service at Yelp</a></li>
+                    <li><a href="https://slack.engineering/engineering-dive-into-slack-enterprise-key-management-1fce471b178c" target="_blank">Enterprise Key Management at Slack</a></li>
+                    <li><a href="https://blog.twitch.tv/en/2019/03/15/how-twitch-addresses-scalability-and-authentication/" target="_blank">Scalability and Authentication at Twitch</a></li>
+                    <li><a href="https://netflixtechblog.com/edge-authentication-and-token-agnostic-identity-propagation-514e47e0b602" target="_blank">Edge Authentication at Netflix</a></li>
+                    <li><a href="https://blog.palantir.com/hardening-palantirs-kubernetes-infrastructure-with-cilium-1c40d4c7ef0" target="_blank">Hardening Kubernetes with Cilium at Palantir</a></li>
+                    <li><a href="https://eng.lyft.com/improving-web-vulnerability-management-through-automation-2631570d8415" target="_blank">Web Vulnerability Management at Lyft</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Distributed Logging</h3>
+                <ul>
+                    <li><a href="https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying" target="_blank">Logging at LinkedIn</a></li>
+                    <li><a href="https://medium.com/@Pinterest_Engineering/scalable-and-reliable-data-ingestion-at-pinterest-b921c2ee8754" target="_blank">Scalable Log Ingestion at Pinterest</a></li>
+                    <li><a href="https://blog.twitter.com/engineering/en_us/topics/infrastructure/2015/building-distributedlog-twitter-s-high-performance-replicated-log-servic.html" target="_blank">DistributedLog at Twitter</a></li>
+                    <li><a href="https://databricks.com/blog/2017/12/14/the-architecture-of-the-next-cern-accelerator-logging-service.html" target="_blank">Logging Service at CERN</a></li>
+                    <li><a href="https://quoraengineering.quora.com/Logging-and-Aggregation-at-Quora" target="_blank">Logging and Aggregation at Quora</a></li>
+                    <li><a href="https://badoo.com/techblog/blog/2016/06/06/collection-and-analysis-of-daemon-logs-at-badoo/" target="_blank">Daemon Logs at Badoo</a></li>
+                    <li><a href="https://medium.com/palantir/using-static-code-analysis-to-improve-log-parsing-18f0d1843965" target="_blank">Log Parsing at Palantir</a></li>
+                    <li><a href="https://tech.ebayinc.com/engineering/low-latency-and-high-throughput-cal-ingress/" target="_blank">Centralized Application Logging at eBay</a></li>
+                    <li><a href="https://netflixtechblog.com/hyper-scale-vpc-flow-logs-enrichment-to-provide-network-insight-e5f1db02910d" target="_blank">VPC Flow Logs at Netflix</a></li>
+                    <li><a href="https://yahooeng.tumblr.com/post/109908973316/bookkeeper-yahoos-distributed-log-storage-is" target="_blank">BookKeeper at Yahoo</a></li>
+                    <li><a href="https://code.facebook.com/posts/357056558062811/logdevice-a-distributed-data-store-for-logs/" target="_blank">LogDevice at Facebook</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2018/03/introducing-logfeeder.html" target="_blank">LogFeeder at Yelp</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/dblog-a-generic-change-data-capture-framework-69351fb9099b" target="_blank">DBLog at Netflix</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Distributed Storage</h3>
+                <ul>
+                    <li><a href="https://medium.com/@denisanikin/what-an-in-memory-database-is-and-how-it-persists-data-efficiently-f43868cff4c1" target="_blank">In-memory Storage</a></li>
+                    <li><a href="http://highscalability.com/blog/2012/8/14/memsql-architecture-the-fast-mvcc-inmem-lockfree-codegen-and.html" target="_blank">MemSQL Architecture</a></li>
+                    <li><a href="https://quoraengineering.quora.com/Optimizing-Memcached-Efficiency" target="_blank">Optimizing Memcached at Quora</a></li>
+                    <li><a href="http://www.datacenterknowledge.com/archives/2013/10/04/object-storage-the-future-of-scale-out" target="_blank">Object Storage</a></li>
+                    <li><a href="https://eng.uber.com/scaling-hdfs/" target="_blank">Scaling HDFS at Uber</a></li>
+                    <li><a href="https://databricks.com/blog/2017/05/31/top-5-reasons-for-choosing-s3-over-hdfs.html" target="_blank">S3 over HDFS at Databricks</a></li>
+                    <li><a href="https://www.quantcast.com/blog/quantcast-file-system-on-amazon-s3/" target="_blank">File System on S3 at Quantcast</a></li>
+                    <li><a href="https://tech.trivago.com/2018/09/03/efficient-image-recovery-at-scale-using-amazon-s3-versioning/" target="_blank">Image Recovery at Scale Using S3 at Trivago</a></li>
+                    <li><a href="https://yahooeng.tumblr.com/post/116391291701/yahoo-cloud-object-store-object-storage-at" target="_blank">Cloud Object Store at Yahoo</a></li>
+                    <li><a href="https://www.usenix.org/conference/srecon17americas/program/presentation/shenoy" target="_blank">Ambry at LinkedIn</a></li>
+                    <li><a href="https://engineering.linkedin.com/blog/2018/02/dynamometer--scale-testing-hdfs-on-minimal-hardware-with-maximum" target="_blank">Dynamometer at LinkedIn</a></li>
+                    <li><a href="https://medium.com/airbnb-engineering/hammerspace-persistent-concurrent-off-heap-storage-3db39bb04472" target="_blank">Hammerspace at Airbnb</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/mezzfs-mounting-object-storage-in-netflixs-media-processing-platform-cda01c446ba" target="_blank">MezzFS at Netflix</a></li>
+                    <li><a href="https://dropbox.tech/infrastructure/inside-the-magic-pocket" target="_blank">Magic Pocket at Dropbox</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Relational Databases</h3>
+                <ul>
+                    <li><a href="https://www.uber.com/en-SG/blog/mysql-at-uber/" target="_blank">MySQL at Uber</a></li>
+                    <li><a href="https://medium.com/@Pinterest_Engineering/learn-to-stop-using-shiny-new-things-and-love-mysql-3e1613c2ce14" target="_blank">MySQL at Pinterest</a></li>
+                    <li><a href="https://blog.twitch.tv/en/2016/10/11/how-twitch-uses-postgresql-c34aa9e56f58" target="_blank">PostgreSQL at Twitch</a></li>
+                    <li><a href="https://medium.com/airbnb-engineering/tracking-the-money-scaling-financial-reporting-at-airbnb-6d742b80f040" target="_blank">Scaling MySQL-based Financial Reporting at Airbnb</a></li>
+                    <li><a href="https://www.wix.engineering/post/scaling-to-100m-mysql-is-a-better-nosql" target="_blank">Scaling MySQL at Wix</a></li>
+                    <li><a href="https://engineering.fb.com/2023/05/16/data-infrastructure/mysql-raft-meta/" target="_blank">MySQL Raft at Meta</a></li>
+                    <li><a href="https://medium.com/airbnb-engineering/unlocking-horizontal-scalability-in-our-web-serving-tier-d907449cdbcf" target="_blank">MaxScale at Airbnb</a></li>
+                    <li><a href="https://www.uber.com/en-NL/blog/postgres-to-mysql-migration/" target="_blank">Switching from Postgres to MySQL at Uber</a></li>
+                    <li><a href="https://engineering.instagram.com/handling-growth-with-postgres-5-tips-from-instagram-d5d7e7ffdfcb" target="_blank">Postgres at Instagram</a></li>
+                    <li><a href="http://tech.transferwise.com/scaling-our-analytics-database/" target="_blank">Analytics Database at TransferWise</a></li>
+                    <li><a href="https://medium.com/adyen/updating-a-50-terabyte-postgresql-database-f64384b799e7" target="_blank">Updating 50TB PostgreSQL at Adyen</a></li>
+                    <li><a href="https://medium.com/paypal-engineering/scaling-database-access-for-100s-of-billions-of-queries-per-day-paypal-introducing-hera-e192adacda54" target="_blank">Database Access at PayPal</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2020/11/minimizing-read-write-mysql-downtime.html" target="_blank">Minimizing MySQL Downtime at Yelp</a></li>
+                    <li><a href="https://engineering.fb.com/2021/07/22/data-infrastructure/mysql/" target="_blank">Migrating MySQL at Facebook</a></li>
+                    <li><a href="https://quoraengineering.quora.com/Migration-from-HBase-to-MyRocks-at-Quora" target="_blank">Migration from HBase to MyRocks at Quora</a></li>
+                    <li><a href="https://githubengineering.com/mitigating-replication-lag-and-reducing-read-load-with-freno/" target="_blank">MySQL Replication at Github</a></li>
+                    <li><a href="https://shopify.engineering/read-consistency-database-replicas" target="_blank">Read Consistency at Shopify</a></li>
+                    <li><a href="https://medium.com/airbnb-engineering/how-we-partitioned-airbnb-s-main-database-in-two-weeks-55f7e006ff21" target="_blank">Partitioning Main MySQL at Airbnb</a></li>
+                    <li><a href="https://eng.uber.com/herb-datacenter-replication/" target="_blank">Herb at Uber</a></li>
+                    <li><a href="https://medium.com/@Pinterest_Engineering/sharding-pinterest-how-we-scaled-our-mysql-fleet-3f341e96ca6f" target="_blank">Sharding MySQL at Pinterest</a></li>
+                    <li><a href="https://www.twilio.com/engineering/2014/06/26/how-we-replaced-our-data-pipeline-with-zero-downtime" target="_blank">Sharding MySQL at Twilio</a></li>
+                    <li><a href="https://medium.com/square-corner-blog/sharding-cash-10280fa3ef3b" target="_blank">Sharding MySQL at Square</a></li>
+                    <li><a href="https://eng.uber.com/schemaless-rewrite/" target="_blank">Sharding Layer at Uber</a></li>
+                    <li><a href="https://instagram-engineering.com/sharding-ids-at-instagram-1cf5a71e5a5c" target="_blank">Sharding & IDs at Instagram</a></li>
+                    <li><a href="https://www.notion.so/blog/sharding-postgres-at-notion" target="_blank">Sharding Postgres at Notion</a></li>
+                    <li><a href="https://www.figma.com/blog/how-figmas-databases-team-lived-to-tell-the-scale/" target="_blank">Sharding Postgres at Figma</a></li>
+                    <li><a href="https://engineering.fb.com/production-engineering/scaling-services-with-shard-manager/" target="_blank">Shard Manager at Facebook</a></li>
+                    <li><a href="https://medium.com/@Pinterest_Engineering/presto-at-pinterest-a8bda7515e52" target="_blank">Presto at Pinterest</a></li>
+                    <li><a href="https://eng.lyft.com/presto-infrastructure-at-lyft-b10adb9db01" target="_blank">Presto at Lyft</a></li>
+                    <li><a href="https://eng.uber.com/presto/" target="_blank">Presto at Uber</a></li>
+                    <li><a href="https://slack.engineering/data-wrangling-at-slack-f2e0ff633b69" target="_blank">Data Wrangling at Slack</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/using-presto-in-our-big-data-platform-on-aws-938035909fd4" target="_blank">Presto at Netflix</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>NoSQL Databases</h3>
+                <ul>
+                    <li><a href="https://medium.com/nikeengineering/becoming-a-nimble-giant-how-dynamo-db-serves-nike-at-scale-4cc375dbb18e" target="_blank">DynamoDB at Nike</a></li>
+                    <li><a href="https://segment.com/blog/the-million-dollar-eng-problem/" target="_blank">DynamoDB at Segment</a></li>
+                    <li><a href="https://blog.mapbox.com/scaling-mapbox-infrastructure-with-dynamodb-streams-d53eabc5e972" target="_blank">DynamoDB at Mapbox</a></li>
+                    <li><a href="https://blog.twitter.com/engineering/en_us/a/2014/manhattan-our-real-time-multi-tenant-distributed-database-for-twitter-scale.html" target="_blank">Manhattan at Twitter</a></li>
+                    <li><a href="https://yahooeng.tumblr.com/post/120730204806/sherpa-scales-new-heights" target="_blank">Sherpa at Yahoo</a></li>
+                    <li><a href="https://yahooeng.tumblr.com/post/178262468576/introducing-halodb-a-fast-embedded-key-value" target="_blank">HaloDB at Yahoo</a></li>
+                    <li><a href="http://engineering.indeedblog.com/blog/2018/02/indeed-mph/" target="_blank">MPH at Indeed</a></li>
+                    <li><a href="https://engineering.linkedin.com/blog/2017/02/building-venice-with-apache-helix" target="_blank">Venice at LinkedIn</a></li>
+                    <li><a href="https://www.slideshare.net/DataStax/cassandra-at-instagram-2016" target="_blank">Cassandra at Instagram</a></li>
+                    <li><a href="https://medium.com/walmartlabs/building-object-store-storing-images-in-cassandra-walmart-scale-a6b9c02af593" target="_blank">Cassandra at Walmart</a></li>
+                    <li><a href="https://blog.discordapp.com/how-discord-stores-billions-of-messages-7fa6ec7ee4c7" target="_blank">Cassandra at Discord</a></li>
+                    <li><a href="https://medium.com/walmartlabs/avoid-pitfalls-in-scaling-your-cassandra-cluster-lessons-and-remedies-a71ca01f8c04" target="_blank">Scaling Cassandra at Walmart</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2016/08/how-we-scaled-our-ad-analytics-with-cassandra.html" target="_blank">Cassandra at Yelp</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/benchmarking-cassandra-scalability-on-aws-over-a-million-writes-per-second-39f45f066c9e" target="_blank">Cassandra at Netflix</a></li>
+                    <li><a href="https://quickbooks-engineering.intuit.com/service-decomposition-at-scale-70405ac2f637" target="_blank">Cassandra at Intuit</a></li>
+                    <li><a href="https://labs.spotify.com/2018/09/04/introducing-cstar-the-spotify-cassandra-orchestration-tool-now-open-source/" target="_blank">cstar at Spotify</a></li>
+                    <li><a href="https://engineering.salesforce.com/investing-in-big-data-apache-hbase-b9d98661a66b" target="_blank">HBase at Salesforce</a></li>
+                    <li><a href="https://www.facebook.com/notes/facebook-engineering/the-underlying-technology-of-messages/454991608919/" target="_blank">HBase in Facebook Messages</a></li>
+                    <li><a href="https://medium.com/@Pinterest_Engineering/improving-hbase-backup-efficiency-at-pinterest-86159da4b954" target="_blank">HBase at Pinterest</a></li>
+                    <li><a href="https://engineering.giphy.com/scaling-redshift-without-scaling-costs/" target="_blank">Redshift at GIPHY</a></li>
+                    <li><a href="https://drivy.engineering/redshift_tips_ticks_part_1/" target="_blank">Redshift at Drivy</a></li>
+                    <li><a href="https://www.mongodb.com/blog/post/ebay-building-mission-critical-multi-data-center-applications-with-mongodb" target="_blank">MongoDB at eBay</a></li>
+                    <li><a href="https://www.mongodb.com/blog/post/mongodb-at-baidu-powering-100-apps-across-600-nodes-at-pb-scale" target="_blank">MongoDB at Baidu</a></li>
+                    <li><a href="https://medium.com/build-addepar/migrating-mountains-of-mongo-data-63e530539952" target="_blank">MongoDB at Addepar</a></li>
+                    <li><a href="https://engineering.linkedin.com/blog/2017/12/couchbase-ecosystem-at-linkedin" target="_blank">Couchbase at LinkedIn</a></li>
+                    <li><a href="https://medium.com/zendesk-engineering/resurrecting-amazon-simpledb-9404034ec506" target="_blank">SimpleDB at Zendesk</a></li>
+                    <li><a href="https://engineering.linkedin.com/espresso/introducing-espresso-linkedins-hot-new-distributed-document-store" target="_blank">Espresso at LinkedIn</a></li>
+                    <li><a href="https://blog.twitter.com/engineering/en_us/a/2010/introducing-flockdb.html" target="_blank">FlockDB at Twitter</a></li>
+                    <li><a href="https://www.cs.cmu.edu/~pavlo/courses/fall2013/static/papers/11730-atc13-bronson.pdf" target="_blank">TAO at Facebook</a></li>
+                    <li><a href="https://tech.ebayinc.com/engineering/akutan-a-distributed-knowledge-graph-store/" target="_blank">Akutan at eBay</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Time Series Databases</h3>
+                <ul>
+                    <li><a href="https://code.facebook.com/posts/952820474848503/beringei-a-high-performance-time-series-storage-engine/" target="_blank">Beringei at Facebook</a></li>
+                    <li><a href="https://blog.twitter.com/engineering/en_us/topics/infrastructure/2019/metricsdb.html" target="_blank">MetricsDB at Twitter</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/introducing-atlas-netflixs-primary-telemetry-platform-bd31f4d8ed9a" target="_blank">Atlas at Netflix</a></li>
+                    <li><a href="https://labs.spotify.com/2015/11/17/monitoring-at-spotify-introducing-heroic/" target="_blank">Heroic at Spotify</a></li>
+                    <li><a href="https://developers.soundcloud.com/blog/roshi-a-crdt-system-for-timestamped-events" target="_blank">Roshi at SoundCloud</a></li>
+                    <li><a href="https://medium.com/@Pinterest_Engineering/goku-building-a-scalable-and-high-performant-time-series-database-system-a8ff5758a181" target="_blank">Goku at Pinterest</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/scaling-time-series-data-storage-part-ii-d67939655586" target="_blank">Time Series Data Storage at Netflix</a></li>
+                    <li><a href="https://netflixtechblog.com/introducing-netflix-timeseries-data-abstraction-layer-31552f6326f8" target="_blank">Time Series Data Abstraction Layer at Netflix</a></li>
+                    <li><a href="https://medium.com/airbnb-engineering/druid-airbnb-data-platform-601c312f2a4c" target="_blank">Druid at Airbnb</a></li>
+                    <li><a href="https://medium.com/walmartlabs/event-stream-analytics-at-walmart-with-druid-dcf1a37ceda7" target="_blank">Druid at Walmart</a></li>
+                    <li><a href="https://tech.ebayinc.com/engineering/monitoring-at-ebay-with-druid/" target="_blank">Druid at eBay</a></li>
+                    <li><a href="https://netflixtechblog.com/how-netflix-uses-druid-for-real-time-insights-to-ensure-a-high-quality-experience-19e1e8568d06" target="_blank">Druid at Netflix</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>CI/CD</h3>
+                <ul>
+                    <li><a href="https://code.fb.com/web/rapid-release-at-massive-scale/" target="_blank">Continuous Integration at Facebook</a></li>
+                    <li><a href="https://medium.com/netflix-techblog/towards-true-continuous-integration-distributed-repositories-and-dependencies-2a2e3108c051" target="_blank">Continuous Integration at Netflix</a></li>
+                    <li><a href="https://dropbox.tech/infrastructure/continuous-integration-and-deployment-with-bazel" target="_blank">CI/CD with Bazel at Dropbox</a></li>
+                    <li><a href="https://medium.com/airbnb-engineering/adopting-bazel-for-web-at-scale-a784b2dbe325" target="_blank">Bazel at Airbnb</a></li>
+                    <li><a href="https://tech.buzzfeed.com/continuous-deployments-at-buzzfeed-d171f76c1ac4" target="_blank">Continuous Deployments at BuzzFeed</a></li>
+                    <li><a href="https://yahooeng.tumblr.com/post/155765242061/open-sourcing-screwdriver-yahoos-continuous" target="_blank">Screwdriver at Yahoo</a></li>
+                    <li><a href="https://medium.com/engineering-brainly/ci-cd-at-scale-fdfb0f49e031" target="_blank">CI/CD at Brainly</a></li>
+                    <li><a href="https://engineering.shopify.com/blogs/engineering/scaling-ios-ci-with-anka" target="_blank">Scaling iOS CI with Anka at Shopify</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2019/04/scaling-jira-server-administration-for-the-enterprise.html" target="_blank">Scaling Jira Server at Yelp</a></li>
+                    <li><a href="https://flexport.engineering/how-flexport-halved-testing-costs-with-an-auto-scaling-ci-cd-cluster-8304297222f" target="_blank">Auto-scaling CI/CD at Flexport</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
                 <h3>Performance Optimization</h3>
                 <ul>
                     <li><a href="https://stackify.com/application-performance-metrics/" target="_blank">Performance Optimization</a></li>
@@ -366,6 +618,20 @@
                     <li><a href="https://instagram-engineering.com/search-architecture-eeb34a936d3a" target="_blank">Search Architecture at Instagram</a></li>
                     <li><a href="https://dropbox.tech/machine-learning/architecture-of-nautilus-the-new-dropbox-search-engine" target="_blank">Nautilus: Search Engine at Dropbox</a></li>
                     <li><a href="https://eng.uber.com/elk/" target="_blank">ELK at Uber</a></li>
+                </ul>
+            </div>
+
+            <div class="category">
+                <h3>Failover</h3>
+                <ul>
+                    <li><a href="https://www.uber.com/en/blog/failover-design/" target="_blank">Failover Design at Uber</a></li>
+                    <li><a href="https://dropbox.tech/infrastructure/active-failover-for-storage-at-dropbox" target="_blank">Active Failover at Dropbox</a></li>
+                    <li><a href="https://eng.uber.com/availability/" target="_blank">Designing for Availability at Uber</a></li>
+                    <li><a href="https://blog.cloudflare.com/dns-resolver-failover/" target="_blank">DNS Resolver Failover at Cloudflare</a></li>
+                    <li><a href="https://blog.dnsimple.com/2019/04/dns-failover-explained/" target="_blank">DNS Failover Explained</a></li>
+                    <li><a href="https://netflixtechblog.com/automated-failover-for-netflix-5bc12e72df94" target="_blank">Automated Failover at Netflix</a></li>
+                    <li><a href="https://engineeringblog.yelp.com/2018/06/automated-failover-for-mysql-at-yelp.html" target="_blank">Automated Failover for MySQL at Yelp</a></li>
+                    <li><a href="https://githubengineering.com/automated-failover-with-orchestrator/" target="_blank">Automated Failover with Orchestrator at GitHub</a></li>
                 </ul>
             </div>
 
@@ -646,6 +912,7 @@
 
         <article style="text-align: center; color: #666;">
             <p>Total: <strong>37 local articles</strong> + <strong>300+ external references</strong></p>
+            <p>If you find this knowledge base helpful, consider <a href="https://www.paypal.com/paypalme2/awesome-scalability" target="_blank">buying the author a coffee</a> ☕</p>
             <p>Last Updated: April 2026</p>
         </article>
     </div>
