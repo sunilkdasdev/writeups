@@ -1,25 +1,33 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    font-family: "Courier New", Courier, monospace;
-    line-height: 1.4; color: #cc0000;
-    background: #000000;
-    padding: 20px;
+    font-family: "Courier", "Lucida Console", "Courier New", monospace;
+    font-size: 14px;
+    color: #cccccc;
+    background: #1a1a1a;
+    padding: 0;
 }
-a { color: #ff6666; text-decoration: underline; }
-a:hover { color: #ffffff; background: #cc0000; }
-h1 { color: #ff0000; border-bottom: 3px double #ff0000; padding-bottom: 10px; }
-h2 { color: #ff3333; border-bottom: 2px dashed #ff0000; padding-bottom: 5px; margin-top: 25px; }
-h3 { color: #ff6666; }
+a { color: #6699cc; text-decoration: none; }
+a:hover { color: #99ccff; text-decoration: underline; }
+h1 { color: #ffffff; font-size: 200%; font-weight: normal; border-bottom: 1px solid #444; padding: 0.5ex 0 0.5ex 0.6ex; margin: 1em 0 0.5em 0; }
+h2 { color: #ffffff; font-size: 150%; font-weight: bold; border-bottom: 1px solid #444; padding: 0.5ex 0 0.5ex 0.6ex; margin: 2em 0 0.5em 0; }
+h3 { color: #ffffff; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
 ul { list-style-type: square; margin-left: 20px; }
-li { padding: 3px 0; border-bottom: 1px dotted #660000; }
-.container { max-width: 1200px; margin: 0 auto; }
+li { padding: 3px 0; }
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
 article {
-    background: #0a0a0a; border: 2px solid #cc0000; padding: 20px; margin-bottom: 20px;
+    background: #222; border: 1px solid #333; padding: 20px; margin-bottom: 20px;
 }
-.category { border: 1px dashed #660000; padding: 10px; margin: 10px 0; }
-.badge { border: 1px solid #ff6666; padding: 1px 5px; font-size: 0.8em; }
-.badge-external { color: #ff9999; }
+.category { border: 1px solid #444; padding: 10px; margin: 10px 0; }
+.badge { border: 1px solid #666; padding: 1px 5px; font-size: 0.8em; }
+.badge-external { color: #888; }
 table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-th, td { border: 1px solid #660000; padding: 8px; }
-th { background: #330000; color: #ff0000; }
-pre, code { background: #1a0000; color: #ff6666; padding: 2px 5px; }
+th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+th { background: #333; }
+pre { margin-left: 2em; font-size: 1.2em; white-space: pre-wrap; font-family: "Courier", "Lucida Console", "Courier New", monospace; background: #222; padding: 10px; overflow-x: auto; }
+code { font-family: "Courier", "Lucida Console", "Courier New", monospace; background: #2a2a2a; padding: 2px 5px; }
+blockquote { border-left: 1px solid #444; font-style: italic; margin-left: 1em; padding-left: 1em; color: #999; }
+hr { border-width: 0px 0px 1px 0px; border-color: #444; }
+
+.logo { height: 40px; vertical-align: middle; margin-right: 15px; }
+.logo-link { text-decoration: none; }
+.logo-link:hover { text-decoration: none; }

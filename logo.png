@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6699cc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#99ccff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="5" y="10" width="50" height="40" fill="none" stroke="url(#grad)" stroke-width="3" rx="5"/>
+  <circle cx="30" cy="30" r="8" fill="url(#grad)"/>
+  <text x="65" y="38" font-family="Courier, monospace" font-size="24" font-weight="bold" fill="#ffffff">Rimfinder</text>
+</svg>
